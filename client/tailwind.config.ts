@@ -39,4 +39,25 @@ const config: Config = {
   },
   plugins: [],
 };
+
+// tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {
+      fontFamily: {
+        // ตั้งชื่อ font ว่า 'kanit' (หรือชื่ออะไรก็ได้ที่คุณชอบ)
+        kanit: ['"Kanit"', 'sans-serif'],
+        
+        // หรือถ้าอยากให้เป็น Font หลักของทั้งเว็บเลย ให้แก้ทับ 'sans'
+        sans: ['"Kanit"', 'sans-serif'], 
+      },
+    },
+  },
+  plugins: [],
+};
+
 export default config;

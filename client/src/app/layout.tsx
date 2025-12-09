@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
-import { Inter } from "next/font/google"
+import { K2D } from "next/font/google"; // 1. เปลี่ยน import เป็น K2D
 import DashboardWrapper from "./dashboardWrapper";
+import { Providers } from "./providers";
 
-const inter = Inter({subsets: ["latin"]});
+// 2. ตั้งค่า K2D (กำหนด weight ที่ต้องการใช้)
+const k2d = K2D({
+  subsets: ["latin", "thai"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800"], 
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,11 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        
-        <DashboardWrapper>{children}</DashboardWrapper>
-       
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <Providers>
+           <DashboardWrapper>{children}</DashboardWrapper>
+        </Providers>
       </body>
     </html>
   );

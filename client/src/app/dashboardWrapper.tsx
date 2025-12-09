@@ -1,21 +1,34 @@
-import React from 'react'
+"use client";
 
+import React, { useState } from "react"; // 1. อย่าลืม import useState
+import Navbar from "./(components)/Navbar";
+import Sidebar from "./(components)/Sidebar";
 
+const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
+  // 2. สร้าง State กลาง (false = เริ่มต้นปิดไว้ก่อนสำหรับมือถือ)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-const DashboardWrapper = ({children}: {children:React.ReactNode}) => {
-  return ( <div className= "flex min-h-screen w-full bg-gray-50 text-gray-900">
- 
- {/*sidebar*/}
-sidebar
+  return (
+    <div className="flex h-screen w-full flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      
+      {/* 3. ส่ง "ฟังก์ชันสลับ" ไปให้ Navbar (เพื่อเอาไปใส่ปุ่ม) */}
+      <Navbar 
+        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
+      />
 
- <main className={'dark:bg-dark-bg flex w-full flex-col bg-gray-50 md:pl-64'}>
+      <div className="flex flex-1 overflow-hidden">
+        
+        {/* 4. ส่ง "สถานะ" ไปให้ Sidebar (เพื่อบอกว่าให้โผล่หรือซ่อน) */}
+        <Sidebar 
+           isSidebarOpen={isSidebarOpen} 
+           setIsSidebarOpen={setIsSidebarOpen} 
+        />
 
- {/*Navbar*/}
- Navbar
-{children}
- </main>
-
-</div> 
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 };
 
