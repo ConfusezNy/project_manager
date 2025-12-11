@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import "./globals.css";
-import { K2D } from "next/font/google"; // 1. เปลี่ยน import เป็น K2D
+import { K2D } from "next/font/google"; 
+import "./globals.css"; // แนะนำให้ย้ายมาบรรทัดนี้ หรือบนสุด
 import DashboardWrapper from "./dashboardWrapper";
 import { Providers } from "./providers";
 
-// 2. ตั้งค่า K2D (กำหนด weight ที่ต้องการใช้)
+// ตั้งค่า K2D
 const k2d = K2D({
   subsets: ["latin", "thai"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800"], 
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
+  variable: "--font-k2d", // (Optional) เผื่ออยากใช้ผ่าน CSS Variable
 });
 
 export const metadata: Metadata = {
@@ -22,7 +23,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      {/* ต้องใส่ k2d.className ลงใน body ไม่งั้นฟอนต์ไม่ติด */}
+      <body className={k2d.className}>
         <Providers>
            <DashboardWrapper>{children}</DashboardWrapper>
         </Providers>
