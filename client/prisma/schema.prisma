@@ -1,0 +1,233 @@
+// schema.prisma (PostgreSQL)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ADVISOR
+  STUDENT 
+}
+
+enum GradeScore {
+  A
+  A_PLUS    // A+
+  B
+  B_PLUS    // B+
+  C
+  C_PLUS    // C+
+  D
+  D_PLUS    // D+
+}
+
+model Users {
+  users_id       String          @id @db.VarChar(13)
+  passwordHash   String?         @db.VarChar(255)
+  titles         String?         @db.VarChar(20)
+  firstname      String?         @db.VarChar(50)
+  lastname       String?         @db.VarChar(50)
+  tel_number     String?         @db.VarChar(10)
+  email          String?         @db.VarChar(100) @unique
+  profilePicture String?         @db.VarChar(255)
+  role           Role            @default(STUDENT)
+
+  // relations
+  teamMembers    Teammember[]    @relation("UserTeamMembers")
+  taskAssignments TaskAssignment[] @relation("UserTaskAssignments")
+  attachments    Attachment[]    @relation("UserAttachments")
+  comments       Comment[]       @relation("UserComments")
+  gradesGiven    Grade[]         @relation("EvaluatorGrades")
+  gradesReceived Grade[]         @relation("StudentGrades")
+  projectAdvisor ProjectAdvisor[] 
+  notifications  Notification[]  @relation("UserNotifications")
+  notificationsActor Notification[] @relation("ActorNotifications")
+  createdTasks   Task[]          @relation("AuthorTasks")
+
+  @@map("Users")
+}
+
+model Team {
+  team_id    Int        @id @default(autoincrement())
+  teamname   String     @db.VarChar(3)
+  course_id  String?    @db.VarChar(10)
+  term_id    Int?
+
+  // relations
+  members    Teammember[] 
+  projects   Project[]
+  notifications Notification[] 
+
+  course     Course?    @relation(fields: [course_id], references: [course_id])
+  term       Term?      @relation(fields: [term_id], references: [term_id])
+
+  @@map("Team")
+}
+
+model Course {
+  course_id  String   @id @db.VarChar(10)
+  courseName String?  @db.VarChar(11)
+
+  teams      Team[]
+
+  @@map("Course")
+}
+
+model Term {
+  term_id      Int     @id @default(autoincrement())
+  academicYear Int?
+  semester     Int?
+
+  teams        Team[]
+  grades       Grade[]
+
+  @@map("Term")
+}
+
+model Teammember {
+  team_id  Int
+  user_id  String   @db.VarChar(13)
+  joinedAt DateTime?
+
+  // relations
+  team Team @relation(fields: [team_id], references: [team_id])
+  user Users @relation(fields: [user_id], references: [users_id], name: "UserTeamMembers")
+
+  @@id([team_id, user_id])
+  @@map("Teammember")
+}
+
+model Project {
+  project_id  Int       @id @default(autoincrement())
+  projectname String?   @db.VarChar(100)
+  description String?   @db.Text
+  startDate   DateTime?
+  endDate     DateTime?
+  team_id     Int?
+
+  // relations
+  team    Team?     @relation(fields: [team_id], references: [team_id])
+  tasks   Task[]
+  grades  Grade[]
+  advisors ProjectAdvisor[]
+  notifications Notification[]
+
+  @@map("Project")
+}
+
+model ProjectAdvisor {
+  project_id Int
+  advisor_id String @db.VarChar(13)
+
+  project Project @relation(fields: [project_id], references: [project_id])
+  advisor Users   @relation(fields: [advisor_id], references: [users_id])
+
+  @@id([project_id, advisor_id])
+  @@map("ProjectAdvisor")
+}
+
+model Task {
+  task_id      Int       @id @default(autoincrement())
+  title        String?   @db.VarChar(100)
+  description  String?   @db.Text
+  status       String?   @db.VarChar(20)
+  priority     String?   @db.VarChar(20)
+  tags         String?   @db.VarChar(50)
+  startDate    DateTime?
+  dueDate      DateTime?
+  projectId    Int?
+  authorUserId String?   @db.VarChar(13)
+
+  // relations
+  project      Project?         @relation(fields: [projectId], references: [project_id])
+  author       Users?           @relation(fields: [authorUserId], references: [users_id], name: "AuthorTasks")
+  assignments  TaskAssignment[]  @relation("TaskAssignments")
+  attachments  Attachment[]      @relation("TaskAttachments")
+  comments     Comment[]         @relation("TaskComments")
+  notifications Notification[]
+
+  @@map("Task")
+}
+
+model TaskAssignment {
+  user_id String  @db.VarChar(13)
+  task_id Int
+
+  user Users @relation(fields: [user_id], references: [users_id], name: "UserTaskAssignments")
+  task Task  @relation(fields: [task_id], references: [task_id], name: "TaskAssignments")
+
+  @@id([user_id, task_id])
+  @@map("TaskAssignment")
+}
+
+model Attachment {
+  Attachment_id Int    @id @default(autoincrement())
+  fileUrl       String? @db.VarChar(255)
+  filename      String? @db.VarChar(100)
+  task_id       Int?
+  uploadedBy_id String? @db.VarChar(13)
+
+  // relations
+  task Task? @relation(fields: [task_id], references: [task_id], name: "TaskAttachments")
+  uploadedBy Users? @relation(fields: [uploadedBy_id], references: [users_id], name: "UserAttachments")
+
+  @@map("Attachment")
+}
+
+model Comment {
+  comment_id Int      @id @default(autoincrement())
+  text       String?  @db.Text
+  createdAt  DateTime? @default(now())
+  isRead     Boolean?  @default(false)
+  task_id    Int?
+  user_id    String?   @db.VarChar(13)
+
+  task Task?  @relation(fields: [task_id], references: [task_id], name: "TaskComments")
+  user Users? @relation(fields: [user_id], references: [users_id], name: "UserComments")
+
+  @@map("Comment")
+}
+
+model Grade {
+  grade_id    Int        @id @default(autoincrement())
+  Student_ID  String     @db.VarChar(13)
+  project_id  Int
+  term_id     Int
+  evaluator_id String    @db.VarChar(13)
+  score       GradeScore?
+
+  // relations
+  student Users  @relation(fields: [Student_ID], references: [users_id], name: "StudentGrades")
+  evaluator Users @relation(fields: [evaluator_id], references: [users_id], name: "EvaluatorGrades")
+  project  Project @relation(fields: [project_id], references: [project_id])
+  term     Term    @relation(fields: [term_id], references: [term_id])
+
+  @@map("Grade")
+}
+
+model Notification {
+  notification_id Int     @id @default(autoincrement())
+  user_id         String? @db.VarChar(13)
+  actor_user_id   String? @db.VarChar(13)
+  title           String? @db.VarChar(100)
+  message         String? @db.Text
+  link            String? @db.VarChar(255)
+  isRead          Boolean? @default(false)
+  createdAt       DateTime? @default(now())
+  event_type      String? @db.VarChar(50)
+  team_id         Int?
+  task_id         Int?
+  project_id      Int?
+
+  user  Users?  @relation(fields: [user_id], references: [users_id], name: "UserNotifications")
+  actor Users?  @relation(fields: [actor_user_id], references: [users_id], name: "ActorNotifications")
+  team  Team?   @relation(fields: [team_id], references: [team_id])
+  task  Task?   @relation(fields: [task_id], references: [task_id])
+  project Project? @relation(fields: [project_id], references: [project_id])
+
+  @@map("Notification")
+}
