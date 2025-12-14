@@ -1,23 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Search, Sun, Moon, Settings, Bell } from "lucide-react";
-import { useTheme } from "next-themes";
+import React from "react";
+import { Search, Settings } from "lucide-react"; // เหลือ import แค่ icon พื้นฐาน
 import HamburgerBtn from "../HamburgerBtn";
+// Import Components ที่แยกออกไป
+import NotificationDropdown from "../NotificationDropdown"; 
+import ThemeToggle from "../ThemeToggle";
 
 const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  // รอให้ Component โหลดเสร็จก่อน (แก้ Hydration Error)
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <div className="flex w-full items-center justify-between bg-white px-4 py-3 shadow-md transition-colors duration-200 dark:bg-black">
       
-      {/* --- ส่วนซ้าย: Hamburger + Logo --- */}
+      {/* --- Left: Hamburger + Logo --- */}
       <div className="flex items-center gap-4">
         <HamburgerBtn onClick={toggleSidebar} />
         <h2 className="text-center text-xl font-bold text-gray-800 dark:text-gray-200 whitespace-nowrap">
@@ -25,7 +19,7 @@ const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
         </h2>
       </div>
 
-      {/* --- ส่วนกลาง: Search Bar --- */}
+      {/* --- Center: Search Bar (Desktop) --- */}
       <div className="flex items-center gap-4">
         <div className="relative hidden h-min w-[200px] lg:w-[400px] md:flex">
           <span className="absolute left-1 top-1/2 -translate-y-1/2 p-2">
@@ -39,7 +33,7 @@ const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
         </div>
       </div>
 
-      {/* --- ส่วนขวา: Icons & Profile --- */}
+      {/* --- Right: Icons & Profile --- */}
       <div className="flex items-center gap-2 md:gap-4">
         
         {/* Mobile Search Icon */}
@@ -47,28 +41,11 @@ const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
           <Search className="h-5 w-5 text-gray-500 dark:text-gray-300" />
         </button>
 
-        {/* Notification */}
-        <button className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-          <Bell className="h-5 w-5 text-gray-500 dark:text-gray-300" />
-        </button>
+        {/* ✅ เรียกใช้ Notification Component */}
+        <NotificationDropdown />
 
-        {/* --- ปุ่มเปลี่ยนโหมด (จุดที่แก้: เพิ่มการเช็ค mounted) --- */}
-        <button
-          className="rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        >
-          {/* ถ้ายังไม่ mounted ให้แสดงช่องว่าง หรือถ้า mounted แล้วให้เช็ค theme */}
-          {mounted ? (
-            theme === "dark" ? (
-              <Sun className="h-6 w-6 text-gray-500 dark:text-gray-300" />
-            ) : (
-              <Moon className="h-6 w-6 text-gray-500 dark:text-gray-300" />
-            )
-          ) : (
-            // Placeholder กันกระพริบตอนโหลด
-            <div className="h-6 w-6" />
-          )}
-        </button>
+        {/* ✅ เรียกใช้ ThemeToggle Component */}
+        <ThemeToggle />
 
         {/* Settings */}
         <button className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
