@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import SelectDropdown from '../(components)/SelectDropdown'; 
-// 1. IMPORT ProjectData เข้ามาด้วย (ต้องแน่ใจว่าในไฟล์ ProjectCard มีการ export interface ProjectData แล้ว)
 import ProjectCard, { ProjectCardSkeleton, ProjectData } from '../(components)/ProjectCard'; 
 
 const SearchPage = () => {
