@@ -25,7 +25,7 @@ export default function SignIn() {
         return false
       }
       
-      router.push('/profile')
+      router.push('/')
     } catch (error) {
       console.log('error', error)
     }

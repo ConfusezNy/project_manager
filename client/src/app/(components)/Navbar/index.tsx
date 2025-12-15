@@ -6,6 +6,7 @@ import HamburgerBtn from "../HamburgerBtn";
 // Import Components ที่แยกออกไป
 import NotificationDropdown from "../NotificationDropdown"; 
 import ThemeToggle from "../ThemeToggle";
+import Profile from "../Profile/page";
 
 const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
   return (
@@ -54,18 +55,10 @@ const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
 
         <div className="mx-1 h-6 w-[1px] bg-gray-200 dark:bg-gray-700"></div>
 
-        {/* Profile */}
-        <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-600 font-bold text-white">
-          A
-        </div>
+        {/* ✅ เปลี่ยนจาก div เป็น ProfileDropdown */}
+        <Profile/>
 
-        {/* Logout */}
-        <button
-          className="hidden ml-2 rounded-md border border-transparent bg-blue-500 px-4 py-2 text-center text-sm text-white shadow-md transition-all hover:bg-blue-800 hover:shadow-lg focus:bg-blue-800 focus:shadow-none md:block"
-          type="button"
-        >
-          ออกจากระบบ
-        </button>
+        {/* ❌ ลบปุ่ม Logout เดิมออก เพราะย้ายไปใน Dropdown แล้ว */}
       </div>
     </div>
   );
