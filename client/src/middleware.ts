@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
   })
 
   // หน้าที่ไม่ต้อง login
-  const publicPaths = ['/singin', '/api/auth']
+  const publicPaths = ['/singin', '/api/auth','/api']
   
   // เช็คว่า path เริ่มด้วย public paths หรือไม่
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
