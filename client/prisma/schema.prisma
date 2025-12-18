@@ -92,7 +92,7 @@ model Term {
 
 model Section {
   section_id       Int        @id @default(autoincrement())
-  section_code     String     @unique // เช่น PRE-66-01
+  section_code     String      // เช่น PRE-66-01
   course_type      CourseType
   study_type       StudyType
   min_team_size    Int
@@ -105,6 +105,7 @@ model Section {
   enrollments SectionEnrollment[] // นักศึกษาที่ลงทะเบียน
   teams       Team[] // ทีมในหมู่เรียนนี้
   Teammember  Teammember[]
+  @@unique([section_code, term_id]) //section_code ซ้ำได้ข้ามเทอมแต่ห้ามซ้ำในเทอมเดียวกัน
 
   @@map("Section")
 }
