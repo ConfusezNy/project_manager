@@ -20,12 +20,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/singin', request.url))
   }
 
-  // ถ้าเข้า /protected แต่ไม่ใช่ admin
-  if (pathname.startsWith('/protected')) {
-    if ((user as any).role !== 'admin') {
+ if (pathname.startsWith('/sections')) {
+    if ((user as any).role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/', request.url))
     }
   }
+ 
+  // ถ้าเข้า /protected แต่ไม่ใช่ admin
+ 
 
   return NextResponse.next()
 }

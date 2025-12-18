@@ -21,6 +21,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/api/fuse.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/api/fuse.js", "src/app/sections/[id]/page.tsx/candidates", "src/app/sections/[id]/page.tsx/enrollments"],
   "exclude": ["node_modules"]
 }
