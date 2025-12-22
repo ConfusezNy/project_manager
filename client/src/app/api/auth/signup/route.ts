@@ -3,9 +3,11 @@ import { prisma } from '@/lib/prisma'
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { firstname, lastname, email, password } = body as {
+    const { titles,firstname, lastname, tel_number,email, password } = body as {
+      titles: string;
       firstname: string;
       lastname: string;
+      tel_number: string;
       email: string;
       password: string;
     };
@@ -19,9 +21,11 @@ export async function POST(request: Request) {
     // บันทึกลง DB
     const newUser = await prisma.users.create({
       data: {
+        titles,
         users_id,
         firstname,
         lastname,
+        tel_number,
         email,
         passwordHash: hashedPassword,
         role: "STUDENT"   // ใส่ default role ได้ตรงนี้ (ถ้ามี enum)
