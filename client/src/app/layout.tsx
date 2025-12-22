@@ -30,7 +30,7 @@ export default async function RootLayout({
   const session = await getServerSession()   //get sesssion ของ singin
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className={k2d.className}>
         <SessionProvider session={session}>
         <Providers>
            <DashboardWrapper>{children}</DashboardWrapper>
