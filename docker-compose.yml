@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: projectmanagement_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 165050
+      POSTGRES_DB: projectmanagement
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  client:
+    build: ./client
+    container_name: projectmanagement_client
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:165050@postgres:5432/projectmanagement"
+      NEXTAUTH_SECRET: "p7TevVUKL215n9yzT7rSAWRlwGQgIaVvBKsmsW5+Ynud+gHg2Ruww/wDqNM="
+      NEXTAUTH_URL: "http://localhost:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+    command: sh -c "npx prisma migrate deploy && npm run dev"
+
+volumes:
+  postgres_data:

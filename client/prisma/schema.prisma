@@ -1,0 +1,318 @@
+// ===================== PRISMA CONFIG =====================
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===================== ENUM =====================
+
+// บทบาทผู้ใช้ในระบบ
+enum Role {
+  ADMIN
+  ADVISOR
+  STUDENT
+}
+
+// ประเภทรายวิชา
+enum CourseType {
+  PRE_PROJECT
+  PROJECT
+}
+
+// ประเภทการศึกษา
+enum StudyType {
+  REG // ปกติ 4 ปี
+  LE // เทียบโอน ปวส.
+}
+
+// เกรดประเมินผล
+enum GradeScore {
+  A
+  A_PLUS
+  B
+  B_PLUS
+  C
+  C_PLUS
+  D
+  D_PLUS
+}
+
+// ===================== USERS =====================
+// ตารางผู้ใช้งาน (นักศึกษา / อาจารย์ / แอดมิน)
+
+model Users {
+  users_id       String  @id @db.VarChar(13) // รหัสนักศึกษา / อาจารย์
+  passwordHash   String? @db.VarChar(255)
+  titles         String? @db.VarChar(20)
+  firstname      String? @db.VarChar(50)
+  lastname       String? @db.VarChar(50)
+  tel_number     String? @db.VarChar(10)
+  email          String? @unique @db.VarChar(100)
+  profilePicture String?
+  role           Role    @default(STUDENT)
+
+  // ความสัมพันธ์
+  sectionEnrollments SectionEnrollment[] // ลงทะเบียนหมู่เรียน
+  teamMembers        Teammember[] // สมาชิกทีม
+  tasksCreated       Task[] // งานที่สร้าง
+  taskAssignments    TaskAssignment[] // งานที่ได้รับมอบหมาย
+  comments           Comment[]
+  attachments        Attachment[]
+  advisorProjects    ProjectAdvisor[] // โปรเจกต์ที่เป็นอาจารย์ที่ปรึกษา
+  gradesGiven        Grade[]             @relation("EvaluatorGrades")
+  gradesReceived     Grade[]             @relation("StudentGrades")
+  notifications      Notification[]      @relation("UserNotifications")
+  notificationsActor Notification[]      @relation("ActorNotifications")
+
+  @@map("Users")
+}
+
+// ===================== TERM =====================
+// ภาคการศึกษา
+
+model Term {
+  term_id      Int      @id @default(autoincrement())
+  academicYear Int // ปีการศึกษา
+  semester     Int // ภาคเรียน
+  startDate    DateTime
+  endDate      DateTime
+
+  sections Section[] // 1 เทอม มีหลาย Section
+  grades   Grade[]
+
+  @@map("Term")
+}
+
+// ===================== SECTION =====================
+// หมู่เรียน (Pre / Project แยกชัด)
+
+model Section {
+  section_id       Int        @id @default(autoincrement())
+  section_code     String      // เช่น PRE-66-01
+  course_type      CourseType
+  study_type       StudyType
+  min_team_size    Int
+  max_team_size    Int
+  project_deadline DateTime
+  team_deadline    DateTime
+  term_id          Int
+
+  term        Term                @relation(fields: [term_id], references: [term_id])
+  enrollments SectionEnrollment[] // นักศึกษาที่ลงทะเบียน
+  teams       Team[] // ทีมในหมู่เรียนนี้
+  Teammember  Teammember[]
+  @@unique([section_code, term_id]) //section_code ซ้ำได้ข้ามเทอมแต่ห้ามซ้ำในเทอมเดียวกัน
+
+  @@map("Section")
+}
+
+// ===================== SECTION ENROLLMENT =====================
+// ตารางเชื่อม Users ↔ Section
+// นักศึกษา 1 คน = 2 record (PRE + PROJECT)
+
+model SectionEnrollment {
+  section_enroll_id Int      @id @default(autoincrement())
+  section_id        Int
+  users_id          String   @db.VarChar(13)
+  enrolledAt        DateTime @default(now())
+
+  section Section @relation(fields: [section_id], references: [section_id])
+  user    Users   @relation(fields: [users_id], references: [users_id])
+
+  @@unique([section_id, users_id])
+  @@map("Section_Enrollment")
+}
+
+// ===================== TEAM =====================
+// กลุ่มโครงงาน (อยู่ภายใต้ Section)
+
+model Team {
+  team_id    Int    @id @default(autoincrement())
+  teamname   String @db.VarChar(3)
+  section_id Int
+
+  section       Section        @relation(fields: [section_id], references: [section_id])
+  members       Teammember[]
+  project       Project? // 1 ทีม มี 1 โปรเจกต์
+  notifications Notification[]
+
+  @@map("Team")
+}
+
+// ===================== TEAM MEMBER =====================
+// สมาชิกทีม
+// บังคับ: นักศึกษา 1 คน อยู่ได้ 1 ทีม ต่อ 1 Section
+
+model Teammember {
+  teammember_id Int      @id @default(autoincrement())
+  team_id       Int
+  user_id       String   @db.VarChar(13)
+  section_id    Int
+  joinedAt      DateTime @default(now())
+
+  team    Team    @relation(fields: [team_id], references: [team_id])
+  user    Users   @relation(fields: [user_id], references: [users_id])
+  section Section @relation(fields: [section_id], references: [section_id])
+
+  @@unique([user_id, section_id])
+  @@map("Teammember")
+}
+
+// ===================== PROJECT =====================
+// โครงงานหลักของทีม
+
+model Project {
+  project_id     Int      @id @default(autoincrement())
+  projectname    String   @db.VarChar(100)
+  projectnameEng String?  @db.VarChar(100)
+  description    String?
+  project_type   String?
+  status         String?
+  createdAt      DateTime @default(now())
+  team_id        Int      @unique // 1 ทีม = 1 โปรเจกต์
+
+  team          Team             @relation(fields: [team_id], references: [team_id])
+  tasks         Task[]
+  grades        Grade[]
+  advisors      ProjectAdvisor[]
+  notifications Notification[]
+
+  @@map("Project")
+}
+
+// ===================== PROJECT ADVISOR =====================
+// อาจารย์ที่ปรึกษาโครงงาน (หลายต่อหลาย)
+
+model ProjectAdvisor {
+  projectAdvisor_id Int    @id @default(autoincrement())
+  project_id        Int
+  advisor_id        String @db.VarChar(13)
+
+  project Project @relation(fields: [project_id], references: [project_id])
+  advisor Users   @relation(fields: [advisor_id], references: [users_id])
+
+  @@unique([project_id, advisor_id])
+  @@map("ProjectAdvisor")
+}
+
+// ===================== TASK =====================
+// งานย่อยในโครงงาน
+
+model Task {
+  task_id      Int       @id @default(autoincrement())
+  title        String    @db.VarChar(100)
+  description  String?
+  status       String    @db.VarChar(20)
+  priority     String    @db.VarChar(20)
+  tags         String?
+  startDate    DateTime?
+  dueDate      DateTime?
+  project_id   Int
+  authorUserId String    @db.VarChar(13)
+
+  project       Project          @relation(fields: [project_id], references: [project_id])
+  author        Users            @relation(fields: [authorUserId], references: [users_id])
+  assignments   TaskAssignment[]
+  comments      Comment[]
+  attachments   Attachment[]
+  notifications Notification[]
+
+  @@map("Task")
+}
+
+// ===================== TASK ASSIGNMENT =====================
+// ผู้รับผิดชอบงาน
+
+model TaskAssignment {
+  taskAssignment_id Int    @id @default(autoincrement())
+  task_id           Int
+  user_id           String @db.VarChar(13)
+
+  task Task  @relation(fields: [task_id], references: [task_id])
+  user Users @relation(fields: [user_id], references: [users_id])
+
+  @@unique([task_id, user_id])
+  @@map("TaskAssignment")
+}
+
+// ===================== COMMENT =====================
+// ความคิดเห็นในงาน
+
+model Comment {
+  comment_id Int      @id @default(autoincrement())
+  text       String
+  createdAt  DateTime @default(now())
+  isRead     Boolean  @default(false)
+  task_id    Int
+  user_id    String   @db.VarChar(13)
+
+  task Task  @relation(fields: [task_id], references: [task_id])
+  user Users @relation(fields: [user_id], references: [users_id])
+
+  @@map("Comment")
+}
+
+// ===================== ATTACHMENT =====================
+// ไฟล์แนบงาน
+
+model Attachment {
+  attachment_id Int    @id @default(autoincrement())
+  fileUrl       String
+  filename      String
+  task_id       Int
+  uploadedBy_id String @db.VarChar(13)
+
+  task       Task  @relation(fields: [task_id], references: [task_id])
+  uploadedBy Users @relation(fields: [uploadedBy_id], references: [users_id])
+
+  @@map("Attachment")
+}
+
+// ===================== GRADE =====================
+// การประเมินผลโครงงาน
+
+model Grade {
+  grade_id     Int        @id @default(autoincrement())
+  student_id   String     @db.VarChar(13)
+  project_id   Int
+  term_id      Int
+  evaluator_id String     @db.VarChar(13)
+  score        GradeScore
+
+  student   Users   @relation("StudentGrades", fields: [student_id], references: [users_id])
+  evaluator Users   @relation("EvaluatorGrades", fields: [evaluator_id], references: [users_id])
+  project   Project @relation(fields: [project_id], references: [project_id])
+  term      Term    @relation(fields: [term_id], references: [term_id])
+
+  @@map("Grade")
+}
+
+// ===================== NOTIFICATION =====================
+// การแจ้งเตือนกิจกรรม
+
+model Notification {
+  notification_id Int      @id @default(autoincrement())
+  user_id         String   @db.VarChar(13)
+  actor_user_id   String   @db.VarChar(13)
+  title           String
+  message         String
+  link            String?
+  isRead          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  event_type      String
+  team_id         Int?
+  task_id         Int?
+  project_id      Int?
+
+  user    Users    @relation("UserNotifications", fields: [user_id], references: [users_id])
+  actor   Users    @relation("ActorNotifications", fields: [actor_user_id], references: [users_id])
+  team    Team?    @relation(fields: [team_id], references: [team_id])
+  task    Task?    @relation(fields: [task_id], references: [task_id])
+  project Project? @relation(fields: [project_id], references: [project_id])
+
+  @@map("Notification")
+}
