@@ -175,10 +175,10 @@ npm install
 
 ```env
 # Database
-DATABASE_URL="postgresql://postgres:165050@localhost:5432/projectmanagement"
+DATABASE_URL="your db"
 
 # NextAuth
-NEXTAUTH_SECRET="p7TevVUKL215n9yzT7rSAWRlwGQgIaVvBKsmsW5+Ynud+gHg2Ruww/wDqNM="
+NEXTAUTH_SECRET="your nextauth key"
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
