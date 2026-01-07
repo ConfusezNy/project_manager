@@ -1,5 +1,6 @@
+'use client';
 import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 interface Props {
   searchQuery: string;
@@ -14,16 +15,16 @@ const UserFilters: React.FC<Props> = ({
   searchQuery, setSearchQuery, roleFilter, setRoleFilter, statusFilter, setStatusFilter 
 }) => {
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
+    <div className="flex flex-col md:flex-row gap-4 mb-6 animate-in fade-in duration-500">
       {/* Search Bar */}
-      <div className="relative flex-1">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <Search className="w-5 h-5 text-gray-400" />
+      <div className="relative flex-1 group">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+          <Search className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
         </div>
         <input 
           type="text" 
           placeholder="ค้นหาชื่อ, อีเมล..." 
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white dark:bg-[#1c1c1e] dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm shadow-sm"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -34,22 +35,22 @@ const UserFilters: React.FC<Props> = ({
         <select 
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-4 py-2.5 rounded-lg border border-gray-300 bg-white dark:bg-[#1c1c1e] dark:border-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          className="px-4 py-3 rounded-xl border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none cursor-pointer shadow-sm transition-all"
         >
-          <option value="All">ทุกระดับ (All Roles)</option>
-          <option value="Admin">Admin</option>
-          <option value="Teacher">Teacher</option>
-          <option value="Student">Student</option>
+          <option value="All">ทุกระดับสิทธิ์</option>
+          <option value="ADMIN">Admin</option>
+          <option value="ADVISOR">Advisor (Teacher)</option>
+          <option value="STUDENT">Student</option>
         </select>
 
         <select 
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 rounded-lg border border-gray-300 bg-white dark:bg-[#1c1c1e] dark:border-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          className="px-4 py-3 rounded-xl border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none cursor-pointer shadow-sm transition-all"
         >
-          <option value="All">ทุกสถานะ (All Status)</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
+          <option value="All">ทุกสถานะ</option>
+          <option value="Active">ใช้งานปกติ</option>
+          <option value="Inactive">ปิดการใช้งาน</option>
         </select>
       </div>
     </div>

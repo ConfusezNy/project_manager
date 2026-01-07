@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import { Search, Settings } from "lucide-react"; // เหลือ import แค่ icon พื้นฐาน
+import { Search } from "lucide-react";
 import HamburgerBtn from "../HamburgerBtn";
-// Import Components ที่แยกออกไป
 import NotificationDropdown from "../NotificationDropdown"; 
 import ThemeToggle from "../ThemeToggle";
-import Profile from "../Profile/page";
+import Profile from "../profile"; // คอมโพเนนต์ที่จะแสดงรูป
 
 const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
   return (
@@ -20,20 +19,6 @@ const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
         </h2>
       </div>
 
-      {/* --- Center: Search Bar (Desktop) --- */}
-      <div className="flex items-center gap-4">
-        <div className="relative hidden h-min w-[200px] lg:w-[400px] md:flex">
-          <span className="absolute left-1 top-1/2 -translate-y-1/2 p-2">
-            <Search className="h-5 w-5 text-gray-500" />
-          </span>
-          <input
-            className="w-full rounded bg-gray-100 p-2 pl-10 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            type="text"
-            placeholder="ค้นหา..."
-          />
-        </div>
-      </div>
-
       {/* --- Right: Icons & Profile --- */}
       <div className="flex items-center gap-2 md:gap-4">
         
@@ -42,23 +27,16 @@ const Navbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
           <Search className="h-5 w-5 text-gray-500 dark:text-gray-300" />
         </button>
 
-        {/* ✅ เรียกใช้ Notification Component */}
+        {/* ✅ Notification Component */}
         <NotificationDropdown />
 
-        {/* ✅ เรียกใช้ ThemeToggle Component */}
+        {/* ✅ ThemeToggle Component */}
         <ThemeToggle />
-
-        {/* Settings */}
-        <button className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-          <Settings className="h-6 w-6 text-gray-500 dark:text-gray-300" />
-        </button>
 
         <div className="mx-1 h-6 w-[1px] bg-gray-200 dark:bg-gray-700"></div>
 
-        {/* ✅ เปลี่ยนจาก div เป็น ProfileDropdown */}
-        <Profile/>
-
-        {/* ❌ ลบปุ่ม Logout เดิมออก เพราะย้ายไปใน Dropdown แล้ว */}
+        {/* ✅ คอมโพเนนต์ที่แสดงรูปโปรไฟล์ที่เราจะแก้ในขั้นตอนถัดไป */}
+        <Profile />
       </div>
     </div>
   );

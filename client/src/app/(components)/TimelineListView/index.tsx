@@ -1,12 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { FilePlus } from 'lucide-react';
-
-// ✅ แก้ไข Import (ลองใช้แบบนี้ดูครับ)
 import Button from '@/app/(components)/Button'; 
 import CardTimeline from '@/app/(components)/CardTimeline';
 
-// ✅ เพิ่ม Interface
 interface TimelineItem {
   id: number;
   week: number;
@@ -18,13 +15,14 @@ interface TimelineItem {
 }
 
 interface Props {
-  data: TimelineItem[]; // ✅ ใช้ Type ที่ถูกต้อง
+  data: TimelineItem[];
   selectedYear: string;
   onEdit: (id: number) => void;
   onCreate: () => void;
+  isAdmin: boolean; // ✅ รับ Prop สิทธิ์
 }
 
-const TimelineListView: React.FC<Props> = ({ data, selectedYear, onEdit, onCreate }) => {
+const TimelineListView: React.FC<Props> = ({ data, selectedYear, onEdit, onCreate, isAdmin }) => {
   
   if (data.length === 0) {
     return (
@@ -36,11 +34,14 @@ const TimelineListView: React.FC<Props> = ({ data, selectedYear, onEdit, onCreat
           ไม่พบข้อมูลปีการศึกษา {selectedYear}
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs text-center mb-6">
-          คุณยังไม่ได้สร้างแผนการเรียนสำหรับปีนี้
+          {isAdmin ? "คุณยังไม่ได้สร้างแผนการเรียนสำหรับปีนี้" : "ยังไม่มีการประกาศแผนการเรียนสำหรับปีนี้"}
         </p>
-        <Button variant="primary" onClick={onCreate}>
-          สร้างแผนการเรียน {selectedYear}
-        </Button>
+        {/* ✅ แสดงปุ่มสร้างแผนเฉพาะ Admin */}
+        {isAdmin && (
+          <Button variant="primary" onClick={onCreate}>
+            สร้างแผนการเรียน {selectedYear}
+          </Button>
+        )}
       </div>
     );
   }
@@ -54,7 +55,6 @@ const TimelineListView: React.FC<Props> = ({ data, selectedYear, onEdit, onCreat
         
         return (
           <div key={item.id} className="relative flex gap-4 sm:gap-6 pb-6 group w-full">
-            
             <div className="flex flex-col items-center mt-1 w-6 sm:w-8 flex-shrink-0">
               <div className={`relative z-10 h-4 w-4 sm:h-5 sm:w-5 rounded-full border-[3px] sm:border-4 transition-all duration-500 ${
                 isActive 
@@ -77,11 +77,12 @@ const TimelineListView: React.FC<Props> = ({ data, selectedYear, onEdit, onCreat
                   title={item.title} 
                   date={item.date} 
                   hasDoc={item.hasDoc} 
-                  onEdit={(e) => { 
+                  // ✅ ส่งฟังก์ชัน onEdit ไปเฉพาะ Admin เท่านั้น
+                  onEdit={isAdmin ? (e) => { 
                     e.preventDefault(); 
                     e.stopPropagation(); 
                     onEdit(item.id); 
-                  }} 
+                  } : undefined} 
                 />
             </Link>
           </div>

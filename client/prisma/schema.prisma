@@ -9,27 +9,22 @@ datasource db {
 }
 
 // ===================== ENUM =====================
-
-// บทบาทผู้ใช้ในระบบ
 enum Role {
   ADMIN
   ADVISOR
   STUDENT
 }
 
-// ประเภทรายวิชา
 enum CourseType {
   PRE_PROJECT
   PROJECT
 }
 
-// ประเภทการศึกษา
 enum StudyType {
-  REG // ปกติ 4 ปี
-  LE // เทียบโอน ปวส.
+  REG
+  LE
 }
 
-// เกรดประเมินผล
 enum GradeScore {
   A
   A_PLUS
@@ -42,10 +37,8 @@ enum GradeScore {
 }
 
 // ===================== USERS =====================
-// ตารางผู้ใช้งาน (นักศึกษา / อาจารย์ / แอดมิน)
-
 model Users {
-  users_id       String  @id @db.VarChar(13) // รหัสนักศึกษา / อาจารย์
+  users_id       String  @id @db.VarChar(13)
   passwordHash   String? @db.VarChar(255)
   titles         String? @db.VarChar(20)
   firstname      String? @db.VarChar(50)
@@ -56,43 +49,68 @@ model Users {
   role           Role    @default(STUDENT)
 
   // ความสัมพันธ์
-  sectionEnrollments SectionEnrollment[] // ลงทะเบียนหมู่เรียน
-  teamMembers        Teammember[] // สมาชิกทีม
-  tasksCreated       Task[] // งานที่สร้าง
-  taskAssignments    TaskAssignment[] // งานที่ได้รับมอบหมาย
+  sectionEnrollments SectionEnrollment[]
+  teamMembers        Teammember[]
+  tasksCreated       Task[]
+  taskAssignments    TaskAssignment[]
   comments           Comment[]
   attachments        Attachment[]
-  advisorProjects    ProjectAdvisor[] // โปรเจกต์ที่เป็นอาจารย์ที่ปรึกษา
+  advisorProjects    ProjectAdvisor[]
   gradesGiven        Grade[]             @relation("EvaluatorGrades")
   gradesReceived     Grade[]             @relation("StudentGrades")
   notifications      Notification[]      @relation("UserNotifications")
   notificationsActor Notification[]      @relation("ActorNotifications")
 
+  // ✅ เพิ่มฟิลด์เชื่อมโยงกับ Team (แก้ไขจุดที่ทำให้ข้อมูลไม่โชว์)
+  teamId Int?
+  team   Team? @relation(fields: [teamId], references: [team_id])
+
   @@map("Users")
 }
 
-// ===================== TERM =====================
-// ภาคการศึกษา
+// ===================== TEAM =====================
+model Team {
+  team_id     Int      @id @default(autoincrement())
+  name        String
+  groupNumber String   @unique
+  semester    String
+  status      String   @default("รออนุมัติหัวข้อ")
+  advisorName String? // เป็นค่าว่างได้ตอนเริ่มต้น
+  topicThai   String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
 
+  // ✅ 1. ตรวจสอบว่ามีบรรทัดนี้เพียงบรรทัดเดียวเท่านั้น!
+  members Users[]
+
+  // ✅ 2. ตรวจสอบความสัมพันธ์อื่นๆ ให้มีอย่างละบรรทัด
+  section_id    Int
+  section       Section        @relation(fields: [section_id], references: [section_id])
+  teammembers   Teammember[]
+  project       Project?
+  notifications Notification[]
+
+  @@map("Team")
+}
+
+// ===================== TERM =====================
 model Term {
   term_id      Int      @id @default(autoincrement())
-  academicYear Int // ปีการศึกษา
-  semester     Int // ภาคเรียน
+  academicYear Int
+  semester     Int
   startDate    DateTime
   endDate      DateTime
 
-  sections Section[] // 1 เทอม มีหลาย Section
+  sections Section[]
   grades   Grade[]
 
   @@map("Term")
 }
 
 // ===================== SECTION =====================
-// หมู่เรียน (Pre / Project แยกชัด)
-
 model Section {
   section_id       Int        @id @default(autoincrement())
-  section_code     String      // เช่น PRE-66-01
+  section_code     String
   course_type      CourseType
   study_type       StudyType
   min_team_size    Int
@@ -102,18 +120,15 @@ model Section {
   term_id          Int
 
   term        Term                @relation(fields: [term_id], references: [term_id])
-  enrollments SectionEnrollment[] // นักศึกษาที่ลงทะเบียน
-  teams       Team[] // ทีมในหมู่เรียนนี้
-  Teammember  Teammember[]
-  @@unique([section_code, term_id]) //section_code ซ้ำได้ข้ามเทอมแต่ห้ามซ้ำในเทอมเดียวกัน
+  enrollments SectionEnrollment[]
+  teams       Team[] // ความสัมพันธ์เชื่อมโยง (ต้องสร้างฟิลด์ section_id ใน Team ถ้าต้องการใช้)
+  teammembers Teammember[]
 
+  @@unique([section_code, term_id])
   @@map("Section")
 }
 
 // ===================== SECTION ENROLLMENT =====================
-// ตารางเชื่อม Users ↔ Section
-// นักศึกษา 1 คน = 2 record (PRE + PROJECT)
-
 model SectionEnrollment {
   section_enroll_id Int      @id @default(autoincrement())
   section_id        Int
@@ -127,26 +142,7 @@ model SectionEnrollment {
   @@map("Section_Enrollment")
 }
 
-// ===================== TEAM =====================
-// กลุ่มโครงงาน (อยู่ภายใต้ Section)
-
-model Team {
-  team_id    Int    @id @default(autoincrement())
-  teamname   String @db.VarChar(3)
-  section_id Int
-
-  section       Section        @relation(fields: [section_id], references: [section_id])
-  members       Teammember[]
-  project       Project? // 1 ทีม มี 1 โปรเจกต์
-  notifications Notification[]
-
-  @@map("Team")
-}
-
 // ===================== TEAM MEMBER =====================
-// สมาชิกทีม
-// บังคับ: นักศึกษา 1 คน อยู่ได้ 1 ทีม ต่อ 1 Section
-
 model Teammember {
   teammember_id Int      @id @default(autoincrement())
   team_id       Int
@@ -163,8 +159,6 @@ model Teammember {
 }
 
 // ===================== PROJECT =====================
-// โครงงานหลักของทีม
-
 model Project {
   project_id     Int      @id @default(autoincrement())
   projectname    String   @db.VarChar(100)
@@ -173,7 +167,7 @@ model Project {
   project_type   String?
   status         String?
   createdAt      DateTime @default(now())
-  team_id        Int      @unique // 1 ทีม = 1 โปรเจกต์
+  team_id        Int      @unique
 
   team          Team             @relation(fields: [team_id], references: [team_id])
   tasks         Task[]
@@ -184,9 +178,7 @@ model Project {
   @@map("Project")
 }
 
-// ===================== PROJECT ADVISOR =====================
-// อาจารย์ที่ปรึกษาโครงงาน (หลายต่อหลาย)
-
+// ===================== ส่วนที่เหลือ (ProjectAdvisor, Task, etc.) คงเดิม =====================
 model ProjectAdvisor {
   projectAdvisor_id Int    @id @default(autoincrement())
   project_id        Int
@@ -198,9 +190,6 @@ model ProjectAdvisor {
   @@unique([project_id, advisor_id])
   @@map("ProjectAdvisor")
 }
-
-// ===================== TASK =====================
-// งานย่อยในโครงงาน
 
 model Task {
   task_id      Int       @id @default(autoincrement())
@@ -224,9 +213,6 @@ model Task {
   @@map("Task")
 }
 
-// ===================== TASK ASSIGNMENT =====================
-// ผู้รับผิดชอบงาน
-
 model TaskAssignment {
   taskAssignment_id Int    @id @default(autoincrement())
   task_id           Int
@@ -238,9 +224,6 @@ model TaskAssignment {
   @@unique([task_id, user_id])
   @@map("TaskAssignment")
 }
-
-// ===================== COMMENT =====================
-// ความคิดเห็นในงาน
 
 model Comment {
   comment_id Int      @id @default(autoincrement())
@@ -256,9 +239,6 @@ model Comment {
   @@map("Comment")
 }
 
-// ===================== ATTACHMENT =====================
-// ไฟล์แนบงาน
-
 model Attachment {
   attachment_id Int    @id @default(autoincrement())
   fileUrl       String
@@ -271,9 +251,6 @@ model Attachment {
 
   @@map("Attachment")
 }
-
-// ===================== GRADE =====================
-// การประเมินผลโครงงาน
 
 model Grade {
   grade_id     Int        @id @default(autoincrement())
@@ -290,9 +267,6 @@ model Grade {
 
   @@map("Grade")
 }
-
-// ===================== NOTIFICATION =====================
-// การแจ้งเตือนกิจกรรม
 
 model Notification {
   notification_id Int      @id @default(autoincrement())
