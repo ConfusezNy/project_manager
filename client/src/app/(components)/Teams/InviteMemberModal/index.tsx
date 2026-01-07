@@ -1,103 +1,116 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Search, UserPlus, CheckCircle2 } from 'lucide-react';
+import { X, UserPlus, Users } from 'lucide-react';
 import Button from '@/app/(components)/Button';
+
+interface Student {
+  users_id: string;
+  firstname: string | null;
+  lastname: string | null;
+  email: string | null;
+}
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  availableStudents: Student[];
   onInvite: (userId: string) => void;
   isLoading: boolean;
 }
 
-export const InviteMemberModal = ({ isOpen, onClose, onInvite, isLoading }: Props) => {
-  const [searchId, setSearchId] = useState('');
-  const [foundUser, setFoundUser] = useState<any>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [error, setError] = useState('');
+export const InviteMemberModal = ({ isOpen, onClose, availableStudents, onInvite, isLoading }: Props) => {
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  // ฟังก์ชันค้นหาเพื่อนในระบบ
-  const handleSearch = async () => {
-    if (!searchId) return;
-    setIsSearching(true);
-    setError('');
-    setFoundUser(null);
-
-    try {
-      const res = await fetch(`/api/users/search?id=${searchId}`);
-      const data = await res.json();
-      
-      if (res.ok && data) {
-        if (data.teamId) {
-          setError('เพื่อนคนนี้มีกลุ่มอยู่แล้ว');
-        } else {
-          setFoundUser(data);
-        }
-      } else {
-        setError('ไม่พบรายชื่อนักศึกษาในระบบ');
-      }
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการค้นหา');
-    } finally {
-      setIsSearching(false);
+  const handleInvite = () => {
+    if (selectedStudent) {
+      onInvite(selectedStudent);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
           <h2 className="text-xl font-bold dark:text-white flex items-center gap-2">
             <UserPlus className="text-emerald-500" size={24} /> เชิญสมาชิกเข้ากลุ่ม
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={24} />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1">
+            <X size={20} />
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase">ค้นหาด้วยรหัสนักศึกษา</label>
-            <div className="flex gap-2">
-              <input
-                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-none rounded-xl text-sm outline-none dark:text-white focus:ring-2 focus:ring-emerald-500"
-                placeholder="ระบุรหัสนักศึกษา 13 หลัก"
-                value={searchId}
-                onChange={(e) => setSearchId(e.target.value)}
-              />
-              <Button onClick={handleSearch} disabled={isSearching} className="!py-2">
-                <Search size={18} />
-              </Button>
-            </div>
+        <div className="p-6">
+          <div className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <Users size={16} />
+            <span>นักศึกษาที่ลงทะเบียนในรายวิชานี้และยังไม่มีกลุ่ม ({availableStudents.length} คน)</span>
           </div>
 
-          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-
-          {foundUser && (
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/30 animate-in zoom-in-95 duration-200">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 size={24} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs text-emerald-600 font-bold uppercase">พบข้อมูลนักศึกษา</p>
-                  <p className="font-bold dark:text-white">{foundUser.firstname} {foundUser.lastname}</p>
-                  <p className="text-xs text-gray-500">{foundUser.users_id}</p>
-                </div>
-                <Button 
-                  variant="primary" 
-                  className="!bg-emerald-600 hover:!bg-emerald-700 !text-white !py-2 !px-4"
-                  onClick={() => onInvite(foundUser.users_id)}
-                  disabled={isLoading}
-                >
-                  {isLoading ? '...' : 'เพิ่มเข้ากลุ่ม'}
-                </Button>
+          {availableStudents.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users size={32} className="text-gray-400" />
               </div>
+              <p className="text-gray-500 dark:text-gray-400">ไม่มีนักศึกษาที่สามารถเชิญได้</p>
+              <p className="text-xs text-gray-400 mt-2">นักศึกษาทุกคนมีกลุ่มแล้ว</p>
+            </div>
+          ) : (
+            <div className="max-h-96 overflow-y-auto space-y-2">
+              {availableStudents.map((student) => (
+                <div
+                  key={student.users_id}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    selectedStudent === student.users_id
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                      : 'border-gray-100 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700'
+                  }`}
+                  onClick={() => setSelectedStudent(student.users_id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {student.firstname} {student.lastname}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{student.users_id}</p>
+                      {student.email && (
+                        <p className="text-xs text-gray-400 mt-1">{student.email}</p>
+                      )}
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      selectedStudent === student.users_id
+                        ? 'border-emerald-500 bg-emerald-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}>
+                      {selectedStudent === student.users_id && (
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
+
+          <div className="flex gap-3 mt-6">
+            <Button 
+              variant="secondary" 
+              className="flex-1"
+              onClick={onClose}
+              disabled={isLoading}
+            >
+              ยกเลิก
+            </Button>
+            <Button 
+              variant="primary" 
+              className="flex-1 !bg-emerald-600 hover:!bg-emerald-700"
+              onClick={handleInvite}
+              disabled={!selectedStudent || isLoading}
+            >
+              {isLoading ? 'กำลังเชิญ...' : 'เชิญเข้ากลุ่ม'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

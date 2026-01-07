@@ -28,10 +28,10 @@ export const TeamMembersTable = ({members, onInviteClick}: { members: any[], onI
             {/* ✅ วนลูปข้อมูลสมาชิกจริง */}
             {members && members.length > 0 ? (
               members.map((member, index) => (
-                <tr key={member.users_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <tr key={member.user?.users_id || index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="px-6 py-4 text-gray-500 text-center">{(index + 1).toString().padStart(2, '0')}</td>
-                  <td className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400">{member.users_id}</td>
-                  <td className="px-6 py-4 font-medium dark:text-gray-200">{member.firstname} {member.lastname}</td>
+                  <td className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400">{member.user?.users_id || member.users_id}</td>
+                  <td className="px-6 py-4 font-medium dark:text-gray-200">{member.user?.firstname || member.firstname} {member.user?.lastname || member.lastname}</td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
                       {index === 0 ? "หัวหน้ากลุ่ม" : "สมาชิก"}

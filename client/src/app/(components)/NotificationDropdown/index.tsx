@@ -1,28 +1,60 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, Check, Trash2 } from "lucide-react";
+import { Bell, Check, Trash2, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface NotificationItem {
-  id: number;
+  notification_id: number;
   title: string;
-  desc: string;
-  time: string;
+  message: string;
+  createdAt: string;
   isRead: boolean;
+  event_type: string;
+  team?: {
+    team_id: number;
+    name: string;
+    section?: {
+      section_code: string;
+    };
+  };
+  actor?: {
+    firstname: string;
+    lastname: string;
+  };
 }
 
 const NotificationDropdown = () => {
+  const router = useRouter();
   const [isNotiOpen, setIsNotiOpen] = useState(false);
   const notiRef = useRef<HTMLDivElement>(null);
-
-  // Mock Data
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    { id: 1, title: "งานใหม่!", desc: "คุณได้รับมอบหมายในโปรเจกต์ A", time: "5 นาทีที่แล้ว", isRead: false },
-    { id: 2, title: "เตือนความจำ", desc: "ส่งรายงานประจำสัปดาห์", time: "1 ชั่วโมงที่แล้ว", isRead: false },
-    { id: 3, title: "ระบบ", desc: "อัปเดตระบบเสร็จสมบูรณ์", time: "เมื่อวาน", isRead: true },
-  ]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // ดึงข้อมูล notifications จาก API
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/teams/pending-invites');
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // Refresh ทุก 30 วินาที
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ปิด Dropdown เมื่อคลิกข้างนอก
   useEffect(() => {
@@ -35,13 +67,31 @@ const NotificationDropdown = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  const handleNotificationClick = (notification: NotificationItem) => {
+    // ถ้าเป็นคำเชิญเข้ากลุ่ม ไปหน้า Teams
+    if (notification.event_type === 'TEAM_INVITE') {
+      router.push('/Teams');
+      setIsNotiOpen(false);
+    }
   };
 
-  const deleteNotification = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMins = Math.floor(diffInMs / 60000);
+    
+    if (diffInMins < 1) return 'เมื่อสักครู่';
+    if (diffInMins < 60) return `${diffInMins} นาทีที่แล้ว`;
+    
+    const diffInHours = Math.floor(diffInMins / 60);
+    if (diffInHours < 24) return `${diffInHours} ชั่วโมงที่แล้ว`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return 'เมื่อวาน';
+    if (diffInDays < 7) return `${diffInDays} วันที่แล้ว`;
+    
+    return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
   };
 
   return (
@@ -65,44 +115,61 @@ const NotificationDropdown = () => {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-[#2c2c2e]">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">การแจ้งเตือน</h3>
             {unreadCount > 0 && (
-              <button 
-                onClick={markAllAsRead}
-                className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
-              >
-                <Check size={14} /> อ่านทั้งหมด
-              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {unreadCount} รายการใหม่
+              </span>
             )}
           </div>
 
           <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-            {notifications.length === 0 ? (
+            {loading ? (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                กำลังโหลด...
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
                 ไม่มีการแจ้งเตือนใหม่
               </div>
             ) : (
               notifications.map((item) => (
                 <div 
-                  key={item.id} 
+                  key={item.notification_id} 
+                  onClick={() => handleNotificationClick(item)}
                   className={`relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0 cursor-pointer ${!item.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1 pr-6">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      {item.event_type === 'TEAM_INVITE' ? (
+                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <Users size={16} className="text-blue-400" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <Bell size={16} className="text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${!item.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
                         {item.title}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
-                        {item.desc}
+                        {item.message}
                       </p>
-                      <p className="text-[10px] text-gray-400 mt-1">{item.time}</p>
+                      {item.actor && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          จาก: {item.actor.firstname} {item.actor.lastname}
+                        </p>
+                      )}
+                      {item.team?.section && (
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          รายวิชา: {item.team.section.section_code}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-gray-400 mt-1">{formatTime(item.createdAt)}</p>
                     </div>
-                    <button 
-                      onClick={(e) => deleteNotification(item.id, e)}
-                      className="absolute top-3 right-3 text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-                    >
-                      <Trash2 size={14} />
-                    </button>
                     {!item.isRead && (
-                      <span className="absolute top-4 right-10 h-2 w-2 rounded-full bg-blue-500"></span>
+                      <span className="flex-shrink-0 h-2 w-2 mt-2 rounded-full bg-blue-500"></span>
                     )}
                   </div>
                 </div>

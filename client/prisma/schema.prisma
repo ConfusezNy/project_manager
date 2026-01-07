@@ -1,4 +1,3 @@
-// ===================== PRISMA CONFIG =====================
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,7 +7,233 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ===================== ENUM =====================
+model Users {
+  users_id           String              @id @db.VarChar(13)
+  passwordHash       String?             @db.VarChar(255)
+  titles             String?             @db.VarChar(20)
+  firstname          String?             @db.VarChar(50)
+  lastname           String?             @db.VarChar(50)
+  tel_number         String?             @db.VarChar(10)
+  email              String?             @unique @db.VarChar(100)
+  profilePicture     String?
+  role               Role                @default(STUDENT)
+  teamId             Int?
+  attachments        Attachment[]
+  comments           Comment[]
+  gradesGiven        Grade[]             @relation("EvaluatorGrades")
+  gradesReceived     Grade[]             @relation("StudentGrades")
+  notificationsActor Notification[]      @relation("ActorNotifications")
+  notifications      Notification[]      @relation("UserNotifications")
+  advisorProjects    ProjectAdvisor[]
+  sectionEnrollments SectionEnrollment[]
+  tasksCreated       Task[]
+  taskAssignments    TaskAssignment[]
+  teamMembers        Teammember[]
+  Team               Team?               @relation(fields: [teamId], references: [team_id])
+
+  @@map("Users")
+}
+
+model Term {
+  term_id      Int       @id @default(autoincrement())
+  academicYear Int
+  semester     Int
+  endDate      DateTime
+  startDate    DateTime
+  grades       Grade[]
+  sections     Section[]
+
+  @@map("Term")
+}
+
+model Section {
+  section_id       Int                 @id @default(autoincrement())
+  section_code     String
+  course_type      CourseType
+  study_type       StudyType
+  min_team_size    Int
+  max_team_size    Int
+  project_deadline DateTime
+  team_deadline    DateTime
+  term_id          Int
+  term             Term                @relation(fields: [term_id], references: [term_id])
+  enrollments      SectionEnrollment[]
+  teams            Team[]
+  Teammember       Teammember[]
+
+  @@unique([section_code, term_id])
+  @@map("Section")
+}
+
+model SectionEnrollment {
+  section_enroll_id Int      @id @default(autoincrement())
+  section_id        Int
+  users_id          String   @db.VarChar(13)
+  enrolledAt        DateTime @default(now())
+  section           Section  @relation(fields: [section_id], references: [section_id])
+  user              Users    @relation(fields: [users_id], references: [users_id])
+
+  @@unique([section_id, users_id])
+  @@map("Section_Enrollment")
+}
+
+model Team {
+  team_id       Int            @id @default(autoincrement())
+  section_id    Int
+  advisorName   String?
+  createdAt     DateTime       @default(now())
+  description   String?
+  groupNumber   String         @unique
+  name          String
+  semester      String
+  status        String         @default("รออนุมัติหัวข้อ")
+  topicThai     String?
+  notifications Notification[]
+  project       Project?
+  section       Section        @relation(fields: [section_id], references: [section_id])
+  members       Teammember[]
+  Users         Users[]
+
+  @@map("Team")
+}
+
+model Teammember {
+  team_id       Int
+  user_id       String   @db.VarChar(13)
+  joinedAt      DateTime @default(now())
+  section_id    Int
+  teammember_id Int      @id @default(autoincrement())
+  section       Section  @relation(fields: [section_id], references: [section_id])
+  team          Team     @relation(fields: [team_id], references: [team_id])
+  user          Users    @relation(fields: [user_id], references: [users_id])
+
+  @@unique([user_id, section_id])
+  @@map("Teammember")
+}
+
+model Project {
+  project_id     Int              @id @default(autoincrement())
+  projectname    String           @db.VarChar(100)
+  description    String?
+  team_id        Int              @unique
+  createdAt      DateTime         @default(now())
+  project_type   String?
+  projectnameEng String?          @db.VarChar(100)
+  status         String?
+  grades         Grade[]
+  notifications  Notification[]
+  team           Team             @relation(fields: [team_id], references: [team_id])
+  advisors       ProjectAdvisor[]
+  tasks          Task[]
+
+  @@map("Project")
+}
+
+model ProjectAdvisor {
+  project_id        Int
+  advisor_id        String  @db.VarChar(13)
+  projectAdvisor_id Int     @id @default(autoincrement())
+  advisor           Users   @relation(fields: [advisor_id], references: [users_id])
+  project           Project @relation(fields: [project_id], references: [project_id])
+
+  @@unique([project_id, advisor_id])
+  @@map("ProjectAdvisor")
+}
+
+model Task {
+  task_id       Int              @id @default(autoincrement())
+  title         String           @db.VarChar(100)
+  description   String?
+  status        String           @db.VarChar(20)
+  priority      String           @db.VarChar(20)
+  tags          String?
+  startDate     DateTime?
+  dueDate       DateTime?
+  authorUserId  String           @db.VarChar(13)
+  project_id    Int
+  attachments   Attachment[]
+  comments      Comment[]
+  notifications Notification[]
+  author        Users            @relation(fields: [authorUserId], references: [users_id])
+  project       Project          @relation(fields: [project_id], references: [project_id])
+  assignments   TaskAssignment[]
+
+  @@map("Task")
+}
+
+model TaskAssignment {
+  user_id           String @db.VarChar(13)
+  task_id           Int
+  taskAssignment_id Int    @id @default(autoincrement())
+  task              Task   @relation(fields: [task_id], references: [task_id])
+  user              Users  @relation(fields: [user_id], references: [users_id])
+
+  @@unique([task_id, user_id])
+  @@map("TaskAssignment")
+}
+
+model Comment {
+  comment_id Int      @id @default(autoincrement())
+  text       String
+  createdAt  DateTime @default(now())
+  isRead     Boolean  @default(false)
+  task_id    Int
+  user_id    String   @db.VarChar(13)
+  task       Task     @relation(fields: [task_id], references: [task_id])
+  user       Users    @relation(fields: [user_id], references: [users_id])
+
+  @@map("Comment")
+}
+
+model Attachment {
+  fileUrl       String
+  filename      String
+  task_id       Int
+  uploadedBy_id String @db.VarChar(13)
+  attachment_id Int    @id @default(autoincrement())
+  task          Task   @relation(fields: [task_id], references: [task_id])
+  uploadedBy    Users  @relation(fields: [uploadedBy_id], references: [users_id])
+
+  @@map("Attachment")
+}
+
+model Grade {
+  grade_id     Int        @id @default(autoincrement())
+  project_id   Int
+  term_id      Int
+  evaluator_id String     @db.VarChar(13)
+  score        GradeScore
+  student_id   String     @db.VarChar(13)
+  evaluator    Users      @relation("EvaluatorGrades", fields: [evaluator_id], references: [users_id])
+  project      Project    @relation(fields: [project_id], references: [project_id])
+  student      Users      @relation("StudentGrades", fields: [student_id], references: [users_id])
+  term         Term       @relation(fields: [term_id], references: [term_id])
+
+  @@map("Grade")
+}
+
+model Notification {
+  notification_id Int      @id @default(autoincrement())
+  user_id         String   @db.VarChar(13)
+  actor_user_id   String   @db.VarChar(13)
+  title           String
+  message         String
+  link            String?
+  isRead          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  event_type      String
+  team_id         Int?
+  task_id         Int?
+  project_id      Int?
+  actor           Users    @relation("ActorNotifications", fields: [actor_user_id], references: [users_id])
+  project         Project? @relation(fields: [project_id], references: [project_id])
+  task            Task?    @relation(fields: [task_id], references: [task_id])
+  team            Team?    @relation(fields: [team_id], references: [team_id])
+  user            Users    @relation("UserNotifications", fields: [user_id], references: [users_id])
+
+  @@map("Notification")
+}
+
 enum Role {
   ADMIN
   ADVISOR
@@ -34,259 +259,4 @@ enum GradeScore {
   C_PLUS
   D
   D_PLUS
-}
-
-// ===================== USERS =====================
-model Users {
-  users_id       String  @id @db.VarChar(13)
-  passwordHash   String? @db.VarChar(255)
-  titles         String? @db.VarChar(20)
-  firstname      String? @db.VarChar(50)
-  lastname       String? @db.VarChar(50)
-  tel_number     String? @db.VarChar(10)
-  email          String? @unique @db.VarChar(100)
-  profilePicture String?
-  role           Role    @default(STUDENT)
-
-  // ความสัมพันธ์
-  sectionEnrollments SectionEnrollment[]
-  teamMembers        Teammember[]
-  tasksCreated       Task[]
-  taskAssignments    TaskAssignment[]
-  comments           Comment[]
-  attachments        Attachment[]
-  advisorProjects    ProjectAdvisor[]
-  gradesGiven        Grade[]             @relation("EvaluatorGrades")
-  gradesReceived     Grade[]             @relation("StudentGrades")
-  notifications      Notification[]      @relation("UserNotifications")
-  notificationsActor Notification[]      @relation("ActorNotifications")
-
-  // ✅ เพิ่มฟิลด์เชื่อมโยงกับ Team (แก้ไขจุดที่ทำให้ข้อมูลไม่โชว์)
-  teamId Int?
-  team   Team? @relation(fields: [teamId], references: [team_id])
-
-  @@map("Users")
-}
-
-// ===================== TEAM =====================
-model Team {
-  team_id     Int      @id @default(autoincrement())
-  name        String
-  groupNumber String   @unique
-  semester    String
-  status      String   @default("รออนุมัติหัวข้อ")
-  advisorName String? // เป็นค่าว่างได้ตอนเริ่มต้น
-  topicThai   String?
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-
-  // ✅ 1. ตรวจสอบว่ามีบรรทัดนี้เพียงบรรทัดเดียวเท่านั้น!
-  members Users[]
-
-  // ✅ 2. ตรวจสอบความสัมพันธ์อื่นๆ ให้มีอย่างละบรรทัด
-  section_id    Int
-  section       Section        @relation(fields: [section_id], references: [section_id])
-  teammembers   Teammember[]
-  project       Project?
-  notifications Notification[]
-
-  @@map("Team")
-}
-
-// ===================== TERM =====================
-model Term {
-  term_id      Int      @id @default(autoincrement())
-  academicYear Int
-  semester     Int
-  startDate    DateTime
-  endDate      DateTime
-
-  sections Section[]
-  grades   Grade[]
-
-  @@map("Term")
-}
-
-// ===================== SECTION =====================
-model Section {
-  section_id       Int        @id @default(autoincrement())
-  section_code     String
-  course_type      CourseType
-  study_type       StudyType
-  min_team_size    Int
-  max_team_size    Int
-  project_deadline DateTime
-  team_deadline    DateTime
-  term_id          Int
-
-  term        Term                @relation(fields: [term_id], references: [term_id])
-  enrollments SectionEnrollment[]
-  teams       Team[] // ความสัมพันธ์เชื่อมโยง (ต้องสร้างฟิลด์ section_id ใน Team ถ้าต้องการใช้)
-  teammembers Teammember[]
-
-  @@unique([section_code, term_id])
-  @@map("Section")
-}
-
-// ===================== SECTION ENROLLMENT =====================
-model SectionEnrollment {
-  section_enroll_id Int      @id @default(autoincrement())
-  section_id        Int
-  users_id          String   @db.VarChar(13)
-  enrolledAt        DateTime @default(now())
-
-  section Section @relation(fields: [section_id], references: [section_id])
-  user    Users   @relation(fields: [users_id], references: [users_id])
-
-  @@unique([section_id, users_id])
-  @@map("Section_Enrollment")
-}
-
-// ===================== TEAM MEMBER =====================
-model Teammember {
-  teammember_id Int      @id @default(autoincrement())
-  team_id       Int
-  user_id       String   @db.VarChar(13)
-  section_id    Int
-  joinedAt      DateTime @default(now())
-
-  team    Team    @relation(fields: [team_id], references: [team_id])
-  user    Users   @relation(fields: [user_id], references: [users_id])
-  section Section @relation(fields: [section_id], references: [section_id])
-
-  @@unique([user_id, section_id])
-  @@map("Teammember")
-}
-
-// ===================== PROJECT =====================
-model Project {
-  project_id     Int      @id @default(autoincrement())
-  projectname    String   @db.VarChar(100)
-  projectnameEng String?  @db.VarChar(100)
-  description    String?
-  project_type   String?
-  status         String?
-  createdAt      DateTime @default(now())
-  team_id        Int      @unique
-
-  team          Team             @relation(fields: [team_id], references: [team_id])
-  tasks         Task[]
-  grades        Grade[]
-  advisors      ProjectAdvisor[]
-  notifications Notification[]
-
-  @@map("Project")
-}
-
-// ===================== ส่วนที่เหลือ (ProjectAdvisor, Task, etc.) คงเดิม =====================
-model ProjectAdvisor {
-  projectAdvisor_id Int    @id @default(autoincrement())
-  project_id        Int
-  advisor_id        String @db.VarChar(13)
-
-  project Project @relation(fields: [project_id], references: [project_id])
-  advisor Users   @relation(fields: [advisor_id], references: [users_id])
-
-  @@unique([project_id, advisor_id])
-  @@map("ProjectAdvisor")
-}
-
-model Task {
-  task_id      Int       @id @default(autoincrement())
-  title        String    @db.VarChar(100)
-  description  String?
-  status       String    @db.VarChar(20)
-  priority     String    @db.VarChar(20)
-  tags         String?
-  startDate    DateTime?
-  dueDate      DateTime?
-  project_id   Int
-  authorUserId String    @db.VarChar(13)
-
-  project       Project          @relation(fields: [project_id], references: [project_id])
-  author        Users            @relation(fields: [authorUserId], references: [users_id])
-  assignments   TaskAssignment[]
-  comments      Comment[]
-  attachments   Attachment[]
-  notifications Notification[]
-
-  @@map("Task")
-}
-
-model TaskAssignment {
-  taskAssignment_id Int    @id @default(autoincrement())
-  task_id           Int
-  user_id           String @db.VarChar(13)
-
-  task Task  @relation(fields: [task_id], references: [task_id])
-  user Users @relation(fields: [user_id], references: [users_id])
-
-  @@unique([task_id, user_id])
-  @@map("TaskAssignment")
-}
-
-model Comment {
-  comment_id Int      @id @default(autoincrement())
-  text       String
-  createdAt  DateTime @default(now())
-  isRead     Boolean  @default(false)
-  task_id    Int
-  user_id    String   @db.VarChar(13)
-
-  task Task  @relation(fields: [task_id], references: [task_id])
-  user Users @relation(fields: [user_id], references: [users_id])
-
-  @@map("Comment")
-}
-
-model Attachment {
-  attachment_id Int    @id @default(autoincrement())
-  fileUrl       String
-  filename      String
-  task_id       Int
-  uploadedBy_id String @db.VarChar(13)
-
-  task       Task  @relation(fields: [task_id], references: [task_id])
-  uploadedBy Users @relation(fields: [uploadedBy_id], references: [users_id])
-
-  @@map("Attachment")
-}
-
-model Grade {
-  grade_id     Int        @id @default(autoincrement())
-  student_id   String     @db.VarChar(13)
-  project_id   Int
-  term_id      Int
-  evaluator_id String     @db.VarChar(13)
-  score        GradeScore
-
-  student   Users   @relation("StudentGrades", fields: [student_id], references: [users_id])
-  evaluator Users   @relation("EvaluatorGrades", fields: [evaluator_id], references: [users_id])
-  project   Project @relation(fields: [project_id], references: [project_id])
-  term      Term    @relation(fields: [term_id], references: [term_id])
-
-  @@map("Grade")
-}
-
-model Notification {
-  notification_id Int      @id @default(autoincrement())
-  user_id         String   @db.VarChar(13)
-  actor_user_id   String   @db.VarChar(13)
-  title           String
-  message         String
-  link            String?
-  isRead          Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  event_type      String
-  team_id         Int?
-  task_id         Int?
-  project_id      Int?
-
-  user    Users    @relation("UserNotifications", fields: [user_id], references: [users_id])
-  actor   Users    @relation("ActorNotifications", fields: [actor_user_id], references: [users_id])
-  team    Team?    @relation(fields: [team_id], references: [team_id])
-  task    Task?    @relation(fields: [task_id], references: [task_id])
-  project Project? @relation(fields: [project_id], references: [project_id])
-
-  @@map("Notification")
 }

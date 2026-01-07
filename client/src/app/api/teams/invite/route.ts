@@ -1,46 +1,64 @@
-import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma"
+import { NextResponse } from "next/server"
+import { getAuthUser } from "@/lib/auth"
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { targetUserId } = await req.json();
-
-    // 1. หาข้อมูลหัวหน้ากลุ่มเพื่อเอา teamId
-    const leader = await prisma.users.findUnique({
-      where: { email: session.user.email },
-      select: { teamId: true }
-    });
-
-    if (!leader?.teamId) {
-      return NextResponse.json({ error: "คุณยังไม่มีกลุ่มที่จะเชิญเพื่อนเข้า" }, { status: 400 });
-    }
-
-    // 2. ตรวจสอบว่าเพื่อนมีกลุ่มหรือยัง
-    const target = await prisma.users.findUnique({
-      where: { users_id: targetUserId },
-      select: { teamId: true }
-    });
-
-    if (target?.teamId) {
-      return NextResponse.json({ error: "นักศึกษาคนนี้มีกลุ่มอยู่แล้ว" }, { status: 400 });
-    }
-
-    // 3. เพิ่มเพื่อนเข้ากลุ่ม
-    await prisma.users.update({
-      where: { users_id: targetUserId },
-      data: { teamId: leader.teamId }
-    });
-
-    return NextResponse.json({ message: "เพิ่มเพื่อนเข้ากลุ่มสำเร็จ" });
-  } catch (error) {
-    console.error("Invite API Error:", error);
-    return NextResponse.json({ error: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" }, { status: 500 });
+  const user = await getAuthUser()
+  if (!user || user.role !== "STUDENT") {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 })
   }
+
+  const { teamId, inviteeUserId } = await req.json()
+  if (!teamId || !inviteeUserId) {
+    return NextResponse.json({ message: "Invalid payload" }, { status: 400 })
+  }
+
+  const team = await prisma.team.findUnique({
+    where: { team_id: Number(teamId) }
+  })
+
+  if (!team) {
+    return NextResponse.json({ message: "Team not found" }, { status: 404 })
+  }
+
+  // inviter ต้องอยู่ทีมนี้
+  const isMember = await prisma.teammember.findFirst({
+    where: {
+      team_id: team.team_id,
+      user_id: user.user_id
+    }
+  })
+
+  if (!isMember) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+  }
+
+  // invitee ต้องยังไม่มีทีมใน section นี้
+  const exists = await prisma.teammember.findFirst({
+    where: {
+      user_id: inviteeUserId,
+      section_id: team.section_id
+    }
+  })
+
+  if (exists) {
+    return NextResponse.json(
+      { message: "ผู้ใช้มีทีมในรายวิชานี้แล้ว" },
+      { status: 400 }
+    )
+  }
+
+  // ใช้ notification เป็น invite
+  await prisma.notification.create({
+    data: {
+      user_id: inviteeUserId,
+      actor_user_id: user.user_id,
+      title: "เชิญเข้าร่วมทีม",
+      message: "คุณถูกเชิญให้เข้าร่วมกลุ่มโครงงาน",
+      event_type: "TEAM_INVITE",
+      team_id: team.team_id
+    }
+  })
+
+  return NextResponse.json({ message: "Invitation sent" })
 }
