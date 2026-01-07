@@ -1,5 +1,65 @@
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import CredentialsProvider from 'next-auth/providers/credentials'
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
+
+const prisma = new PrismaClient()
+
+export const authOptions = {
+  providers: [
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email', placeholder: 'john@doe.com' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials, req) {
+        if (!credentials) return null
+        const user = await prisma.users.findUnique({
+          where: { email: credentials.email },
+        })
+
+        if (
+          user &&
+          (await bcrypt.compare(credentials.password, user.passwordHash))
+        ) {
+          return {
+            id: String(user.users_id),
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+            role: user.role
+          } as any
+        } else {
+          throw new Error('Invalid email or password')
+        }
+      },
+    })
+  ],
+  session: {
+    strategy: 'jwt' as const,
+  },
+  callbacks: {
+    jwt: async ({ token, user }: any) => {
+      if (user) {
+        token.user_id = user.id
+        token.firstname = user.firstname
+        token.lastname = user.lastname
+        token.role = user.role
+      }
+      return token
+    },
+    session: async ({ session, token }: any) => {
+      if (session?.user) {
+        session.user.user_id = token.user_id
+        session.user.firstname = token.firstname
+        session.user.lastname = token.lastname
+        session.user.role = token.role
+      }
+      return session
+    }
+  },
+}
 
 export async function getAuthUser() {
   const session = await getServerSession(authOptions)
