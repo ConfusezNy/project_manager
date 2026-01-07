@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, ChevronDown, GraduationCap, Users } from 'lucide-react';
-import Button from '../../(components)/Button'; // เช็ค Path ให้ถูกต้อง
+import Button from '../../(components)/Button';
 
 interface Props {
   activeTab: 'timeline' | 'documents';
@@ -10,26 +10,26 @@ interface Props {
   studentType: string;
   setStudentType: (type: string) => void;
   onAddClick: () => void;
+  isAdmin: boolean; // ✅ รับ Prop สิทธิ์
 }
 
 const TimelineFilters: React.FC<Props> = ({
-  activeTab, setActiveTab, selectedYear, setSelectedYear, studentType, setStudentType, onAddClick
+  activeTab, setActiveTab, selectedYear, setSelectedYear, studentType, setStudentType, onAddClick, isAdmin
 }) => {
   return (
     <>
-      {/* Header & Add Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timeline</h1>
           <span className="text-gray-400 dark:text-gray-600">|</span>
           <h2 className="text-xl font-semibold text-gray-500 dark:text-gray-400">จัดการปีการศึกษา</h2>
         </div>
-        {activeTab === 'timeline' && (
+        {/* ✅ แสดงปุ่มเพิ่มข้อมูลเฉพาะ Admin และอยู่ในหน้า Timeline */}
+        {activeTab === 'timeline' && isAdmin && (
           <Button variant="primary" icon={Plus} onClick={onAddClick}>เพิ่มข้อมูล</Button>
         )}
       </div>
 
-      {/* Tabs & Selectors */}
       <div className="flex flex-wrap items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-0 mb-6 gap-4">
         <div className="flex gap-8 text-sm font-semibold">
           <button onClick={() => setActiveTab('timeline')} className={`pb-4 border-b-2 transition-colors ${activeTab === 'timeline' ? 'text-blue-600 border-blue-600 dark:text-blue-400' : 'text-gray-500 border-transparent'}`}>สัปดาห์ที่ (Timeline)</button>
@@ -37,7 +37,6 @@ const TimelineFilters: React.FC<Props> = ({
         </div>
         
         <div className="flex items-center gap-3 mb-2">
-           {/* Year Selector */}
            <div className="relative group">
               <div className="flex items-center gap-2 rounded-lg bg-white dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-[#2c2c2e]">
                 <GraduationCap size={16} className="text-gray-500" />
@@ -49,7 +48,6 @@ const TimelineFilters: React.FC<Props> = ({
                 <ChevronDown size={14} className="text-gray-400 pointer-events-none" />
               </div>
            </div>
-           {/* Type Selector */}
            <div className="relative group">
               <div className="flex items-center gap-2 rounded-lg bg-white dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-[#2c2c2e]">
                 <Users size={16} className="text-gray-500" />
