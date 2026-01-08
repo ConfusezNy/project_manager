@@ -139,7 +139,8 @@ export async function GET(req: NextRequest) {
                 users_id: true,
                 firstname: true,
                 lastname: true,
-                titles: true
+                titles: true,
+                email: true
               }
             }
           }

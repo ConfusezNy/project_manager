@@ -10,6 +10,7 @@ import { TeamMembersTable } from '@/app/(components)/Teams/TeamMembersTable'
 import { TeamProjectDetail } from '@/app/(components)/Teams/TeamProjectDetail'
 import { InviteMemberModal } from '@/app/(components)/Teams/InviteMemberModal'
 import { ProjectFormModal, ProjectFormData } from '@/app/(components)/ProjectFormModal'
+import AdvisorSelectionModal from '@/app/(components)/AdvisorSelectionModal'
 import Button from '@/app/(components)/Button'
 
 export default function TeamsPage() {
@@ -33,6 +34,9 @@ export default function TeamsPage() {
   const [showProjectModal, setShowProjectModal] = useState(false)
   const [projectSubmitting, setProjectSubmitting] = useState(false)
   const [isEditingProject, setIsEditingProject] = useState(false)
+  
+  // Advisor states
+  const [showAdvisorModal, setShowAdvisorModal] = useState(false)
 
   // ========================
   // Fetch team + section
@@ -294,6 +298,59 @@ export default function TeamsPage() {
   }
 
   // ========================
+  // Member management
+  // ========================
+  const handleRemoveMember = async (userId: string) => {
+    if (!teamData) return
+
+    const isRemovingSelf = userId === user?.user_id
+
+    // ถ้าลบตัวเอง ใช้ API leave
+    if (isRemovingSelf) {
+      if (!confirm('คุณต้องการออกจากกลุ่มใช่หรือไม่?\n(ถ้าคุณเป็นสมาชิกคนสุดท้าย กลุ่มจะถูกลบ)')) {
+        return
+      }
+
+      try {
+        const res = await fetch('/api/teams/leave', {
+          method: 'POST'
+        })
+
+        if (res.ok) {
+          alert('ออกจากกลุ่มสำเร็จ!')
+          fetchData()
+        } else {
+          const data = await res.json()
+          alert(data.message || 'ออกจากกลุ่มไม่สำเร็จ')
+        }
+      } catch (error) {
+        alert('เกิดข้อผิดพลาด')
+      }
+    } else {
+      // ลบคนอื่น
+      if (!confirm('คุณต้องการลบสมาชิกคนนี้ออกจากกลุ่มใช่หรือไม่?')) {
+        return
+      }
+
+      try {
+        const res = await fetch(`/api/teams/${teamData.team_id}/members/${userId}`, {
+          method: 'DELETE'
+        })
+
+        if (res.ok) {
+          alert('ลบสมาชิกสำเร็จ!')
+          fetchData()
+        } else {
+          const data = await res.json()
+          alert(data.message || 'ลบสมาชิกไม่สำเร็จ')
+        }
+      } catch (error) {
+        alert('เกิดข้อผิดพลาด')
+      }
+    }
+  }
+
+  // ========================
   // Guards
   // ========================
   if (status === 'loading' || loading) {
@@ -424,7 +481,7 @@ export default function TeamsPage() {
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider mb-2">ภาคเรียน</p>
                   <p className="text-base font-semibold text-gray-900 dark:text-white">
-                    {section?.term?.semester}/{section?.term?.academicYear || section?.term?.term_name || '---'}
+                    {teamData?.semester || '---'}
                   </p>
                 </div>
               </div>
@@ -448,7 +505,7 @@ export default function TeamsPage() {
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider mb-2">ภาคเรียน</p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
-                          {section.term?.semester}/{section.term?.academicYear || section.term?.term_name}
+                          {section.term ? `${section.term.semester}/${section.term.academicYear}` : '---'}
                         </p>
                       </div>
                     </div>
@@ -485,22 +542,62 @@ export default function TeamsPage() {
 
           {/* อาจารย์ที่ปรึกษา */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-gray-100 dark:bg-gray-700">
-              <UserPlus size={32} className="text-gray-400" />
-            </div>
-            <h3 className="text-base font-bold text-gray-500 dark:text-gray-400 mb-1">
-              ยังไม่มีสมาชิกอาจารย์
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              กรุณาติดต่ออาจารย์เพื่อขอคำปรึกษา
-            </p>
-            <Button 
-              variant="primary" 
-              className="!py-2.5 !px-5 !text-sm w-full"
-              onClick={() => alert("ระบบค้นหาและเลือกอาจารย์กำลังพัฒนา...")}
-            >
-              เลือกอาจารย์ที่ปรึกษา +
-            </Button>
+            {projectData?.advisors && projectData.advisors.length > 0 ? (
+              <>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">
+                  อาจารย์ที่ปรึกษา
+                </h3>
+                {projectData.advisors.map((advisor: any) => (
+                  <div key={advisor.advisor_id} className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 w-full mb-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                      {advisor.advisor?.firstname?.charAt(0) || 'A'}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
+                        {advisor.advisor?.titles} {advisor.advisor?.firstname} {advisor.advisor?.lastname}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {advisor.advisor?.email}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {projectData.status !== 'APPROVED' && (
+                  <Button 
+                    variant="secondary" 
+                    className="!py-2 !px-4 !text-sm w-full mt-2"
+                    onClick={() => setShowAdvisorModal(true)}
+                  >
+                    เปลี่ยนอาจารย์
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-gray-100 dark:bg-gray-700">
+                  <UserPlus size={32} className="text-gray-400" />
+                </div>
+                <h3 className="text-base font-bold text-gray-500 dark:text-gray-400 mb-1">
+                  ยังไม่มีอาจารย์ที่ปรึกษา
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  เลือกอาจารย์เพื่อขอคำปรึกษาโครงงาน
+                </p>
+                <Button 
+                  variant="primary" 
+                  className="!py-2.5 !px-5 !text-sm w-full"
+                  onClick={() => setShowAdvisorModal(true)}
+                  disabled={!projectData}
+                >
+                  เลือกอาจารย์ที่ปรึกษา +
+                </Button>
+                {!projectData && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    สร้างหัวข้อโครงงานก่อนเลือกอาจารย์
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -509,6 +606,9 @@ export default function TeamsPage() {
           <TeamMembersTable 
             members={teamData.members || []} 
             onInviteClick={handleOpenInviteModal}
+            onRemoveMember={handleRemoveMember}
+            currentUserId={user?.user_id}
+            canEdit={projectData?.status !== 'APPROVED'}
           />
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -634,6 +734,16 @@ export default function TeamsPage() {
         } : null}
         isSubmitting={projectSubmitting}
       />
+
+      {/* Advisor Selection Modal */}
+      {projectData && (
+        <AdvisorSelectionModal
+          isOpen={showAdvisorModal}
+          onClose={() => setShowAdvisorModal(false)}
+          projectId={projectData.project_id}
+          onAdvisorSelected={fetchData}
+        />
+      )}
     </div>
   )
 }

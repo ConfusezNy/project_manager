@@ -112,6 +112,32 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
           </div>
         )}
 
+        {/* อาจารย์ที่ปรึกษา */}
+        {data.advisors && data.advisors.length > 0 && (
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-700/50">
+            <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-3">
+              อาจารย์ที่ปรึกษา
+            </p>
+            <div className="space-y-2">
+              {data.advisors.map((advisor: any) => (
+                <div key={advisor.advisor_id} className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
+                    {advisor.advisor?.firstname?.charAt(0) || 'A'}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {advisor.advisor?.titles} {advisor.advisor?.firstname} {advisor.advisor?.lastname}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {advisor.advisor?.email}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* สถานะ */}
         <div className="pt-4 border-t border-gray-100 dark:border-gray-700/50">
           <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-2">

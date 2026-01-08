@@ -76,7 +76,7 @@ const Sidebar = ({ isSidebarOpen,  }: SidebarProps) => {
             <span className={contentClass}>User</span>
           </Link>
 
-          <Link href="/Teams" className={linkBaseClass}>
+          <Link href="/advisorteams" className={linkBaseClass}>
              <div className={iconClass}><Users size={24} /></div>
             <span className={contentClass}>Teams</span>
           </Link>
