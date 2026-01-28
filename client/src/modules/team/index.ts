@@ -1,38 +1,38 @@
 // Team Module - Barrel Export
-// Usage: import { CreateTeamModal, TeamMembersTable } from '@/modules/team';
+// Usage: import { TeamDashboard, CreateTeamModal, TeamMembersTable } from '@/modules/team';
 
 // Components
+export { TeamDashboard } from "./components/TeamDashboard";
 export { CreateTeamModal } from "./components/CreateTeamModal";
-export type { CreateTeamFormData } from "./components/CreateTeamModal";
-
 export { TeamMembersTable } from "./components/TeamMembersTable";
-export type { TeamMember } from "./components/TeamMembersTable";
-
 export { InviteMemberModal } from "./components/InviteMemberModal";
-export type { AvailableStudent } from "./components/InviteMemberModal";
-
 export { TeamHeader } from "./components/TeamHeader";
-
 export { TeamProjectDetail } from "./components/TeamProjectDetail";
-export type { ProjectData } from "./components/TeamProjectDetail";
-
 export { TeamSettingsModal } from "./components/TeamSettingsModal";
-export type { TeamSettingsData } from "./components/TeamSettingsModal";
-
 export { TeamInfoCards } from "./components/TeamInfoCards";
-export type { TeamInfoData } from "./components/TeamInfoCards";
-
 export { EmptyTeamState } from "./components/EmptyTeamState";
+export { PendingInvites } from "./components/PendingInvites";
+export { TeamStatusCard } from "./components/TeamStatusCard";
+export { AdvisorCard } from "./components/AdvisorCard";
+export { ConfirmModal } from "./components/ConfirmModal";
 
-// TODO: Add more exports as components are migrated
-// export { TeamCard } from './components/TeamCard';
-// export { TeamTable } from './components/TeamTable';
-// export { TeamFilters } from './components/TeamFilters';
-// export { TeamAdvisorSection } from './components/TeamAdvisorSection';
-// export { TeamAdminStats } from './components/TeamAdminStats';
+// Hooks
+export { useTeamData } from "./hooks/useTeamData";
 
-// Services (to be added)
-// export { teamService } from './services/team.service';
+// Services
+export { teamService } from "./services/teamService";
+export { projectService } from "./services/projectService";
 
-// Hooks (to be added)
-// export { useTeam } from './hooks/useTeam';
+// Types
+export type {
+  TeamData,
+  TeamMember,
+  PendingInvite,
+  AvailableStudent,
+} from "./services/teamService";
+export type {
+  ProjectData,
+  ProjectFormData,
+  ProjectAdvisor,
+} from "./services/projectService";
+export type { UseTeamDataReturn } from "./hooks/useTeamData";
