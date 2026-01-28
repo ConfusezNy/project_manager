@@ -1,7 +1,11 @@
 // Timeline Module - Barrel Export
-// Usage: import { TimelineListView } from '@/modules/timeline';
+// Usage: import { TimelineDashboard } from '@/modules/timeline';
 
-// TODO: Migrate timeline components
-// export { TimelineListView } from './components/TimelineListView';
-// export { TimelineFilters } from './components/TimelineFilters';
-// export { CardTimeline } from './components/CardTimeline';
+// Components
+export { TimelineDashboard } from "./components/TimelineDashboard";
+
+// Hooks
+export { useTimeline } from "./hooks/useTimeline";
+
+// Types
+export type { TimelineItem } from "./hooks/useTimeline";

@@ -1,0 +1,238 @@
+"use client";
+
+// useSectionData Hook - Manages all section page state and logic
+import { useState, useEffect, useCallback } from "react";
+import {
+  sectionService,
+  Section,
+  Term,
+  Candidate,
+  Enrollment,
+  CreateSectionForm,
+  CreateTermForm,
+} from "../services/sectionService";
+
+const initialCreateForm: CreateSectionForm = {
+  section_code: "",
+  course_type: "PROJECT",
+  study_type: "LE",
+  min_team_size: 1,
+  max_team_size: 3,
+  project_deadline: "",
+  team_deadline: "",
+  term_id: "",
+};
+
+const initialTermForm: CreateTermForm = {
+  academicYear: "",
+  semester: "",
+  startDate: "",
+  endDate: "",
+};
+
+export function useSectionData() {
+  // Data states
+  const [sections, setSections] = useState<Section[]>([]);
+  const [terms, setTerms] = useState<Term[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showTermModal, setShowTermModal] = useState(false);
+  const [showEnrollmentsModal, setShowEnrollmentsModal] = useState(false);
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [showContinueModal, setShowContinueModal] = useState(false);
+
+  // Current section context
+  const [currentSectionId, setCurrentSectionId] = useState<number | null>(null);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
+  const [continueTermId, setContinueTermId] = useState<string>("");
+  const [continuingSectionId, setContinuingSectionId] = useState<number | null>(
+    null,
+  );
+
+  // Forms
+  const [createForm, setCreateForm] =
+    useState<CreateSectionForm>(initialCreateForm);
+  const [createError, setCreateError] = useState("");
+  const [termForm, setTermForm] = useState<CreateTermForm>(initialTermForm);
+  const [termError, setTermError] = useState("");
+
+  // Fetch data
+  const fetchSections = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await sectionService.getSections();
+      setSections(data);
+      setError("");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchTerms = useCallback(async () => {
+    const data = await sectionService.getTerms();
+    setTerms(data);
+  }, []);
+
+  useEffect(() => {
+    fetchSections();
+    fetchTerms();
+  }, [fetchSections, fetchTerms]);
+
+  // Handlers
+  const handleCreateSection = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setCreateError("");
+      try {
+        await sectionService.createSection(createForm);
+        setShowCreateModal(false);
+        setCreateForm(initialCreateForm);
+        fetchSections();
+      } catch (err: any) {
+        setCreateError(err.message);
+      }
+    },
+    [createForm, fetchSections],
+  );
+
+  const handleCreateTerm = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setTermError("");
+      try {
+        await sectionService.createTerm(termForm);
+        setShowTermModal(false);
+        setTermForm(initialTermForm);
+        fetchTerms();
+      } catch (err: any) {
+        setTermError(err.message);
+      }
+    },
+    [termForm, fetchTerms],
+  );
+
+  const fetchEnrollments = useCallback(async (sectionId: number) => {
+    setCurrentSectionId(sectionId);
+    setEnrollments([]);
+    setShowEnrollmentsModal(true);
+    const data = await sectionService.getEnrollments(sectionId);
+    setEnrollments(data);
+  }, []);
+
+  const openEnrollModal = useCallback(async (sectionId: number) => {
+    setCurrentSectionId(sectionId);
+    setCandidates([]);
+    setSelectedCandidates([]);
+    setShowEnrollModal(true);
+    const data = await sectionService.getCandidates(sectionId);
+    setCandidates(data);
+  }, []);
+
+  const handleEnroll = useCallback(async () => {
+    if (!currentSectionId || selectedCandidates.length === 0) return;
+    try {
+      await sectionService.enrollStudents(currentSectionId, selectedCandidates);
+      alert("Enroll สำเร็จ!");
+      setShowEnrollModal(false);
+      setSelectedCandidates([]);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }, [currentSectionId, selectedCandidates]);
+
+  const toggleCandidate = useCallback((userId: string) => {
+    setSelectedCandidates((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
+    );
+  }, []);
+
+  const toggleAllCandidates = useCallback(() => {
+    if (selectedCandidates.length === candidates.length) {
+      setSelectedCandidates([]);
+    } else {
+      setSelectedCandidates(candidates.map((c) => c.users_id));
+    }
+  }, [selectedCandidates, candidates]);
+
+  const openContinueModal = useCallback((sectionId: number) => {
+    setContinuingSectionId(sectionId);
+    setContinueTermId("");
+    setShowContinueModal(true);
+  }, []);
+
+  const handleContinueToProject = useCallback(async () => {
+    if (!continuingSectionId || !continueTermId) {
+      alert("กรุณาเลือกเทอมใหม่");
+      return;
+    }
+    try {
+      await sectionService.continueToProject(
+        continuingSectionId,
+        continueTermId,
+      );
+      alert("ต่อวิชาเรียบร้อย! ย้ายทีมและนักศึกษาไปเทอมใหม่แล้ว");
+      setShowContinueModal(false);
+      fetchSections();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }, [continuingSectionId, continueTermId, fetchSections]);
+
+  return {
+    // Data
+    sections,
+    terms,
+    loading,
+    error,
+    candidates,
+    enrollments,
+    selectedCandidates,
+    currentSectionId,
+    continueTermId,
+    setContinueTermId,
+
+    // Forms
+    createForm,
+    setCreateForm,
+    createError,
+    termForm,
+    setTermForm,
+    termError,
+
+    // Modals
+    showCreateModal,
+    setShowCreateModal,
+    showTermModal,
+    setShowTermModal,
+    showEnrollmentsModal,
+    setShowEnrollmentsModal,
+    showEnrollModal,
+    setShowEnrollModal,
+    showContinueModal,
+    setShowContinueModal,
+
+    // Handlers
+    handlers: {
+      fetchSections,
+      fetchTerms,
+      handleCreateSection,
+      handleCreateTerm,
+      fetchEnrollments,
+      openEnrollModal,
+      handleEnroll,
+      toggleCandidate,
+      toggleAllCandidates,
+      openContinueModal,
+      handleContinueToProject,
+    },
+  };
+}

@@ -1,8 +1,11 @@
 // User Module - Barrel Export
-// Usage: import { UserCard, UserTable } from '@/modules/user';
+// Usage: import { UserManagementDashboard } from '@/modules/user';
 
-// TODO: Migrate user components
-// export { UserCard } from './components/UserCard';
-// export { UserTable } from './components/UserTable';
-// export { UserFormModal } from './components/UserFormModal';
-// export { UserFilters } from './components/UserFilters';
+// Components
+export { UserManagementDashboard } from "./components/UserManagementDashboard";
+
+// Hooks
+export { useUserManagement } from "./hooks/useUserManagement";
+
+// Types
+export type { User } from "./hooks/useUserManagement";

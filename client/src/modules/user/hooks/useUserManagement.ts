@@ -1,0 +1,125 @@
+"use client";
+
+// useUserManagement Hook - State management for user management page
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+
+export interface User {
+  id: string | number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  lastActive: string;
+}
+
+export function useUserManagement() {
+  const { data: session } = useSession();
+  const currentUser = session?.user as any;
+  const isAdmin = currentUser?.role === "ADMIN";
+
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch("/api/users");
+      const data = await res.json();
+
+      if (res.ok) {
+        const mappedUsers = data.map((u: any) => ({
+          id: u.users_id,
+          name: `${u.firstname} ${u.lastname}`,
+          email: u.email,
+          role: u.role,
+          status: "Active",
+          lastActive: "Now",
+        }));
+        setUsers(mappedUsers);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === "All" || user.role === roleFilter;
+    const matchesStatus =
+      statusFilter === "All" || user.status === statusFilter;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const handleAddClick = useCallback(() => {
+    setEditingUser(null);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleDeleteClick = useCallback(async (id: string | number) => {
+    if (confirm("คุณต้องการลบผู้ใช้งานนี้ใช่หรือไม่?")) {
+      const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u.id !== id));
+      } else {
+        alert("ลบไม่สำเร็จ");
+      }
+    }
+  }, []);
+
+  const handleEditClick = useCallback((user: User) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleFormSubmit = useCallback(async () => {
+    await fetchUsers();
+    setIsModalOpen(false);
+  }, [fetchUsers]);
+
+  return {
+    // Session
+    currentUser,
+    isAdmin,
+
+    // Data
+    users,
+    filteredUsers,
+    isLoading,
+
+    // Filters
+    searchQuery,
+    setSearchQuery,
+    roleFilter,
+    setRoleFilter,
+    statusFilter,
+    setStatusFilter,
+
+    // Modal
+    isModalOpen,
+    setIsModalOpen,
+    editingUser,
+
+    // Handlers
+    handlers: {
+      fetchUsers,
+      handleAddClick,
+      handleDeleteClick,
+      handleEditClick,
+      handleFormSubmit,
+    },
+  };
+}

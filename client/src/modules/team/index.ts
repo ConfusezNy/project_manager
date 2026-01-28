@@ -3,6 +3,7 @@
 
 // Components
 export { TeamDashboard } from "./components/TeamDashboard";
+export { AdvisorTeamsDashboard } from "./components/AdvisorTeamsDashboard";
 export { CreateTeamModal } from "./components/CreateTeamModal";
 export { TeamMembersTable } from "./components/TeamMembersTable";
 export { InviteMemberModal } from "./components/InviteMemberModal";
@@ -18,6 +19,7 @@ export { ConfirmModal } from "./components/ConfirmModal";
 
 // Hooks
 export { useTeamData } from "./hooks/useTeamData";
+export { useAdvisorTeams } from "./hooks/useAdvisorTeams";
 
 // Services
 export { teamService } from "./services/teamService";
@@ -36,3 +38,4 @@ export type {
   ProjectAdvisor,
 } from "./services/projectService";
 export type { UseTeamDataReturn } from "./hooks/useTeamData";
+export type { AdvisorProject } from "./hooks/useAdvisorTeams";
