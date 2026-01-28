@@ -16,7 +16,7 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   const userRole = (session?.user as any)?.role;
 
   // หน้าที่ไม่ต้องการ navbar/sidebar
-  const publicPages = ["/singin", "/singup"];
+  const publicPages = ["/signin", "/signup"];
   const isPublicPage = publicPages.includes(pathname);
 
   if (isPublicPage) {

@@ -132,25 +132,41 @@ export function useTeamData(): UseTeamDataReturn {
 
   // Team handlers
   const createTeam = useCallback(async () => {
-    if (!section) return;
+    if (!section?.section_id) {
+      console.error(
+        "[useTeamData] Cannot create team: section or section_id is missing",
+        section,
+      );
+      alert("ไม่พบข้อมูล section กรุณาลองใหม่อีกครั้ง");
+      return;
+    }
+
+    console.log(
+      `[useTeamData] Creating team for section: ${section.section_id}`,
+      section,
+    );
     setSubmitting(true);
     try {
       await teamService.createTeam(section.section_id);
       setShowConfirm(false);
-      fetchData();
+      await fetchData();
     } catch (error: any) {
-      alert(error.message);
+      console.error("[useTeamData] Create team error:", error);
+      alert(error.message || "เกิดข้อผิดพลาดในการสร้างทีม");
     } finally {
       setSubmitting(false);
     }
   }, [section, fetchData]);
 
   const openInviteModal = useCallback(async () => {
-    if (!section) return;
+    // Use section from teamData if available, otherwise use section state
+    const sectionId = teamData?.section?.section_id || section?.section_id;
+    if (!sectionId) return;
+
     setShowInviteModal(true);
-    const students = await teamService.getAvailableStudents(section.section_id);
+    const students = await teamService.getAvailableStudents(sectionId);
     setAvailableStudents(students);
-  }, [section]);
+  }, [teamData, section]);
 
   const inviteMember = useCallback(
     async (userId: string) => {

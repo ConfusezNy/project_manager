@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { K2D } from "next/font/google"; 
+import { K2D } from "next/font/google";
 import "./globals.css"; // แนะนำให้ย้ายมาบรรทัดนี้ หรือบนสุด
 import DashboardWrapper from "./dashboardWrapper";
 import { Providers } from "./providers";
 
-import {getServerSession} from 'next-auth'                      //get sesssion ของ singin
-import SessionProvider from './(components)/SeecionProviders'     //get sesssion ของ singin
-
-
+import { getServerSession } from "next-auth"; //get sesssion ของ singin
+import SessionProvider from "./(components)/SessionProvider"; //get sesssion ของ singin
 
 // 2. ตั้งค่า K2D (กำหนด weight ที่ต้องการใช้)
 const k2d = K2D({
@@ -27,14 +25,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession()   //get sesssion ของ singin
+  const session = await getServerSession(); //get sesssion ของ singin
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={k2d.className}>
         <SessionProvider session={session}>
-        <Providers>
-           <DashboardWrapper>{children}</DashboardWrapper>
-        </Providers>
+          <Providers>
+            <DashboardWrapper>{children}</DashboardWrapper>
+          </Providers>
         </SessionProvider>
       </body>
     </html>

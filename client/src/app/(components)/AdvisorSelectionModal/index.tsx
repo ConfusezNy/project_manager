@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface AdvisorData {
-  users_id: number;
+  users_id: string; // API returns string
   titles?: string;
   firstname?: string;
   lastname?: string;
@@ -43,44 +43,44 @@ export default function AdvisorSelectionModal({
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/advisors/available');
-      
+      const response = await fetch("/api/advisors/available");
+
       if (!response.ok) {
-        throw new Error('Failed to fetch advisors');
+        throw new Error("Failed to fetch advisors");
       }
 
       const data = await response.json();
       setAdvisors(data);
     } catch (err) {
-      setError('ไม่สามารถโหลดรายชื่ออาจารย์ได้');
+      setError("ไม่สามารถโหลดรายชื่ออาจารย์ได้");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelectAdvisor = async (advisorId: number) => {
+  const handleSelectAdvisor = async (advisorId: string) => {
     try {
       setSelecting(true);
       setError(null);
 
       const response = await fetch(`/api/projects/${projectId}/advisor`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ advisor_id: advisorId }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'เกิดข้อผิดพลาด');
+        throw new Error(data.message || "เกิดข้อผิดพลาด");
       }
 
-      alert('เพิ่มอาจารย์ที่ปรึกษาสำเร็จ');
+      alert("เพิ่มอาจารย์ที่ปรึกษาสำเร็จ");
       onAdvisorSelected();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'เกิดข้อผิดพลาดในการเลือกอาจารย์');
+      setError(err.message || "เกิดข้อผิดพลาดในการเลือกอาจารย์");
       console.error(err);
     } finally {
       setSelecting(false);
@@ -96,7 +96,9 @@ export default function AdvisorSelectionModal({
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-white">เลือกอาจารย์ที่ปรึกษา</h2>
+              <h2 className="text-2xl font-bold text-white">
+                เลือกอาจารย์ที่ปรึกษา
+              </h2>
               <p className="text-blue-100 mt-1">
                 เลือกอาจารย์ที่ปรึกษาสำหรับโครงงานของคุณ
               </p>
@@ -106,8 +108,18 @@ export default function AdvisorSelectionModal({
               disabled={selecting}
               className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors disabled:opacity-50"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -128,7 +140,9 @@ export default function AdvisorSelectionModal({
             </div>
           ) : advisors.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400 text-lg">ไม่พบรายชื่ออาจารย์</p>
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
+                ไม่พบรายชื่ออาจารย์
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -137,8 +151,8 @@ export default function AdvisorSelectionModal({
                   key={advisor.users_id}
                   className={`border-2 rounded-xl p-6 transition-all ${
                     advisor.canSelect
-                      ? 'border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-lg'
-                      : 'border-gray-200 dark:border-gray-700 opacity-60'
+                      ? "border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-lg"
+                      : "border-gray-200 dark:border-gray-700 opacity-60"
                   }`}
                 >
                   {/* Profile Picture */}
@@ -153,7 +167,7 @@ export default function AdvisorSelectionModal({
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-white text-3xl font-bold">
-                          {advisor.firstname?.charAt(0) || 'A'}
+                          {advisor.firstname?.charAt(0) || "A"}
                         </div>
                       )}
                     </div>
@@ -171,14 +185,18 @@ export default function AdvisorSelectionModal({
 
                   {/* Project Count */}
                   <div className="flex items-center justify-center mb-4">
-                    <div className={`px-4 py-2 rounded-lg ${
-                      advisor.currentProjects === 0 
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                        : advisor.currentProjects === 1
-                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                    }`}>
-                      <span className="font-semibold">โปรเจกต์: {advisor.currentProjects}/2</span>
+                    <div
+                      className={`px-4 py-2 rounded-lg ${
+                        advisor.currentProjects === 0
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                          : advisor.currentProjects === 1
+                            ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+                            : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                      }`}
+                    >
+                      <span className="font-semibold">
+                        โปรเจกต์: {advisor.currentProjects}/2
+                      </span>
                     </div>
                   </div>
 
@@ -189,11 +207,11 @@ export default function AdvisorSelectionModal({
                       disabled={selecting}
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {selecting ? 'กำลังเลือก...' : 'เลือกอาจารย์ท่านนี้'}
+                      {selecting ? "กำลังเลือก..." : "เลือกอาจารย์ท่านนี้"}
                     </button>
                   ) : (
                     <div className="w-full py-3 text-center text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                      {advisor.reason || 'ไม่สามารถเลือกได้'}
+                      {advisor.reason || "ไม่สามารถเลือกได้"}
                     </div>
                   )}
                 </div>

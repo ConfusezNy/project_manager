@@ -71,8 +71,53 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Map ข้อมูลให้อยู่ในรูปแบบที่ใช้งานง่าย
-    const projects = projectAdvisors.map((pa) => pa.Project);
+    // Normalize to camelCase for frontend
+    const projects = projectAdvisors.map((pa) => {
+      const project = pa.Project;
+      const team = project.Team;
+
+      return {
+        project_id: project.project_id,
+        projectname: project.projectname,
+        projectnameEng: project.projectnameEng,
+        project_type: project.project_type,
+        description: project.description,
+        status: project.status,
+        team: {
+          team_id: team.team_id,
+          groupNumber: team.groupNumber,
+          semester: team.semester,
+          section: {
+            section_id: team.Section?.section_id,
+            section_code: team.Section?.section_code,
+            term: team.Section?.Term
+              ? {
+                  semester: team.Section.Term.semester,
+                  academicYear: team.Section.Term.academicYear,
+                }
+              : undefined,
+          },
+          members: (team.Teammember || []).map((m: any) => ({
+            user: {
+              users_id: m.Users?.users_id || m.user_id,
+              firstname: m.Users?.firstname,
+              lastname: m.Users?.lastname,
+              email: m.Users?.email,
+              titles: m.Users?.titles,
+            },
+          })),
+        },
+        advisors: (project.ProjectAdvisor || []).map((a: any) => ({
+          advisor: {
+            users_id: a.Users?.users_id || a.advisor_id,
+            firstname: a.Users?.firstname,
+            lastname: a.Users?.lastname,
+            email: a.Users?.email,
+            titles: a.Users?.titles,
+          },
+        })),
+      };
+    });
 
     return NextResponse.json(projects);
   } catch (error) {

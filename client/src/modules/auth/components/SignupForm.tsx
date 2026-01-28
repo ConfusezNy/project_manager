@@ -245,7 +245,7 @@ export const SignupForm: React.FC = () => {
               <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
                 มีบัญชีผู้ใช้งานอยู่แล้ว?{" "}
                 <Link
-                  href="/singin"
+                  href="/signin"
                   className="font-black text-blue-600 dark:text-blue-400 hover:underline transition-colors"
                 >
                   เข้าสู่ระบบ

@@ -43,9 +43,31 @@ export async function POST(req: Request) {
     }
 
     const { sectionId } = await req.json();
+    console.log(
+      `[POST /api/teams] User: ${user.user_id}, sectionId: ${sectionId}`,
+    );
+
     if (!sectionId) {
       return NextResponse.json(
         { message: "sectionId is required" },
+        { status: 400 },
+      );
+    }
+
+    // Check if user is enrolled in this section first
+    const enrollment = await prisma.section_Enrollment.findFirst({
+      where: {
+        section_id: Number(sectionId),
+        users_id: user.user_id,
+      },
+    });
+
+    if (!enrollment) {
+      console.log(
+        `[POST /api/teams] User ${user.user_id} not enrolled in section ${sectionId}`,
+      );
+      return NextResponse.json(
+        { message: "คุณยังไม่ได้ลงทะเบียนในรายวิชานี้" },
         { status: 400 },
       );
     }
@@ -59,11 +81,18 @@ export async function POST(req: Request) {
     });
 
     if (exists) {
+      console.log(
+        `[POST /api/teams] User ${user.user_id} already has team in section ${sectionId}`,
+      );
       return NextResponse.json(
         { message: "คุณมีทีมในรายวิชานี้แล้ว" },
         { status: 400 },
       );
     }
+
+    console.log(
+      `[POST /api/teams] Creating team for user ${user.user_id} in section ${sectionId}`,
+    );
 
     // ดึง section info เพื่อเอา semester
     const section = await prisma.section.findUnique({

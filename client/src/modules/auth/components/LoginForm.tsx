@@ -230,7 +230,7 @@ export const LoginForm: React.FC = () => {
               <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
                 ยังไม่มีบัญชีผู้ใช้งาน?{" "}
                 <Link
-                  href="/singup"
+                  href="/signup"
                   className="font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors"
                 >
                   สมัครสมาชิกใหม่

@@ -17,7 +17,10 @@ const Profile = () => {
   // ปิด Dropdown เมื่อคลิกข้างนอก
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -26,7 +29,7 @@ const Profile = () => {
   }, []);
 
   const handleLogout = () => {
-    signOut({ callbackUrl: "/singin" });
+    signOut({ callbackUrl: "/signin" });
   };
 
   const handleViewProfile = () => {
@@ -50,10 +53,10 @@ const Profile = () => {
         className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700 transition-all overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm"
       >
         {user?.profilePicture ? (
-          <img 
-            src={user.profilePicture} 
-            alt="Profile" 
-            className="h-full w-full object-cover" 
+          <img
+            src={user.profilePicture}
+            alt="Profile"
+            className="h-full w-full object-cover"
           />
         ) : (
           getInitial()
@@ -63,7 +66,6 @@ const Profile = () => {
       {/* Dropdown Content */}
       {isOpen && (
         <div className="absolute right-0 mt-3 w-72 rounded-xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 dark:bg-[#1c1c1e] dark:border dark:border-gray-700 z-50 overflow-hidden transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
-          
           {/* Header with User Info */}
           {status === "authenticated" && user && (
             <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-[#2c2c2e]">
@@ -71,10 +73,10 @@ const Profile = () => {
                 {/* --- 2. แก้ไขรูปภาพในส่วน Header ของ Dropdown --- */}
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 font-bold text-white text-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-sm">
                   {user.profilePicture ? (
-                    <img 
-                      src={user.profilePicture} 
-                      alt="Profile" 
-                      className="h-full w-full object-cover" 
+                    <img
+                      src={user.profilePicture}
+                      alt="Profile"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     getInitial()
@@ -112,7 +114,10 @@ const Profile = () => {
               }}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors"
             >
-              <Settings size={18} className="text-gray-500 dark:text-gray-400" />
+              <Settings
+                size={18}
+                className="text-gray-500 dark:text-gray-400"
+              />
               <span>ตั้งค่า</span>
             </button>
 
@@ -130,16 +135,20 @@ const Profile = () => {
           {/* Loading State */}
           {status === "loading" && (
             <div className="px-4 py-6 text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium animate-pulse">กำลังโหลด...</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium animate-pulse">
+                กำลังโหลด...
+              </p>
             </div>
           )}
 
           {/* Not Authenticated State */}
           {status === "unauthenticated" && (
             <div className="px-4 py-6 text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 font-medium">กรุณาเข้าสู่ระบบ</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 font-medium">
+                กรุณาเข้าสู่ระบบ
+              </p>
               <button
-                onClick={() => router.push("/singin")}
+                onClick={() => router.push("/signin")}
                 className="w-full bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md active:scale-95"
               >
                 เข้าสู่ระบบ

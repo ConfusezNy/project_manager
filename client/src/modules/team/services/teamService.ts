@@ -54,7 +54,22 @@ export const teamService = {
     const res = await fetch("/api/teams/my-team");
     if (!res.ok) return null;
     const data = await res.json();
-    return data?.team || null;
+    // Prisma returns relation as 'Team' (uppercase)
+    const team = data?.Team || data?.team;
+    if (!team) return null;
+
+    // Normalize Prisma PascalCase to camelCase
+    return {
+      ...team,
+      section: team.Section || team.section,
+      members: (team.Teammember || team.members || []).map((m: any) => ({
+        ...m,
+        user: m.Users || m.user,
+        users_id: m.Users?.users_id || m.user?.users_id || m.user_id,
+        firstname: m.Users?.firstname || m.user?.firstname || m.firstname,
+        lastname: m.Users?.lastname || m.user?.lastname || m.lastname,
+      })),
+    };
   },
 
   // Fetch user's section
