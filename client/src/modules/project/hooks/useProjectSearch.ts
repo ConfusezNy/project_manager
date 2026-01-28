@@ -7,10 +7,11 @@ export interface ProjectData {
   id: number;
   title: string;
   description?: string;
-  category?: string;
-  year?: string;
+  category: string;
+  year: string;
   team?: any;
   advisors?: any[];
+  author: string;
 }
 
 export function useProjectSearch() {

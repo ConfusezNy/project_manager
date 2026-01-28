@@ -42,7 +42,7 @@ export interface PendingInvite {
 }
 
 export interface AvailableStudent {
-  user_id: string;
+  users_id: string;
   firstname: string;
   lastname: string;
   email: string;

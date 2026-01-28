@@ -1,37 +1,37 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
-import { getAuthUser } from "@/lib/auth"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/auth";
 
 // GET: ทีมเดียวของ student
 export async function GET() {
-  const user = await getAuthUser()
+  const user = await getAuthUser();
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   const member = await prisma.teammember.findFirst({
     where: {
-      user_id: user.user_id
+      user_id: user.user_id,
     },
     include: {
-      team: {
+      Team: {
         include: {
-          section: true,
-          members: {
+          Section: true,
+          Teammember: {
             include: {
-              user: {
+              Users: {
                 select: {
                   users_id: true,
                   firstname: true,
-                  lastname: true
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  })
+                  lastname: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
 
-  return NextResponse.json(member)
+  return NextResponse.json(member);
 }

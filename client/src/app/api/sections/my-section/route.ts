@@ -1,45 +1,45 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
-import { getAuthUser } from "@/lib/auth"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * GET /api/sections/my-section
  * ดึงรายวิชาที่นักศึกษากำลังเรียน (ผ่าน SectionEnrollment)
  */
 export async function GET() {
-  const user = await getAuthUser()
-  
+  const user = await getAuthUser();
+
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   if (user.role !== "STUDENT") {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   // ดึง section ที่นักศึกษาลงทะเบียนเรียน
-  const enrollment = await prisma.sectionEnrollment.findFirst({
+  const enrollment = await prisma.section_Enrollment.findFirst({
     where: {
-      users_id: user.user_id
+      users_id: user.user_id,
     },
     include: {
-      section: {
+      Section: {
         include: {
-          term: true
-        }
-      }
+          Term: true,
+        },
+      },
     },
     orderBy: {
-      section_id: 'desc' // เอาล่าสุดก่อน
-    }
-  })
+      section_id: "desc", // เอาล่าสุดก่อน
+    },
+  });
 
   if (!enrollment) {
     return NextResponse.json(
-      { message: "No section enrollment found" }, 
-      { status: 404 }
-    )
+      { message: "No section enrollment found" },
+      { status: 404 },
+    );
   }
 
-  return NextResponse.json(enrollment.section)
+  return NextResponse.json(enrollment.Section);
 }

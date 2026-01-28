@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
-import { getAuthUser } from "@/lib/auth"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * GET /api/sections/[id]/available-students
@@ -8,52 +8,52 @@ import { getAuthUser } from "@/lib/auth"
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
-  const user = await getAuthUser()
-  
+  const user = await getAuthUser();
+
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const sectionId = Number(params.id)
+  const sectionId = Number(params.id);
 
   // ดึงนักศึกษาที่ลงทะเบียนใน section นี้
-  const enrollments = await prisma.sectionEnrollment.findMany({
+  const enrollments = await prisma.section_Enrollment.findMany({
     where: {
-      section_id: sectionId
+      section_id: sectionId,
     },
     include: {
-      user: {
+      Users: {
         select: {
           users_id: true,
           firstname: true,
           lastname: true,
-          email: true
-        }
-      }
-    }
-  })
+          email: true,
+        },
+      },
+    },
+  });
 
   // กรองเอาเฉพาะคนที่ยังไม่มีทีมใน section นี้
-  const availableStudents = []
-  
+  const availableStudents = [];
+
   for (const enrollment of enrollments) {
     // ไม่รวมตัวเอง
-    if (enrollment.users_id === user.user_id) continue
+    if (enrollment.users_id === user.user_id) continue;
 
-    // เช็กว่ามีทีมใน section นี้หรือยัง
+    // เช็กว่ามีทีมใน section นี้หรือยัง (ผ่าน team.section_id)
     const hasTeam = await prisma.teammember.findFirst({
       where: {
         user_id: enrollment.users_id,
-        section_id: sectionId
-      }
-    })
+        Team: { section_id: sectionId },
+      },
+    });
 
     if (!hasTeam) {
-      availableStudents.push(enrollment.user)
+      availableStudents.push(enrollment.Users);
     }
   }
 
-  return NextResponse.json(availableStudents)
+  return NextResponse.json(availableStudents);
 }

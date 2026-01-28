@@ -63,7 +63,7 @@ export const SectionCard: React.FC<Props> = ({
             ภาคเรียน
           </span>
           <span className="font-semibold text-gray-900 dark:text-white">
-            {s.term?.term_name ?? `Term ${s.term.term_id}`}
+            {s.term?.term_name ?? `Term ${s.term?.term_id ?? "-"}`}
           </span>
         </div>
 

@@ -9,7 +9,7 @@ export interface User {
   name: string;
   email: string;
   role: string;
-  status: string;
+  status: "Active" | "Inactive";
   lastActive: string;
 }
 
@@ -38,7 +38,7 @@ export function useUserManagement() {
           name: `${u.firstname} ${u.lastname}`,
           email: u.email,
           role: u.role,
-          status: "Active",
+          status: "Active" as "Active" | "Inactive",
           lastActive: "Now",
         }));
         setUsers(mappedUsers);

@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/sections
@@ -9,20 +9,20 @@ export async function GET() {
   try {
     const sections = await prisma.section.findMany({
       include: {
-        term: true,
+        Term: true,
       },
       orderBy: {
         section_id: "asc",
       },
-    })
+    });
 
-    return NextResponse.json(sections)
+    return NextResponse.json(sections);
   } catch (error) {
-    console.error("GET /api/sections error:", error)
+    console.error("GET /api/sections error:", error);
     return NextResponse.json(
       { message: "Failed to fetch sections" },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 
@@ -32,7 +32,7 @@ export async function GET() {
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    const body = await request.json();
 
     const {
       section_code,
@@ -42,22 +42,22 @@ export async function POST(request: Request) {
       max_team_size,
       project_deadline,
       team_deadline,
-      term_id
-    } = body ?? {}
+      term_id,
+    } = body ?? {};
 
     // validation (ของคุณดีอยู่แล้ว)
-    const minT = Number(min_team_size)
-    const maxT = Number(max_team_size)
-    const termIdNum = Number(term_id)
+    const minT = Number(min_team_size);
+    const maxT = Number(max_team_size);
+    const termIdNum = Number(term_id);
 
-    const projDate = new Date(project_deadline)
-    const teamDate = new Date(team_deadline)
+    const projDate = new Date(project_deadline);
+    const teamDate = new Date(team_deadline);
 
     const term = await prisma.term.findUnique({
-      where: { term_id: termIdNum }
-    })
+      where: { term_id: termIdNum },
+    });
     if (!term) {
-      return NextResponse.json({ message: "Term not found" }, { status: 404 })
+      return NextResponse.json({ message: "Term not found" }, { status: 404 });
     }
 
     const newSection = await prisma.section.create({
@@ -71,14 +71,14 @@ export async function POST(request: Request) {
         team_deadline: teamDate,
         term_id: termIdNum,
       },
-    })
+    });
 
-    return NextResponse.json(newSection, { status: 201 })
+    return NextResponse.json(newSection, { status: 201 });
   } catch (error: any) {
-    console.error("Create section error:", error)
+    console.error("Create section error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }

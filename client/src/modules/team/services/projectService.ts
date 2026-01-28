@@ -19,7 +19,7 @@ export interface ProjectData {
 }
 
 export interface ProjectAdvisor {
-  advisor_id: number;
+  advisor_id: string;
   advisor?: {
     titles?: string;
     firstname: string;

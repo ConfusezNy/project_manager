@@ -1,31 +1,34 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
-  const sectionId = Number(params.id)
+  const sectionId = Number(params.id);
 
   if (isNaN(sectionId)) {
-    return NextResponse.json({ message: "Invalid section id" }, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid section id" },
+      { status: 400 },
+    );
   }
 
-  const enrollments = await prisma.sectionEnrollment.findMany({
+  const enrollments = await prisma.section_Enrollment.findMany({
     where: { section_id: sectionId },
     include: {
-      user: {
+      Users: {
         select: {
           users_id: true,
           firstname: true,
-          lastname: true
-        }
-      }
+          lastname: true,
+        },
+      },
     },
     orderBy: {
-      enrolledAt: "asc"
-    }
-  })
+      enrolledAt: "asc",
+    },
+  });
 
-  return NextResponse.json(enrollments)
+  return NextResponse.json(enrollments);
 }

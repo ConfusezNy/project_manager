@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 /**
  * PUT /api/projects/[id]
@@ -8,56 +8,66 @@ import { prisma } from '@/lib/prisma';
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   const user = await getAuthUser();
-  
+
   if (!user) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  if (user.role !== 'STUDENT') {
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  if (user.role !== "STUDENT") {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   try {
     const projectId = parseInt(params.id);
-    const { projectname, projectnameEng, project_type, description } = await req.json();
+    const { projectname, projectnameEng, project_type, description } =
+      await req.json();
 
     // ดึงข้อมูลโปรเจกต์เดิม
     const existingProject = await prisma.project.findUnique({
       where: { project_id: projectId },
       include: {
-        team: {
+        Team: {
           include: {
-            members: true
-          }
-        }
-      }
+            Teammember: true,
+          },
+        },
+      },
     });
 
     if (!existingProject) {
-      return NextResponse.json({ 
-        message: 'Project not found' 
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          message: "Project not found",
+        },
+        { status: 404 },
+      );
     }
 
     // ตรวจสอบว่า user เป็นสมาชิกของทีม
-    const isMember = existingProject.team.members.some(
-      (m) => m.user_id === user.user_id
+    const isMember = existingProject.Team.Teammember.some(
+      (m) => m.user_id === user.user_id,
     );
 
     if (!isMember) {
-      return NextResponse.json({ 
-        message: 'You are not a member of this team' 
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          message: "You are not a member of this team",
+        },
+        { status: 403 },
+      );
     }
 
     // ตรวจสอบว่าโปรเจกต์ได้รับการอนุมัติแล้วหรือไม่
-    if (existingProject.status === 'APPROVED') {
-      return NextResponse.json({ 
-        message: 'Cannot edit approved project' 
-      }, { status: 403 });
+    if (existingProject.status === "APPROVED") {
+      return NextResponse.json(
+        {
+          message: "Cannot edit approved project",
+        },
+        { status: 403 },
+      );
     }
 
     // แก้ไขโปรเจกต์
@@ -65,49 +75,58 @@ export async function PUT(
       where: { project_id: projectId },
       data: {
         projectname: projectname || existingProject.projectname,
-        projectnameEng: projectnameEng !== undefined ? projectnameEng : existingProject.projectnameEng,
-        project_type: project_type !== undefined ? project_type : existingProject.project_type,
-        description: description !== undefined ? description : existingProject.description
+        projectnameEng:
+          projectnameEng !== undefined
+            ? projectnameEng
+            : existingProject.projectnameEng,
+        project_type:
+          project_type !== undefined
+            ? project_type
+            : existingProject.project_type,
+        description:
+          description !== undefined ? description : existingProject.description,
       },
       include: {
-        team: {
+        Team: {
           include: {
-            section: true,
-            members: {
+            Section: true,
+            Teammember: {
               include: {
-                user: {
+                Users: {
                   select: {
                     users_id: true,
                     firstname: true,
-                    lastname: true
-                  }
-                }
-              }
-            }
-          }
+                    lastname: true,
+                  },
+                },
+              },
+            },
+          },
         },
-        advisors: {
+        ProjectAdvisor: {
           include: {
-            advisor: {
+            Users: {
               select: {
                 users_id: true,
                 firstname: true,
                 lastname: true,
-                titles: true
-              }
-            }
-          }
-        }
-      }
+                titles: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return NextResponse.json(updatedProject);
-
   } catch (error) {
-    console.error('Update project error:', error);
-    return NextResponse.json({ 
-      message: 'Internal server error' 
-    }, { status: 500 });
+    console.error("Update project error:", error);
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -117,16 +136,16 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   const user = await getAuthUser();
-  
+
   if (!user) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  if (user.role !== 'STUDENT') {
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  if (user.role !== "STUDENT") {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   try {
@@ -136,51 +155,62 @@ export async function DELETE(
     const project = await prisma.project.findUnique({
       where: { project_id: projectId },
       include: {
-        team: {
+        Team: {
           include: {
-            members: true
-          }
-        }
-      }
+            Teammember: true,
+          },
+        },
+      },
     });
 
     if (!project) {
-      return NextResponse.json({ 
-        message: 'Project not found' 
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          message: "Project not found",
+        },
+        { status: 404 },
+      );
     }
 
     // ตรวจสอบว่า user เป็นสมาชิกของทีม
-    const isMember = project.team.members.some(
-      (m) => m.user_id === user.user_id
+    const isMember = project.Team.Teammember.some(
+      (m) => m.user_id === user.user_id,
     );
 
     if (!isMember) {
-      return NextResponse.json({ 
-        message: 'You are not a member of this team' 
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          message: "You are not a member of this team",
+        },
+        { status: 403 },
+      );
     }
 
     // ตรวจสอบว่าโปรเจกต์ได้รับการอนุมัติแล้วหรือไม่
-    if (project.status === 'APPROVED') {
-      return NextResponse.json({ 
-        message: 'Cannot delete approved project' 
-      }, { status: 403 });
+    if (project.status === "APPROVED") {
+      return NextResponse.json(
+        {
+          message: "Cannot delete approved project",
+        },
+        { status: 403 },
+      );
     }
 
     // ลบโปรเจกต์
     await prisma.project.delete({
-      where: { project_id: projectId }
+      where: { project_id: projectId },
     });
 
-    return NextResponse.json({ 
-      message: 'Project deleted successfully' 
+    return NextResponse.json({
+      message: "Project deleted successfully",
     });
-
   } catch (error) {
-    console.error('Delete project error:', error);
-    return NextResponse.json({ 
-      message: 'Internal server error' 
-    }, { status: 500 });
+    console.error("Delete project error:", error);
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+      },
+      { status: 500 },
+    );
   }
 }

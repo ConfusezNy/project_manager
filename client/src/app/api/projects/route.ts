@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/projects
@@ -8,48 +8,58 @@ import { prisma } from '@/lib/prisma';
  */
 export async function POST(req: NextRequest) {
   const user = await getAuthUser();
-  
+
   if (!user) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  if (user.role !== 'STUDENT') {
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  if (user.role !== "STUDENT") {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   try {
-    const { projectname, projectnameEng, project_type, description, team_id } = await req.json();
+    const { projectname, projectnameEng, project_type, description, team_id } =
+      await req.json();
 
     // Validate required fields
     if (!projectname || !team_id) {
-      return NextResponse.json({ 
-        message: 'projectname and team_id are required' 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          message: "projectname and team_id are required",
+        },
+        { status: 400 },
+      );
     }
 
     // ตรวจสอบว่า user เป็นสมาชิกของทีมนี้
     const membership = await prisma.teammember.findFirst({
       where: {
         team_id: team_id,
-        user_id: user.user_id
-      }
+        user_id: user.user_id,
+      },
     });
 
     if (!membership) {
-      return NextResponse.json({ 
-        message: 'You are not a member of this team' 
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          message: "You are not a member of this team",
+        },
+        { status: 403 },
+      );
     }
 
     // ตรวจสอบว่าทีมนี้มีโปรเจกต์อยู่แล้วหรือไม่
     const existingProject = await prisma.project.findUnique({
-      where: { team_id: team_id }
+      where: { team_id: team_id },
     });
 
     if (existingProject) {
-      return NextResponse.json({ 
-        message: 'This team already has a project' 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          message: "This team already has a project",
+        },
+        { status: 400 },
+      );
     }
 
     // สร้างโปรเจกต์
@@ -59,36 +69,38 @@ export async function POST(req: NextRequest) {
         projectnameEng: projectnameEng || null,
         project_type: project_type || null,
         description: description || null,
-        status: 'DRAFT', // ร่าง - ยังไม่มีอาจารย์
-        team_id
+        status: "DRAFT", // ร่าง - ยังไม่มีอาจารย์
+        team_id,
       },
       include: {
-        team: {
+        Team: {
           include: {
-            section: true,
-            members: {
+            Section: true,
+            Teammember: {
               include: {
-                user: {
+                Users: {
                   select: {
                     users_id: true,
                     firstname: true,
-                    lastname: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    lastname: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     return NextResponse.json(project, { status: 201 });
-
   } catch (error) {
-    console.error('Create project error:', error);
-    return NextResponse.json({ 
-      message: 'Internal server error' 
-    }, { status: 500 });
+    console.error("Create project error:", error);
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -98,62 +110,67 @@ export async function POST(req: NextRequest) {
  */
 export async function GET(req: NextRequest) {
   const user = await getAuthUser();
-  
+
   if (!user) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
-  const team_id = searchParams.get('team_id');
+  const team_id = searchParams.get("team_id");
 
   if (!team_id) {
-    return NextResponse.json({ 
-      message: 'team_id parameter is required' 
-    }, { status: 400 });
+    return NextResponse.json(
+      {
+        message: "team_id parameter is required",
+      },
+      { status: 400 },
+    );
   }
 
   try {
     const project = await prisma.project.findUnique({
       where: { team_id: parseInt(team_id) },
       include: {
-        team: {
+        Team: {
           include: {
-            section: true,
-            members: {
+            Section: true,
+            Teammember: {
               include: {
-                user: {
+                Users: {
                   select: {
                     users_id: true,
                     firstname: true,
-                    lastname: true
-                  }
-                }
-              }
-            }
-          }
+                    lastname: true,
+                  },
+                },
+              },
+            },
+          },
         },
-        advisors: {
+        ProjectAdvisor: {
           include: {
-            advisor: {
+            Users: {
               select: {
                 users_id: true,
                 firstname: true,
                 lastname: true,
                 titles: true,
-                email: true
-              }
-            }
-          }
-        }
-      }
+                email: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return NextResponse.json(project);
-
   } catch (error) {
-    console.error('Get project error:', error);
-    return NextResponse.json({ 
-      message: 'Internal server error' 
-    }, { status: 500 });
+    console.error("Get project error:", error);
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+      },
+      { status: 500 },
+    );
   }
 }

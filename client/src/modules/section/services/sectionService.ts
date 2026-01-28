@@ -64,7 +64,12 @@ export const sectionService = {
   async getSections(): Promise<Section[]> {
     const res = await fetch("/api/sections", { cache: "no-store" });
     if (!res.ok) throw new Error("ไม่สามารถโหลดข้อมูล section ได้");
-    return res.json();
+    const data = await res.json();
+    // Transform Prisma's capital property names to lowercase for frontend compatibility
+    return data.map((s: any) => ({
+      ...s,
+      term: s.Term || s.term, // Handle both cases
+    }));
   },
 
   // Fetch all terms

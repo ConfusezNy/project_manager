@@ -18,7 +18,7 @@ export interface TimelineItem {
 
 export function useTimeline() {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = (session?.user as any)?.role === "ADMIN";
 
   const [data, setData] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

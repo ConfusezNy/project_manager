@@ -1,28 +1,31 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
-  const sectionId = Number(params.id)
+  const sectionId = Number(params.id);
 
   if (isNaN(sectionId)) {
-    return NextResponse.json({ message: "Invalid section id" }, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid section id" },
+      { status: 400 },
+    );
   }
 
   const section = await prisma.section.findUnique({
     where: { section_id: sectionId },
     include: {
-      term: true
-    }
-  })
+      Term: true,
+    },
+  });
 
   if (!section) {
-    return NextResponse.json({ message: "Section not found" }, { status: 404 })
+    return NextResponse.json({ message: "Section not found" }, { status: 404 });
   }
 
-  return NextResponse.json(section)
+  return NextResponse.json(section);
 }
 export async function POST(request: Request) {
   try {
@@ -36,7 +39,7 @@ export async function POST(request: Request) {
       max_team_size,
       project_deadline,
       team_deadline,
-      term_id
+      term_id,
     } = body ?? {};
 
     const missing: string[] = [];
@@ -49,36 +52,56 @@ export async function POST(request: Request) {
     if (!team_deadline) missing.push("team_deadline");
     if (term_id == null) missing.push("term_id");
     if (missing.length > 0) {
-      return NextResponse.json({ message: "Missing fields", missing }, { status: 400 });
+      return NextResponse.json(
+        { message: "Missing fields", missing },
+        { status: 400 },
+      );
     }
 
     const allowedCourse = ["PRE_PROJECT", "PROJECT"];
     const allowedStudy = ["REG", "LE"];
     if (!allowedCourse.includes(course_type)) {
-      return NextResponse.json({ message: "Invalid course_type", allowedCourse }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid course_type", allowedCourse },
+        { status: 400 },
+      );
     }
     if (!allowedStudy.includes(study_type)) {
-      return NextResponse.json({ message: "Invalid study_type", allowedStudy }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid study_type", allowedStudy },
+        { status: 400 },
+      );
     }
 
     const minT = Number(min_team_size);
     const maxT = Number(max_team_size);
     const termIdNum = Number(term_id);
     if (Number.isNaN(minT) || Number.isNaN(maxT) || Number.isNaN(termIdNum)) {
-      return NextResponse.json({ message: "min_team_size, max_team_size and term_id must be numbers" }, { status: 400 });
+      return NextResponse.json(
+        { message: "min_team_size, max_team_size and term_id must be numbers" },
+        { status: 400 },
+      );
     }
     if (minT <= 0 || maxT <= 0 || minT > maxT) {
-      return NextResponse.json({ message: "Invalid team size range" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid team size range" },
+        { status: 400 },
+      );
     }
 
     const projDate = new Date(project_deadline);
     const teamDate = new Date(team_deadline);
     if (isNaN(projDate.valueOf()) || isNaN(teamDate.valueOf())) {
-      return NextResponse.json({ message: "Invalid date format" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid date format" },
+        { status: 400 },
+      );
     }
 
     // ตรวจว่า term มีอยู่จริง
-    const term = await prisma.term.findUnique({ where: { term_id: termIdNum } });
+    const term = await prisma.term.findUnique({
+      where: { term_id: termIdNum },
+    });
     if (!term) {
       return NextResponse.json({ message: "Term not found" }, { status: 404 });
     }
@@ -92,7 +115,7 @@ export async function POST(request: Request) {
       max_team_size: maxT,
       project_deadline: projDate.toISOString(),
       team_deadline: teamDate.toISOString(),
-      term_id: termIdNum
+      term_id: termIdNum,
     });
 
     // สร้าง section
@@ -106,20 +129,32 @@ export async function POST(request: Request) {
           max_team_size: maxT,
           project_deadline: projDate,
           team_deadline: teamDate,
-          term_id: termIdNum
-        }
+          term_id: termIdNum,
+        },
       });
 
       return NextResponse.json(newSection, { status: 201 });
     } catch (err: any) {
       console.error("Prisma create error:", err);
       if (err?.code === "P2002") {
-        return NextResponse.json({ message: "Section code already exists", detail: err.meta }, { status: 409 });
+        return NextResponse.json(
+          { message: "Section code already exists", detail: err.meta },
+          { status: 409 },
+        );
       }
-      return NextResponse.json({ message: "Create failed", detail: err?.message || String(err) }, { status: 500 });
+      return NextResponse.json(
+        { message: "Create failed", detail: err?.message || String(err) },
+        { status: 500 },
+      );
     }
   } catch (error: any) {
     console.error("Create section error:", error);
-    return NextResponse.json({ message: "Internal server error", detail: error?.message || String(error) }, { status: 500 });
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+        detail: error?.message || String(error),
+      },
+      { status: 500 },
+    );
   }
 }

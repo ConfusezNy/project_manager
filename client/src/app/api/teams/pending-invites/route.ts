@@ -1,20 +1,21 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
-import { getAuthUser } from "@/lib/auth"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * GET /api/teams/pending-invites
  * ดึงรายการคำเชิญเข้ากลุ่มที่รอการตอบรับ
  */
 export async function GET() {
-  const user = await getAuthUser()
-  
+  const user = await getAuthUser();
+
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  // Return empty array for non-STUDENT roles (don't break the UI)
   if (user.role !== "STUDENT") {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+    return NextResponse.json([]);
   }
 
   // ดึง notification ที่เป็นคำเชิญเข้าทีม
@@ -22,41 +23,41 @@ export async function GET() {
     where: {
       user_id: user.user_id,
       event_type: "TEAM_INVITE",
-      isRead: false
+      isRead: false,
     },
     include: {
-      team: {
+      Team: {
         include: {
-          section: {
+          Section: {
             include: {
-              term: true
-            }
+              Term: true,
+            },
           },
-          members: {
+          Teammember: {
             include: {
-              user: {
+              Users: {
                 select: {
                   users_id: true,
                   firstname: true,
-                  lastname: true
-                }
-              }
-            }
-          }
-        }
+                  lastname: true,
+                },
+              },
+            },
+          },
+        },
       },
-      actor: {
+      Users_Notification_actor_user_idToUsers: {
         select: {
           users_id: true,
           firstname: true,
-          lastname: true
-        }
-      }
+          lastname: true,
+        },
+      },
     },
     orderBy: {
-      createdAt: 'desc'
-    }
-  })
+      createdAt: "desc",
+    },
+  });
 
-  return NextResponse.json(invites)
+  return NextResponse.json(invites);
 }

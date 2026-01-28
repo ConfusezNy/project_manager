@@ -3,7 +3,7 @@ import { LucideIcon } from "lucide-react";
 
 interface ButtonProps {
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   variant?: "primary" | "secondary" | "ghost" | "outline";
   className?: string;
   icon?: LucideIcon;

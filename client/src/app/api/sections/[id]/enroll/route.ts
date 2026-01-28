@@ -1,36 +1,39 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
-  const sectionId = Number(params.id)
+  const sectionId = Number(params.id);
 
   if (isNaN(sectionId)) {
-    return NextResponse.json({ message: "Invalid section id" }, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid section id" },
+      { status: 400 },
+    );
   }
 
-  const body = await req.json()
-  const { users_ids } = body as { users_ids: string[] }
+  const body = await req.json();
+  const { users_ids } = body as { users_ids: string[] };
 
   if (!Array.isArray(users_ids) || users_ids.length === 0) {
     return NextResponse.json(
       { message: "users_ids must be a non-empty array" },
-      { status: 400 }
-    )
+      { status: 400 },
+    );
   }
 
-  await prisma.sectionEnrollment.createMany({
-    data: users_ids.map(userId => ({
+  await prisma.section_Enrollment.createMany({
+    data: users_ids.map((userId) => ({
       users_id: userId,
-      section_id: sectionId
+      section_id: sectionId,
     })),
-    skipDuplicates: true
-  })
+    skipDuplicates: true,
+  });
 
   return NextResponse.json({
     message: "Enroll completed",
-    enrolledCount: users_ids.length
-  })
+    enrolledCount: users_ids.length,
+  });
 }
