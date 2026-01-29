@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const notification = await prisma.notification.findFirst({
       where: {
         notification_id: notificationId,
-        user_id: user.user_id,
+        user_id: user.users_id,
         event_type: 'TEAM_INVITE',
         isRead: false
       }

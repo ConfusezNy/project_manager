@@ -1,5 +1,6 @@
 // Team Service - API calls for team management
 // Usage: import { teamService } from '@/modules/team/services/teamService';
+import { api } from "@/lib/api";
 
 export interface TeamData {
   team_id: number;
@@ -18,7 +19,7 @@ export interface TeamData {
 }
 
 export interface TeamMember {
-  user_id: string;
+  users_id: string;
   firstname: string;
   lastname: string;
   email: string;
@@ -51,123 +52,121 @@ export interface AvailableStudent {
 export const teamService = {
   // Fetch user's team
   async getMyTeam() {
-    const res = await fetch("/api/teams/my-team");
-    if (!res.ok) return null;
-    const data = await res.json();
-    // Prisma returns relation as 'Team' (uppercase)
-    const team = data?.Team || data?.team;
-    if (!team) return null;
+    try {
+      const data = await api.get<any>("/api/teams/my-team");
+      if (!data) return null;
 
-    // Normalize Prisma PascalCase to camelCase
-    return {
-      ...team,
-      section: team.Section || team.section,
-      members: (team.Teammember || team.members || []).map((m: any) => ({
-        ...m,
-        user: m.Users || m.user,
-        users_id: m.Users?.users_id || m.user?.users_id || m.user_id,
-        firstname: m.Users?.firstname || m.user?.firstname || m.firstname,
-        lastname: m.Users?.lastname || m.user?.lastname || m.lastname,
-      })),
-    };
+      // Prisma returns relation as 'Team' (uppercase)
+      const team = data?.Team || data?.team;
+      if (!team) return null;
+
+      // Normalize Prisma PascalCase to camelCase
+      return {
+        ...team,
+        section: team.Section || team.section,
+        members: (team.Teammember || team.members || []).map((m: any) => {
+          // Get users_id from multiple possible sources (FK is user_id, PK is users_id)
+          const usersId = m.user_id || m.Users?.users_id || m.user?.users_id;
+          const userObj = m.Users || m.user;
+          return {
+            ...m,
+            users_id: usersId, // Standard field for components
+            user: userObj
+              ? {
+                  ...userObj,
+                  users_id: userObj.users_id || usersId,
+                }
+              : undefined,
+            firstname: userObj?.firstname || m.firstname,
+            lastname: userObj?.lastname || m.lastname,
+          };
+        }),
+      };
+    } catch (error) {
+      return null;
+    }
   },
 
   // Fetch user's section
   async getMySection() {
-    const res = await fetch("/api/sections/my-section");
-    if (!res.ok) return null;
-    return res.json();
+    try {
+      return await api.get<any>("/api/sections/my-section");
+    } catch {
+      return null;
+    }
   },
 
   // Fetch pending invites
   async getPendingInvites(): Promise<PendingInvite[]> {
-    const res = await fetch("/api/teams/pending-invites");
-    if (!res.ok) return [];
-    return res.json();
+    try {
+      return await api.get<PendingInvite[]>("/api/teams/pending-invites");
+    } catch {
+      return [];
+    }
   },
 
   // Create new team
   async createTeam(sectionId: number) {
-    const res = await fetch("/api/teams", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sectionId }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "สร้างกลุ่มไม่สำเร็จ");
+    try {
+      return await api.post("/api/teams", { sectionId });
+    } catch (error: any) {
+      throw new Error(error.message || "สร้างกลุ่มไม่สำเร็จ");
     }
-    return res.json();
   },
 
   // Get available students for invite
   async getAvailableStudents(sectionId: number): Promise<AvailableStudent[]> {
-    const res = await fetch(`/api/sections/${sectionId}/available-students`);
-    if (!res.ok) return [];
-    return res.json();
+    try {
+      return await api.get<AvailableStudent[]>(
+        `/api/sections/${sectionId}/available-students`,
+      );
+    } catch {
+      return [];
+    }
   },
 
   // Invite member to team
   async inviteMember(teamId: number, inviteeUserId: string) {
-    const res = await fetch("/api/teams/invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teamId, inviteeUserId }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "เชิญสมาชิกไม่สำเร็จ");
+    try {
+      return await api.post("/api/teams/invite", { teamId, inviteeUserId });
+    } catch (error: any) {
+      throw new Error(error.message || "เชิญสมาชิกไม่สำเร็จ");
     }
-    return res.json();
   },
 
   // Accept invite
   async acceptInvite(notificationId: number) {
-    const res = await fetch("/api/teams/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notificationId }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "เข้าร่วมกลุ่มไม่สำเร็จ");
+    try {
+      return await api.post("/api/teams/join", { notificationId });
+    } catch (error: any) {
+      throw new Error(error.message || "เข้าร่วมกลุ่มไม่สำเร็จ");
     }
-    return res.json();
   },
 
   // Reject invite
   async rejectInvite(notificationId: number) {
-    const res = await fetch("/api/teams/reject", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notificationId }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "ปฏิเสธไม่สำเร็จ");
+    try {
+      return await api.post("/api/teams/reject", { notificationId });
+    } catch (error: any) {
+      throw new Error(error.message || "ปฏิเสธไม่สำเร็จ");
     }
-    return res.json();
   },
 
   // Leave team
   async leaveTeam() {
-    const res = await fetch("/api/teams/leave", { method: "POST" });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "ออกจากกลุ่มไม่สำเร็จ");
+    try {
+      return await api.post("/api/teams/leave", {});
+    } catch (error: any) {
+      throw new Error(error.message || "ออกจากกลุ่มไม่สำเร็จ");
     }
-    return res.json();
   },
 
   // Remove member from team
   async removeMember(teamId: number, userId: string) {
-    const res = await fetch(`/api/teams/${teamId}/members/${userId}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "ลบสมาชิกไม่สำเร็จ");
+    try {
+      return await api.delete(`/api/teams/${teamId}/members/${userId}`);
+    } catch (error: any) {
+      throw new Error(error.message || "ลบสมาชิกไม่สำเร็จ");
     }
-    return res.json();
   },
 };

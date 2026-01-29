@@ -119,7 +119,7 @@ export const TeamDashboard: React.FC = () => {
             members={teamData?.members || []}
             onInviteClick={handlers.openInviteModal}
             onRemoveMember={handlers.removeMember}
-            currentUserId={user?.user_id}
+            currentUserId={user?.users_id}
             canEdit={projectData?.status !== "APPROVED"}
           />
         ) : (

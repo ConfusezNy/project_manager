@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     // ดึงโปรเจกต์ที่อาจารย์เป็นที่ปรึกษา
     const projectAdvisors = await prisma.projectAdvisor.findMany({
       where: {
-        advisor_id: user.user_id,
+        advisor_id: user.users_id,
       },
       include: {
         Project: {

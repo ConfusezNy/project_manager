@@ -12,7 +12,7 @@ export async function GET() {
   const teams = await prisma.team.findMany({
     where: {
       Teammember: {
-        some: { user_id: user.user_id },
+        some: { user_id: user.users_id },
       },
     },
     include: {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
     const { sectionId } = await req.json();
     console.log(
-      `[POST /api/teams] User: ${user.user_id}, sectionId: ${sectionId}`,
+      `[POST /api/teams] User: ${user.users_id}, sectionId: ${sectionId}`,
     );
 
     if (!sectionId) {
@@ -58,13 +58,13 @@ export async function POST(req: Request) {
     const enrollment = await prisma.section_Enrollment.findFirst({
       where: {
         section_id: Number(sectionId),
-        users_id: user.user_id,
+        users_id: user.users_id,
       },
     });
 
     if (!enrollment) {
       console.log(
-        `[POST /api/teams] User ${user.user_id} not enrolled in section ${sectionId}`,
+        `[POST /api/teams] User ${user.users_id} not enrolled in section ${sectionId}`,
       );
       return NextResponse.json(
         { message: "คุณยังไม่ได้ลงทะเบียนในรายวิชานี้" },
@@ -75,14 +75,14 @@ export async function POST(req: Request) {
     // เช็กว่ามีทีมใน section นี้แล้วหรือยัง (ผ่าน team.section_id)
     const exists = await prisma.teammember.findFirst({
       where: {
-        user_id: user.user_id,
+        user_id: user.users_id,
         Team: { section_id: Number(sectionId) },
       },
     });
 
     if (exists) {
       console.log(
-        `[POST /api/teams] User ${user.user_id} already has team in section ${sectionId}`,
+        `[POST /api/teams] User ${user.users_id} already has team in section ${sectionId}`,
       );
       return NextResponse.json(
         { message: "คุณมีทีมในรายวิชานี้แล้ว" },
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     }
 
     console.log(
-      `[POST /api/teams] Creating team for user ${user.user_id} in section ${sectionId}`,
+      `[POST /api/teams] Creating team for user ${user.users_id} in section ${sectionId}`,
     );
 
     // ดึง section info เพื่อเอา semester
@@ -124,7 +124,7 @@ export async function POST(req: Request) {
     await prisma.teammember.create({
       data: {
         team_id: team.team_id,
-        user_id: user.user_id,
+        user_id: user.users_id,
       },
     });
 

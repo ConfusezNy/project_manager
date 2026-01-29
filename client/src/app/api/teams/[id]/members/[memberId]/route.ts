@@ -28,7 +28,7 @@ export async function DELETE(
     const membership = await prisma.teammember.findFirst({
       where: {
         team_id: teamId,
-        user_id: user.user_id,
+        user_id: user.users_id,
       },
     });
 

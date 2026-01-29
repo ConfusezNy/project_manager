@@ -93,7 +93,7 @@ export default function AdvisorSelectionModal({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
+        <div className="bg-slate-900 px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold text-white">
@@ -157,7 +157,7 @@ export default function AdvisorSelectionModal({
                 >
                   {/* Profile Picture */}
                   <div className="flex justify-center mb-4">
-                    <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500">
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden bg-slate-800">
                       {advisor.profilePicture ? (
                         <Image
                           src={advisor.profilePicture}
@@ -205,7 +205,7 @@ export default function AdvisorSelectionModal({
                     <button
                       onClick={() => handleSelectAdvisor(advisor.users_id)}
                       disabled={selecting}
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {selecting ? "กำลังเลือก..." : "เลือกอาจารย์ท่านนี้"}
                     </button>

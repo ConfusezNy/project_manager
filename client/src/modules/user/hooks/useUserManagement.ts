@@ -3,6 +3,7 @@
 // useUserManagement Hook - State management for user management page
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { api } from "@/lib/api";
 
 export interface User {
   id: string | number;
@@ -29,10 +30,9 @@ export function useUserManagement() {
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/users");
-      const data = await res.json();
+      const data = await api.get<any[]>("/api/users");
 
-      if (res.ok) {
+      if (data) {
         const mappedUsers = data.map((u: any) => ({
           id: u.users_id,
           name: `${u.firstname} ${u.lastname}`,
@@ -71,10 +71,10 @@ export function useUserManagement() {
 
   const handleDeleteClick = useCallback(async (id: string | number) => {
     if (confirm("คุณต้องการลบผู้ใช้งานนี้ใช่หรือไม่?")) {
-      const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
-      if (res.ok) {
+      try {
+        await api.delete(`/api/users/${id}`);
         setUsers((prev) => prev.filter((u) => u.id !== id));
-      } else {
+      } catch (error) {
         alert("ลบไม่สำเร็จ");
       }
     }

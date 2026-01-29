@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       include: { Team: true },
     });
 
-    if (!notification || notification.user_id !== user.user_id) {
+    if (!notification || notification.user_id !== user.users_id) {
       return NextResponse.json(
         { message: "Invitation not found" },
         { status: 404 },
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     // เช็กว่ายังไม่มีทีมใน section นี้ (ผ่าน team.section_id)
     const exists = await prisma.teammember.findFirst({
       where: {
-        user_id: user.user_id,
+        user_id: user.users_id,
         Team: { section_id: notification.Team.section_id },
       },
     });
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     await prisma.teammember.create({
       data: {
         team_id: notification.Team.team_id,
-        user_id: user.user_id,
+        user_id: user.users_id,
       },
     });
 

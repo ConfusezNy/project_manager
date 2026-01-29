@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { FileText, Edit2, Trash2 } from 'lucide-react';
+import React from "react";
+import { FileText, Edit2, Trash2 } from "lucide-react";
 
 interface TeamProjectDetailProps {
   data: any;
@@ -10,11 +10,11 @@ interface TeamProjectDetailProps {
   canEdit?: boolean;
 }
 
-export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({ 
-  data, 
-  onEdit, 
+export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
+  data,
+  onEdit,
   onDelete,
-  canEdit = false 
+  canEdit = false,
 }) => {
   if (!data) {
     return (
@@ -44,7 +44,7 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
         {canEdit && (
           <div className="flex gap-2">
             {onEdit && (
-              <button 
+              <button
                 onClick={onEdit}
                 className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
@@ -53,7 +53,7 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
               </button>
             )}
             {onDelete && (
-              <button 
+              <button
                 onClick={onDelete}
                 className="flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
               >
@@ -64,7 +64,7 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
           </div>
         )}
       </div>
-      
+
       <div className="space-y-6">
         {/* ชื่อโครงงานภาษาไทย */}
         <div>
@@ -120,13 +120,17 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
             </p>
             <div className="space-y-2">
               {data.advisors.map((advisor: any) => (
-                <div key={advisor.advisor_id} className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
-                    {advisor.advisor?.firstname?.charAt(0) || 'A'}
+                <div
+                  key={advisor.advisor_id}
+                  className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                >
+                  <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold">
+                    {advisor.advisor?.firstname?.charAt(0) || "A"}
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {advisor.advisor?.titles} {advisor.advisor?.firstname} {advisor.advisor?.lastname}
+                      {advisor.advisor?.titles} {advisor.advisor?.firstname}{" "}
+                      {advisor.advisor?.lastname}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {advisor.advisor?.email}
@@ -143,16 +147,24 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
           <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-2">
             สถานะ
           </p>
-          <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
-            data.status === 'APPROVED' 
-              ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
-              : data.status === 'REJECTED'
-              ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
-              : data.status === 'PENDING'
-              ? 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800'
-              : 'bg-gray-50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800'
-          }`}>
-            {data.status === 'APPROVED' ? 'อนุมัติแล้ว' : data.status === 'REJECTED' ? 'ไม่อนุมัติ' : data.status === 'PENDING' ? 'รอการอนุมัติ' : 'ร่าง (ยังไม่มีอาจารย์)'}
+          <span
+            className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+              data.status === "APPROVED"
+                ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800"
+                : data.status === "REJECTED"
+                  ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+                  : data.status === "PENDING"
+                    ? "bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800"
+                    : "bg-gray-50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800"
+            }`}
+          >
+            {data.status === "APPROVED"
+              ? "อนุมัติแล้ว"
+              : data.status === "REJECTED"
+                ? "ไม่อนุมัติ"
+                : data.status === "PENDING"
+                  ? "รอการอนุมัติ"
+                  : "ร่าง (ยังไม่มีอาจารย์)"}
           </span>
         </div>
       </div>

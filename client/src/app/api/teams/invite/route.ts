@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   const isMember = await prisma.teammember.findFirst({
     where: {
       team_id: team.team_id,
-      user_id: user.user_id,
+      user_id: user.users_id,
     },
   });
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   await prisma.notification.create({
     data: {
       user_id: inviteeUserId,
-      actor_user_id: user.user_id,
+      actor_user_id: user.users_id,
       title: "เชิญเข้าร่วมทีม",
       message: "คุณถูกเชิญให้เข้าร่วมกลุ่มโครงงาน",
       event_type: "TEAM_INVITE",

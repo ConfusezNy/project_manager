@@ -11,7 +11,7 @@ export async function GET() {
 
   const member = await prisma.teammember.findFirst({
     where: {
-      user_id: user.user_id,
+      user_id: user.users_id,
     },
     include: {
       Team: {

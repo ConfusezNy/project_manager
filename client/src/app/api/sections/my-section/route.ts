@@ -20,7 +20,7 @@ export async function GET() {
   // ดึง section ที่นักศึกษาลงทะเบียนเรียน
   const enrollment = await prisma.section_Enrollment.findFirst({
     where: {
-      users_id: user.user_id,
+      users_id: user.users_id,
     },
     include: {
       Section: {

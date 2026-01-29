@@ -1,5 +1,6 @@
 // Section Service - API calls for section management
 // Usage: import { sectionService } from '@/modules/section/services/sectionService';
+import { api } from "@/lib/api";
 
 export interface Section {
   section_id: number;
@@ -62,9 +63,8 @@ export interface CreateTermForm {
 export const sectionService = {
   // Fetch all sections
   async getSections(): Promise<Section[]> {
-    const res = await fetch("/api/sections", { cache: "no-store" });
-    if (!res.ok) throw new Error("ไม่สามารถโหลดข้อมูล section ได้");
-    const data = await res.json();
+    const data = await api.get<any[]>("/api/sections", { cache: "no-store" });
+    if (!data) return [];
     // Transform Prisma's capital property names to lowercase for frontend compatibility
     return data.map((s: any) => ({
       ...s,
@@ -74,9 +74,8 @@ export const sectionService = {
 
   // Fetch all terms
   async getTerms(): Promise<Term[]> {
-    const res = await fetch("/api/terms", { cache: "no-store" });
-    if (!res.ok) return [];
-    const data = await res.json();
+    const data = await api.get<Term[]>("/api/terms", { cache: "no-store" });
+    if (!data) return [];
     return data.sort(
       (a: Term, b: Term) =>
         Number(b.academicYear) - Number(a.academicYear) ||
@@ -86,69 +85,38 @@ export const sectionService = {
 
   // Create section
   async createSection(form: CreateSectionForm) {
-    const res = await fetch("/api/sections", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "เกิดข้อผิดพลาด");
-    }
-    return res.json();
+    return api.post("/api/sections", form);
   },
 
   // Create term
   async createTerm(form: CreateTermForm) {
-    const res = await fetch("/api/terms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "สร้างเทอมไม่สำเร็จ");
-    }
-    return res.json();
+    return api.post("/api/terms", form);
   },
 
   // Get enrollments for a section
   async getEnrollments(sectionId: number): Promise<Enrollment[]> {
-    const res = await fetch(`/api/sections/${sectionId}/enrollments`);
-    if (!res.ok) return [];
-    return res.json();
+    return api.get<Enrollment[]>(`/api/sections/${sectionId}/enrollments`);
   },
 
   // Get candidates for enrollment
   async getCandidates(sectionId: number): Promise<Candidate[]> {
-    const res = await fetch(`/api/sections/${sectionId}/candidates`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.candidates || [];
+    const data = await api.get<{ candidates: Candidate[] }>(
+      `/api/sections/${sectionId}/candidates`,
+    );
+    return data?.candidates || [];
   },
 
   // Enroll students
   async enrollStudents(sectionId: number, userIds: string[]) {
-    const res = await fetch(`/api/sections/${sectionId}/enroll`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ users_ids: userIds }),
+    return api.post(`/api/sections/${sectionId}/enroll`, {
+      users_ids: userIds,
     });
-    if (!res.ok) throw new Error("Enroll ล้มเหลว");
-    return res.json();
   },
 
   // Continue to project (for PRE_PROJECT sections)
   async continueToProject(sectionId: number, newTermId: string) {
-    const res = await fetch(`/api/sections/${sectionId}/continue-to-project`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ new_term_id: newTermId }),
+    return api.post(`/api/sections/${sectionId}/continue-to-project`, {
+      new_term_id: newTermId,
     });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "ต่อวิชาล้มเหลว");
-    }
-    return res.json();
   },
 };

@@ -126,6 +126,7 @@ model Task {
   dueDate        DateTime?
   authorUserId   String           @db.VarChar(13)
   project_id     Int
+  position       Int              @default(0)
   Attachment     Attachment[]
   Comment        Comment[]
   Notification   Notification[]

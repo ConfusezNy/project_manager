@@ -222,7 +222,7 @@ export function useTeamData(): UseTeamDataReturn {
     async (userId: string) => {
       if (!teamData) return;
 
-      const isRemovingSelf = userId === user?.user_id;
+      const isRemovingSelf = userId === user?.users_id;
 
       if (isRemovingSelf) {
         if (

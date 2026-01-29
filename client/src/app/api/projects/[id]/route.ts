@@ -48,7 +48,7 @@ export async function PUT(
 
     // ตรวจสอบว่า user เป็นสมาชิกของทีม
     const isMember = existingProject.Team.Teammember.some(
-      (m) => m.user_id === user.user_id,
+      (m) => m.user_id === user.users_id,
     );
 
     if (!isMember) {
@@ -174,7 +174,7 @@ export async function DELETE(
 
     // ตรวจสอบว่า user เป็นสมาชิกของทีม
     const isMember = project.Team.Teammember.some(
-      (m) => m.user_id === user.user_id,
+      (m) => m.user_id === user.users_id,
     );
 
     if (!isMember) {

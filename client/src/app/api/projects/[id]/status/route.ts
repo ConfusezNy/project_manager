@@ -38,7 +38,7 @@ export async function PUT(
     const projectAdvisor = await prisma.projectAdvisor.findFirst({
       where: {
         project_id: projectId,
-        advisor_id: user.user_id,
+        advisor_id: user.users_id,
       },
       include: {
         Project: true,

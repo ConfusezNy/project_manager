@@ -21,7 +21,7 @@ export async function GET() {
   // ดึง notification ที่เป็นคำเชิญเข้าทีม
   const invites = await prisma.notification.findMany({
     where: {
-      user_id: user.user_id,
+      user_id: user.users_id,
       event_type: "TEAM_INVITE",
       isRead: false,
     },

@@ -40,7 +40,7 @@ export async function GET(
 
   for (const enrollment of enrollments) {
     // ไม่รวมตัวเอง
-    if (enrollment.users_id === user.user_id) continue;
+    if (enrollment.users_id === user.users_id) continue;
 
     // เช็กว่ามีทีมใน section นี้หรือยัง (ผ่าน team.section_id)
     const hasTeam = await prisma.teammember.findFirst({

@@ -1,21 +1,16 @@
-import { redirect } from "next/navigation"
-import { getAuthUser } from "@/lib/auth"
+import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/auth";
 
 export default async function StudentLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const user = await getAuthUser()
-  
+  const user = await getAuthUser();
+
   if (!user || user.role !== "STUDENT") {
-    redirect("/")
+    redirect("/");
   }
 
-  return (
-    <div>
-      <div className="bg-green-100 p-2 text-sm">Student Panel</div>
-      {children}
-    </div>
-  )
+  return <div>{children}</div>;
 }
