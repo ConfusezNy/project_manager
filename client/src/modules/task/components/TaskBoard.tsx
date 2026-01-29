@@ -14,11 +14,12 @@ import {
   DragOverlay,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { Plus, LayoutGrid, GanttChart } from "lucide-react";
+import { Plus, LayoutGrid, Calendar } from "lucide-react";
 import { TaskColumn } from "./TaskColumn";
 import { TaskCard } from "./TaskCard";
 import { TaskFormModal } from "./TaskFormModal";
 import { TaskDetailModal } from "./TaskDetailModal";
+import { TaskGanttChart } from "./TaskGanttChart";
 import { useTaskBoard } from "../hooks/useTaskBoard";
 import type { Task, TaskStatus } from "../types/task.types";
 
@@ -192,7 +193,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
-              <GanttChart size={16} />
+              <Calendar size={16} />
               Timeline
             </button>
           </div>
@@ -242,19 +243,12 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
         </DndContext>
       )}
 
-      {/* Timeline View Placeholder */}
+      {/* Timeline View - Gantt Chart */}
       {viewMode === "timeline" && (
-        <div className="flex items-center justify-center h-64 bg-gray-50 dark:bg-gray-800/50 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-          <div className="text-center">
-            <GanttChart
-              size={48}
-              className="mx-auto text-gray-300 dark:text-gray-600 mb-4"
-            />
-            <p className="text-gray-500 dark:text-gray-400">
-              Gantt Chart จะถูกเพิ่มใน Phase 2.3
-            </p>
-          </div>
-        </div>
+        <TaskGanttChart
+          tasks={columns.flatMap((c) => c.tasks)}
+          onTaskClick={handleTaskClick}
+        />
       )}
 
       {/* Modals */}

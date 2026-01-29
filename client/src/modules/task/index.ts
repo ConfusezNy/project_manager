@@ -7,6 +7,7 @@ export { TaskCard } from "./components/TaskCard";
 export { TaskColumn } from "./components/TaskColumn";
 export { TaskFormModal } from "./components/TaskFormModal";
 export { TaskDetailModal } from "./components/TaskDetailModal";
+export { TaskGanttChart } from "./components/TaskGanttChart";
 
 // Hooks
 export { useTaskBoard } from "./hooks/useTaskBoard";
