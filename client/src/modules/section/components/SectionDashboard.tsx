@@ -5,7 +5,7 @@ import React from "react";
 import { useSectionData } from "../hooks/useSectionData";
 
 // Sub-components
-import { SectionCard } from "./SectionCard";
+import { SectionAccordion } from "./SectionAccordion";
 import { CreateTermModal } from "./CreateTermModal";
 import { CreateSectionModal } from "./CreateSectionModal";
 import { EnrollmentsModal } from "./EnrollmentsModal";
@@ -24,6 +24,13 @@ export const SectionDashboard: React.FC = () => {
     currentSectionId,
     continueTermId,
     setContinueTermId,
+    // Continue to project
+    continueTeams,
+    selectedTeamIds,
+    setSelectedTeamIds,
+    continuingSectionCode,
+    continueLoading,
+    // Forms
     createForm,
     setCreateForm,
     createError,
@@ -74,18 +81,15 @@ export const SectionDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sections.map((s) => (
-          <SectionCard
-            key={s.section_id}
-            section={s}
-            onEnroll={handlers.openEnrollModal}
-            onViewEnrollments={handlers.fetchEnrollments}
-            onContinue={handlers.openContinueModal}
-          />
-        ))}
-      </div>
+      {/* Sections Accordion */}
+      <SectionAccordion
+        sections={sections}
+        onEnroll={handlers.openEnrollModal}
+        onViewEnrollments={handlers.fetchEnrollments}
+        onContinue={handlers.openContinueModal}
+        onDelete={handlers.handleDeleteSection}
+        onToggleLock={handlers.handleToggleLock}
+      />
 
       {/* Modals */}
       <CreateTermModal
@@ -128,10 +132,15 @@ export const SectionDashboard: React.FC = () => {
       <ContinueModal
         isOpen={showContinueModal}
         onClose={() => setShowContinueModal(false)}
+        sectionCode={continuingSectionCode}
         terms={terms}
+        teams={continueTeams}
         selectedTermId={continueTermId}
         setSelectedTermId={setContinueTermId}
+        selectedTeamIds={selectedTeamIds}
+        setSelectedTeamIds={setSelectedTeamIds}
         onConfirm={handlers.handleContinueToProject}
+        loading={continueLoading}
       />
     </div>
   );

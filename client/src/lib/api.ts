@@ -44,6 +44,21 @@ export const api = {
   delete: async <T = any>(url: string, options?: FetchOptions): Promise<T> => {
     return request<T>(url, { ...options, method: "DELETE" });
   },
+  patch: async <T = any>(
+    url: string,
+    body: any,
+    options?: FetchOptions,
+  ): Promise<T> => {
+    return request<T>(url, {
+      ...options,
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+    });
+  },
 };
 
 async function request<T>(url: string, options: FetchOptions = {}): Promise<T> {

@@ -95,11 +95,12 @@ model Section {
   min_team_size      Int
   max_team_size      Int
   project_deadline   DateTime
-  team_deadline      DateTime
+  team_locked        Boolean              @default(false)
   term_id            Int
   Term               Term                 @relation(fields: [term_id], references: [term_id])
   Section_Enrollment Section_Enrollment[]
   Team               Team[]
+  Event              Event[]
 
   @@unique([section_code, term_id])
 }
@@ -161,6 +162,7 @@ model Team {
   Section      Section        @relation(fields: [section_id], references: [section_id])
   Teammember   Teammember[]
   Users        Users[]
+  Submission   Submission[]
 }
 
 model Teammember {
@@ -207,6 +209,7 @@ model Users {
   TaskAssignment                                 TaskAssignment[]
   Teammember                                     Teammember[]
   Team                                           Team?                @relation(fields: [teamId], references: [team_id])
+  Submission_approvedBy                          Submission[]         @relation("Submission_approvedByToUsers")
 }
 
 enum CourseType {
@@ -234,4 +237,55 @@ enum Role {
 enum StudyType {
   REG
   LE
+}
+
+// ===== Event System (กำหนดการ) =====
+
+model Event {
+  event_id    Int          @id @default(autoincrement())
+  name        String       @db.VarChar(100)
+  type        EventType
+  description String?
+  order       Int
+  dueDate     DateTime
+  section_id  Int
+  createdAt   DateTime     @default(now())
+
+  Section     Section      @relation(fields: [section_id], references: [section_id])
+  Submission  Submission[]
+}
+
+model Submission {
+  submission_id Int              @id @default(autoincrement())
+  event_id      Int
+  team_id       Int
+  status        SubmissionStatus @default(PENDING)
+  submittedAt   DateTime?
+  file          String?
+  feedback      String?
+  approvedAt    DateTime?
+  approvedBy    String?          @db.VarChar(13)
+  createdAt     DateTime         @default(now())
+
+  Event          Event   @relation(fields: [event_id], references: [event_id])
+  Team           Team    @relation(fields: [team_id], references: [team_id])
+  ApprovedByUser Users?  @relation("Submission_approvedByToUsers", fields: [approvedBy], references: [users_id])
+
+  @@unique([event_id, team_id])
+}
+
+enum EventType {
+  PROGRESS_REPORT
+  DOCUMENT
+  POSTER
+  EXAM
+  FINAL_SUBMISSION
+  SEMINAR
+}
+
+enum SubmissionStatus {
+  PENDING
+  SUBMITTED
+  NEEDS_REVISION
+  APPROVED
 }

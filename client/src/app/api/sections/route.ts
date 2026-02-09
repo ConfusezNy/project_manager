@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       min_team_size,
       max_team_size,
       project_deadline,
-      team_deadline,
+      team_locked,
       term_id,
     } = body ?? {};
 
@@ -51,7 +51,6 @@ export async function POST(request: Request) {
     const termIdNum = Number(term_id);
 
     const projDate = new Date(project_deadline);
-    const teamDate = new Date(team_deadline);
 
     const term = await prisma.term.findUnique({
       where: { term_id: termIdNum },
@@ -68,7 +67,7 @@ export async function POST(request: Request) {
         min_team_size: minT,
         max_team_size: maxT,
         project_deadline: projDate,
-        team_deadline: teamDate,
+        team_locked: Boolean(team_locked),
         term_id: termIdNum,
       },
     });

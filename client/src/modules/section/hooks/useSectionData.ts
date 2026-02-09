@@ -10,6 +10,7 @@ import {
   Enrollment,
   CreateSectionForm,
   CreateTermForm,
+  SectionTeam,
 } from "../services/sectionService";
 
 const initialCreateForm: CreateSectionForm = {
@@ -19,7 +20,7 @@ const initialCreateForm: CreateSectionForm = {
   min_team_size: 1,
   max_team_size: 3,
   project_deadline: "",
-  team_deadline: "",
+  team_locked: false,
   term_id: "",
 };
 
@@ -49,10 +50,17 @@ export function useSectionData() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
+
+  // Continue to project states
   const [continueTermId, setContinueTermId] = useState<string>("");
   const [continuingSectionId, setContinuingSectionId] = useState<number | null>(
     null,
   );
+  const [continuingSectionCode, setContinuingSectionCode] =
+    useState<string>("");
+  const [continueTeams, setContinueTeams] = useState<SectionTeam[]>([]);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<number[]>([]);
+  const [continueLoading, setContinueLoading] = useState(false);
 
   // Forms
   const [createForm, setCreateForm] =
@@ -163,29 +171,95 @@ export function useSectionData() {
     }
   }, [selectedCandidates, candidates]);
 
-  const openContinueModal = useCallback((sectionId: number) => {
-    setContinuingSectionId(sectionId);
-    setContinueTermId("");
-    setShowContinueModal(true);
-  }, []);
+  // Continue to project handlers
+  const openContinueModal = useCallback(
+    async (sectionId: number) => {
+      setContinuingSectionId(sectionId);
+      setContinueTermId("");
+      setContinueTeams([]);
+      setSelectedTeamIds([]);
+      setShowContinueModal(true);
+
+      // Find section code
+      const section = sections.find((s) => s.section_id === sectionId);
+      setContinuingSectionCode(section?.section_code || "");
+
+      // Fetch teams for this section
+      try {
+        const data = await sectionService.getTeamsBySection(sectionId);
+        setContinueTeams(data.teams);
+
+        // Auto-select teams that are NOT approved
+        const nonApproved = data.teams
+          .filter((t) => t.project?.status !== "APPROVED")
+          .map((t) => t.team_id);
+        setSelectedTeamIds(nonApproved);
+      } catch (err: any) {
+        console.error("Failed to fetch teams:", err);
+        setContinueTeams([]);
+      }
+    },
+    [sections],
+  );
 
   const handleContinueToProject = useCallback(async () => {
     if (!continuingSectionId || !continueTermId) {
       alert("กรุณาเลือกเทอมใหม่");
       return;
     }
+    if (selectedTeamIds.length === 0) {
+      alert("กรุณาเลือกอย่างน้อย 1 ทีม");
+      return;
+    }
+
+    setContinueLoading(true);
     try {
-      await sectionService.continueToProject(
+      const result = await sectionService.continueToProject(
         continuingSectionId,
         continueTermId,
+        selectedTeamIds,
       );
-      alert("ต่อวิชาเรียบร้อย! ย้ายทีมและนักศึกษาไปเทอมใหม่แล้ว");
+      alert(
+        `ต่อวิชาเรียบร้อย! ย้าย ${result.teams_moved || selectedTeamIds.length} ทีมไปเทอมใหม่แล้ว`,
+      );
       setShowContinueModal(false);
       fetchSections();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setContinueLoading(false);
     }
-  }, [continuingSectionId, continueTermId, fetchSections]);
+  }, [continuingSectionId, continueTermId, selectedTeamIds, fetchSections]);
+
+  // Delete section handler
+  const handleDeleteSection = useCallback(
+    async (sectionId: number) => {
+      if (
+        !confirm(
+          "คุณแน่ใจหรือไม่ที่จะลบ Section นี้? การลบจะไม่สามารถกู้คืนได้",
+        )
+      ) {
+        return;
+      }
+
+      try {
+        await sectionService.deleteSection(sectionId);
+        alert("ลบ Section เรียบร้อย");
+        fetchSections();
+      } catch (err: any) {
+        alert(err.message || "เกิดข้อผิดพลาดในการลบ Section");
+      }
+    },
+    [fetchSections],
+  );
+
+  // Toggle team lock handler
+  const handleToggleLock = useCallback(
+    async (sectionId: number, locked: boolean) => {
+      await sectionService.toggleTeamLock(sectionId, locked);
+    },
+    [],
+  );
 
   return {
     // Data
@@ -199,6 +273,13 @@ export function useSectionData() {
     currentSectionId,
     continueTermId,
     setContinueTermId,
+
+    // Continue to project
+    continueTeams,
+    selectedTeamIds,
+    setSelectedTeamIds,
+    continuingSectionCode,
+    continueLoading,
 
     // Forms
     createForm,
@@ -233,6 +314,8 @@ export function useSectionData() {
       toggleAllCandidates,
       openContinueModal,
       handleContinueToProject,
+      handleDeleteSection,
+      handleToggleLock,
     },
   };
 }

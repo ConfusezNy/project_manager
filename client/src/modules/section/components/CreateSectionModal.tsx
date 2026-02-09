@@ -127,16 +127,34 @@ export const CreateSectionModal: React.FC<Props> = ({
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              เดดไลน์จัดทีม
+              ล็อคการจัดการทีม
             </label>
-            <input
-              type="date"
-              className="border border-gray-300 dark:border-gray-600 p-3 w-full rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              value={form.team_deadline}
-              onChange={(e) =>
-                setForm({ ...form, team_deadline: e.target.value })
-              }
-            />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setForm({ ...form, team_locked: !form.team_locked })
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  form.team_locked
+                    ? "bg-red-500"
+                    : "bg-gray-300 dark:bg-gray-600"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    form.team_locked ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span
+                className={`text-sm ${form.team_locked ? "text-red-500 font-medium" : "text-gray-500 dark:text-gray-400"}`}
+              >
+                {form.team_locked
+                  ? "🔒 ล็อค (นศ. ไม่สามารถจัดการสมาชิกได้)"
+                  : "🔓 ปลดล็อค (นศ. จัดการสมาชิกได้)"}
+              </span>
+            </div>
           </div>
 
           <div>
