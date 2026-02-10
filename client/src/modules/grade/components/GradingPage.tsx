@@ -11,7 +11,9 @@ import {
   Loader2,
   Search,
   Filter,
+  Download,
 } from "lucide-react";
+import { exportToCSV, formatGradeLabel } from "@/lib/exportCSV";
 import {
   useGrading,
   GRADE_OPTIONS,
@@ -90,6 +92,7 @@ export const GradingPage: React.FC = () => {
     selectedSection,
     setSelectedSection,
     teams,
+    allTeams,
     gradeMap,
     loading,
     saving,
@@ -106,6 +109,39 @@ export const GradingPage: React.FC = () => {
     resetGrades,
     saveGrades,
   } = useGrading();
+
+  // Export CSV
+  const handleExportGrades = () => {
+    const rows: Record<string, string | number | null>[] = [];
+    for (const team of allTeams) {
+      for (const member of team.members) {
+        const score = gradeMap[member.users_id];
+        rows.push({
+          group: team.groupNumber,
+          team_name: team.name,
+          project: team.project?.projectname || "-",
+          student_id: member.users_id,
+          firstname: member.firstname,
+          lastname: member.lastname,
+          grade: score ? formatGradeLabel(score) : "-",
+        });
+      }
+    }
+    const sectionName = selectedSection?.section_code || "grades";
+    exportToCSV(
+      rows,
+      [
+        { key: "group", label: "กลุ่ม" },
+        { key: "team_name", label: "ชื่อทีม" },
+        { key: "project", label: "ชื่อโครงงาน" },
+        { key: "student_id", label: "รหัสนักศึกษา" },
+        { key: "firstname", label: "ชื่อ" },
+        { key: "lastname", label: "นามสกุล" },
+        { key: "grade", label: "เกรด" },
+      ],
+      `grades_${sectionName}`,
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-10 font-sans text-slate-900">
@@ -137,6 +173,14 @@ export const GradingPage: React.FC = () => {
               คน
             </span>
           </div>
+          <button
+            onClick={handleExportGrades}
+            disabled={totalStudents === 0}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
         </div>
       </div>
 

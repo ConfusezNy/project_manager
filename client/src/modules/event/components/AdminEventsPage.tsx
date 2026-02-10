@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Users, ChevronDown, Calendar, X } from "lucide-react";
+import { Plus, Users, ChevronDown, Calendar, X, Download } from "lucide-react";
 import { useEventManagement } from "../hooks/useEventManagement";
 import { EventTable } from "./EventTable";
 import { CreateEventModal } from "./CreateEventModal";
 import { EventDetailDrawer } from "./EventDetailDrawer";
+import { exportToCSV } from "@/lib/exportCSV";
 
 export const AdminEventsPage: React.FC = () => {
   const {
@@ -65,13 +66,48 @@ export const AdminEventsPage: React.FC = () => {
           </p>
         </div>
         {isAdmin && (
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            disabled={!selectedSection}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg shadow-sm hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-5 h-5" /> สร้างกำหนดการใหม่
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const rows = events.map((evt) => ({
+                  order: evt.order,
+                  name: evt.name,
+                  type: evt.type,
+                  dueDate: new Date(evt.dueDate).toLocaleDateString("th-TH"),
+                  totalTeams: evt.stats?.totalTeams || 0,
+                  submitted: evt.stats?.submitted || 0,
+                  approved: evt.stats?.approved || 0,
+                  pending: evt.stats?.pending || 0,
+                }));
+                const sectionName = selectedSection?.section_code || "events";
+                exportToCSV(
+                  rows,
+                  [
+                    { key: "order", label: "ลำดับ" },
+                    { key: "name", label: "ชื่อกำหนดการ" },
+                    { key: "type", label: "ประเภท" },
+                    { key: "dueDate", label: "กำหนดส่ง" },
+                    { key: "totalTeams", label: "ทีมทั้งหมด" },
+                    { key: "submitted", label: "ส่งแล้ว" },
+                    { key: "approved", label: "อนุมัติแล้ว" },
+                    { key: "pending", label: "รอดำเนินการ" },
+                  ],
+                  `events_${sectionName}`,
+                );
+              }}
+              disabled={events.length === 0 || !selectedSection}
+              className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2.5 rounded-lg shadow-sm hover:bg-emerald-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              disabled={!selectedSection}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg shadow-sm hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-5 h-5" /> สร้างกำหนดการใหม่
+            </button>
+          </div>
         )}
       </div>
 

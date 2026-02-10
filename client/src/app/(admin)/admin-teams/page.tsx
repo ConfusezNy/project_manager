@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 import { TeamDetailModal } from "./TeamDetailModal";
+import { exportToCSV } from "@/lib/exportCSV";
 
 interface TeamMember {
   user_id: string;
@@ -149,14 +150,53 @@ export default function AdminTeamsPage() {
   return (
     <>
       <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            จัดการทีมทั้งหมด
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Admin Teams Management
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              จัดการทีมทั้งหมด
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Admin Teams Management
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              const rows = teams.flatMap((team) =>
+                team.members.map((m) => ({
+                  group: team.groupNumber,
+                  team_name: team.name,
+                  section: team.section?.section_code || "-",
+                  status: team.status,
+                  student_id: m.user_id,
+                  firstname: m.firstname || "",
+                  lastname: m.lastname || "",
+                  email: m.email || "",
+                  project: team.project?.projectname || "-",
+                  project_status: team.project?.status || "-",
+                })),
+              );
+              exportToCSV(
+                rows,
+                [
+                  { key: "group", label: "กลุ่ม" },
+                  { key: "team_name", label: "ชื่อทีม" },
+                  { key: "section", label: "Section" },
+                  { key: "status", label: "สถานะทีม" },
+                  { key: "student_id", label: "รหัสนักศึกษา" },
+                  { key: "firstname", label: "ชื่อ" },
+                  { key: "lastname", label: "นามสกุล" },
+                  { key: "email", label: "อีเมล" },
+                  { key: "project", label: "ชื่อโครงงาน" },
+                  { key: "project_status", label: "สถานะโครงงาน" },
+                ],
+                "teams_report",
+              );
+            }}
+            disabled={teams.length === 0}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow-sm disabled:opacity-50"
+          >
+            ⚡ Export CSV
+          </button>
         </div>
 
         {/* Stats */}
