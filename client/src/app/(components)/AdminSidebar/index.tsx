@@ -13,6 +13,7 @@ import {
   Users,
   Folder,
   Calendar,
+  Award,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -107,6 +108,13 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
               <Calendar size={24} />
             </div>
             <span className={contentClass}>กำหนดการ</span>
+          </Link>
+
+          <Link href="/admin-grades" className={linkBaseClass}>
+            <div className={iconClass}>
+              <Award size={24} />
+            </div>
+            <span className={contentClass}>ให้เกรด</span>
           </Link>
 
           <Link href="/settings" className={linkBaseClass}>

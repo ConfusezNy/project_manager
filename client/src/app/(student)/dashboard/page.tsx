@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
+  Award,
 } from "lucide-react";
 import {
   TaskStatusChart,
@@ -233,7 +234,7 @@ const DashboardSchedulePanel = ({
 };
 
 export default function StudentDashboardPage() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const { submissions, loading, error, submitWork } = useStudentEvents();
 
   const [taskStats, setTaskStats] = useState({
@@ -269,6 +270,37 @@ export default function StudentDashboardPage() {
       fetchTaskStats();
     }
   }, [status]);
+
+  // Fetch student grade
+  const [myGrades, setMyGrades] = useState<
+    Array<{
+      grade_id: number;
+      score: string;
+      Project: { projectname: string };
+      Term: { semester: number; academicYear: number };
+      Users_Grade_evaluator_idToUsers: {
+        firstname: string;
+        lastname: string;
+        titles?: string;
+      };
+    }>
+  >([]);
+
+  useEffect(() => {
+    const fetchGrades = async () => {
+      try {
+        const data = await api.get<any[]>(
+          `/api/grades?student_id=${(session as any)?.user?.users_id}`,
+        );
+        if (data) setMyGrades(data);
+      } catch (err) {
+        console.error("Error fetching grades:", err);
+      }
+    };
+    if (status === "authenticated" && (session as any)?.user?.users_id) {
+      fetchGrades();
+    }
+  }, [status, session]);
 
   const handleSubmit = (sub: SubmissionWithEvent) => {
     setSelectedSubmission(sub);
@@ -349,6 +381,51 @@ export default function StudentDashboardPage() {
 
         {/* Activity Feed */}
         <ActivityFeed activities={MOCK_ACTIVITIES} />
+
+        {/* Grade Card */}
+        {myGrades.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-500" />
+              ผลการประเมิน
+            </h3>
+            <div className="space-y-3">
+              {myGrades.map((g) => {
+                const gradeLabel = g.score.replace("_PLUS", "+");
+                const gradeColor =
+                  g.score === "A"
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    : g.score.startsWith("B")
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      : g.score.startsWith("C")
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        : g.score === "F"
+                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
+                return (
+                  <div
+                    key={g.grade_id}
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {g.Project?.projectname}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        เทอม {g.Term?.semester}/{g.Term?.academicYear}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-lg font-bold px-3 py-1 rounded-lg ${gradeColor}`}
+                    >
+                      {gradeLabel}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Submit Modal */}

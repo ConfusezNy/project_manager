@@ -219,13 +219,13 @@ enum CourseType {
 
 enum GradeScore {
   A
-  A_PLUS
-  B
   B_PLUS
-  C
+  B
   C_PLUS
-  D
+  C
   D_PLUS
+  D
+  F
 }
 
 enum Role {
