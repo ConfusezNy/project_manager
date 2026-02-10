@@ -150,7 +150,14 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
             <div className={iconClass}>
               <User size={24} />
             </div>
-            <span className={contentClass}>User</span>
+            <span className={contentClass}>Profile</span>
+          </Link>
+
+          <Link href="/classmates" className={linkBaseClass}>
+            <div className={iconClass}>
+              <Users size={24} />
+            </div>
+            <span className={contentClass}>เพื่อนร่วมชั้น</span>
           </Link>
 
           <Link href="/Teams" className={linkBaseClass}>

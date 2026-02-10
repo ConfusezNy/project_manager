@@ -88,6 +88,7 @@ export const UserManagementDashboard: React.FC = () => {
           users={filteredUsers}
           onEdit={handlers.handleEditClick}
           onDelete={handlers.handleDeleteClick}
+          onRoleChange={handlers.handleRoleChange}
           readOnly={!isAdmin}
         />
       </div>

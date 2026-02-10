@@ -85,10 +85,39 @@ export function useUserManagement() {
     setIsModalOpen(true);
   }, []);
 
-  const handleFormSubmit = useCallback(async () => {
-    await fetchUsers();
-    setIsModalOpen(false);
-  }, [fetchUsers]);
+  const handleFormSubmit = useCallback(
+    async (formData: Partial<User>) => {
+      try {
+        if (editingUser) {
+          // Update existing user
+          await api.patch(`/api/users/${editingUser.id}`, {
+            role: formData.role,
+            // Split name back to firstname/lastname if needed
+          });
+        }
+        await fetchUsers();
+        setIsModalOpen(false);
+      } catch (error: any) {
+        alert(error.message || "เกิดข้อผิดพลาด");
+      }
+    },
+    [editingUser, fetchUsers],
+  );
+
+  // Quick role change handler (for inline change)
+  const handleRoleChange = useCallback(
+    async (userId: string | number, newRole: string) => {
+      try {
+        await api.patch(`/api/users/${userId}`, { role: newRole });
+        setUsers((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
+        );
+      } catch (error: any) {
+        alert(error.message || "เปลี่ยน Role ไม่สำเร็จ");
+      }
+    },
+    [],
+  );
 
   return {
     // Session
@@ -120,6 +149,7 @@ export function useUserManagement() {
       handleDeleteClick,
       handleEditClick,
       handleFormSubmit,
+      handleRoleChange,
     },
   };
 }

@@ -8,6 +8,21 @@ export { EventListItem } from "./components/EventListItem";
 export { SubmitModal } from "./components/SubmitModal";
 export { AdvisorEventsDashboard } from "./components/AdvisorEventsDashboard";
 
+// Admin Event Components
+export { AdminEventsPage } from "./components/AdminEventsPage";
+export { EventTable } from "./components/EventTable";
+export { CreateEventModal } from "./components/CreateEventModal";
+export { EventDetailDrawer } from "./components/EventDetailDrawer";
+export {
+  StatusBadge,
+  EventTypeBadge,
+  EVENT_TYPES,
+} from "./components/StatusBadge";
+
+// Hooks
+export { useEventManagement } from "./hooks/useEventManagement";
+export { useStudentEvents } from "./hooks/useStudentEvents";
+
 // Services
 export { eventService } from "./services/eventService";
 

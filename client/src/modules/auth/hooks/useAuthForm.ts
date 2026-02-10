@@ -103,6 +103,19 @@ export function useLoginForm() {
     }));
   }, []);
 
+  // Get redirect path based on role
+  const getRedirectPath = (role: string): string => {
+    switch (role) {
+      case "ADMIN":
+        return "/admin-dashboard";
+      case "ADVISOR":
+        return "/advisor-dashboard";
+      case "STUDENT":
+      default:
+        return "/dashboard";
+    }
+  };
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -121,7 +134,14 @@ export function useLoginForm() {
           return;
         }
 
-        router.push("/");
+        // Fetch session to get user role
+        const sessionRes = await fetch("/api/auth/session");
+        const session = await sessionRes.json();
+        const role = session?.user?.role || "STUDENT";
+
+        // Redirect based on role
+        const redirectPath = getRedirectPath(role);
+        router.push(redirectPath);
       } catch (error) {
         setLoading(false);
         alert("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");

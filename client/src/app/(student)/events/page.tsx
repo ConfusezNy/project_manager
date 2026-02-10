@@ -1,120 +1,25 @@
 "use client";
 
-// Student Events Page - Widget Dashboard Style
+// Student Events Page - Shows all events from all sections
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Loader2,
   Clock,
   CheckCircle2,
   ArrowRight,
   Calendar,
-  Award,
-  ChevronRight,
   AlertCircle,
   Lock,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { SubmitModal } from "@/modules/event";
-import type { Event, Submission } from "@/modules/event";
-import { projectService } from "@/modules/team/services/projectService";
-import { teamService } from "@/modules/team/services/teamService";
-
-// Mock Events with weight
-const MOCK_EVENTS: Event[] = [
-  {
-    event_id: 1,
-    name: "สอบหัวข้อโครงงาน (Project Proposal)",
-    type: "DOCUMENT",
-    order: 1,
-    dueDate: "2024-08-15T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-06-01T00:00:00Z",
-    weight: 20,
-  },
-  {
-    event_id: 2,
-    name: "รายงานความก้าวหน้าครั้งที่ 1 (Progress 1)",
-    type: "PROGRESS_REPORT",
-    order: 2,
-    dueDate: "2024-09-10T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-06-01T00:00:00Z",
-    weight: 10,
-  },
-  {
-    event_id: 3,
-    name: "รายงานความก้าวหน้าครั้งที่ 2 (Progress 2)",
-    type: "PROGRESS_REPORT",
-    order: 3,
-    dueDate: "2024-10-15T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-06-01T00:00:00Z",
-    weight: 10,
-  },
-  {
-    event_id: 4,
-    name: "ส่งเล่มปริญญานิพนธ์ฉบับสมบูรณ์ (Final Report)",
-    type: "FINAL_SUBMISSION",
-    order: 4,
-    dueDate: "2024-11-20T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-06-01T00:00:00Z",
-    weight: 30,
-  },
-  {
-    event_id: 5,
-    name: "สอบป้องกันปริญญานิพนธ์ (Final Defense)",
-    type: "EXAM",
-    order: 5,
-    dueDate: "2024-11-30T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-06-01T00:00:00Z",
-    weight: 30,
-  },
-];
-
-// Mock Submissions
-const MOCK_SUBMISSIONS: Submission[] = [
-  {
-    submission_id: 1,
-    event_id: 1,
-    team_id: 1,
-    status: "APPROVED",
-    createdAt: "2024-08-14T00:00:00Z",
-    submittedAt: "2024-08-14T10:00:00Z",
-  },
-  {
-    submission_id: 2,
-    event_id: 2,
-    team_id: 1,
-    status: "NEEDS_REVISION",
-    feedback: "กรุณาเพิ่มรายละเอียดในส่วนของ System Architecture",
-    createdAt: "2024-09-09T00:00:00Z",
-    submittedAt: "2024-09-09T15:00:00Z",
-  },
-  {
-    submission_id: 3,
-    event_id: 3,
-    team_id: 1,
-    status: "SUBMITTED",
-    createdAt: "2024-10-14T00:00:00Z",
-    submittedAt: "2024-10-14T16:00:00Z",
-  },
-  {
-    submission_id: 4,
-    event_id: 4,
-    team_id: 1,
-    status: "PENDING",
-    createdAt: "2024-06-01T00:00:00Z",
-  },
-  {
-    submission_id: 5,
-    event_id: 5,
-    team_id: 1,
-    status: "PENDING",
-    createdAt: "2024-06-01T00:00:00Z",
-  },
-];
+import {
+  useStudentEvents,
+  type SubmissionWithEvent,
+  type SectionGroup,
+} from "@/modules/event/hooks/useStudentEvents";
 
 // Status Badge Component
 const StatusBadge = ({ status }: { status: string }) => {
@@ -185,113 +90,177 @@ const ProgressCircle = ({ progress }: { progress: number }) => {
   );
 };
 
+// Section Accordion Component
+const SectionAccordion = ({
+  group,
+  onSubmit,
+}: {
+  group: SectionGroup;
+  onSubmit: (sub: SubmissionWithEvent) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(group.isCurrent);
+
+  const approvedCount = group.submissions.filter(
+    (s) => s.status === "APPROVED",
+  ).length;
+  const total = group.submissions.length;
+  const progress = total > 0 ? Math.round((approvedCount / total) * 100) : 0;
+
+  // Format term display
+  const term = group.section.Term;
+  const termLabel = term ? `${term.semester}/${term.academicYear}` : "";
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mb-4">
+      {/* Header */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold ${
+              group.isCurrent
+                ? "bg-gradient-to-br from-blue-500 to-indigo-600"
+                : "bg-slate-400 dark:bg-slate-600"
+            }`}
+          >
+            {group.section.course_type === "PRE_PROJECT" ? "Pre" : "Pro"}
+          </div>
+          <div className="text-left">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-gray-800 dark:text-gray-200">
+                {group.section.section_code}
+              </h3>
+              {group.isCurrent && (
+                <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs rounded-full">
+                  ปัจจุบัน
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {group.section.course_type === "PRE_PROJECT"
+                ? "Pre-Project"
+                : "Project"}{" "}
+              • เทอม {termLabel}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* Progress */}
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {approvedCount}/{total} ผ่าน
+            </p>
+            <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mt-1">
+              <div
+                className="bg-emerald-500 h-2 rounded-full transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {isOpen ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
+      </button>
+
+      {/* Content */}
+      {isOpen && (
+        <div className="border-t border-gray-100 dark:border-gray-700">
+          <div className="p-2">
+            {group.submissions.map((sub, index) => {
+              const isApproved = sub.status === "APPROVED";
+              const isRevision = sub.status === "NEEDS_REVISION";
+
+              return (
+                <div
+                  key={sub.submission_id}
+                  onClick={() => onSubmit(sub)}
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl cursor-pointer transition"
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Number/Check Circle */}
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${
+                        isApproved
+                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                          : "bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500"
+                      }`}
+                    >
+                      {isApproved ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : (
+                        sub.Event?.order || index + 1
+                      )}
+                    </div>
+
+                    {/* Event Info */}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-800 dark:text-gray-200 text-sm">
+                          {sub.Event?.name || "Unknown Event"}
+                        </p>
+                        {isRevision && (
+                          <AlertCircle className="w-4 h-4 text-rose-500" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        {sub.Event?.dueDate
+                          ? formatThaiDate(sub.Event.dueDate)
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <StatusBadge status={sub.status} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const formatThaiDate = (dateStr?: string) => {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear() + 543}`;
+};
+
 export default function StudentEventsPage() {
   const { status } = useSession();
-  const [loading, setLoading] = useState(true);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [accessError, setAccessError] = useState<string | null>(null);
+  const {
+    sectionGroups,
+    loading,
+    error,
+    totalProgress,
+    currentEvent,
+    submitWork,
+    getSubmission,
+  } = useStudentEvents();
 
   // Submit modal
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<SubmissionWithEvent | null>(null);
 
-  useEffect(() => {
-    const checkProjectAccess = async () => {
-      try {
-        // Get user's team
-        const team = await teamService.getMyTeam();
-        if (!team) {
-          setAccessError("คุณยังไม่มีทีม กรุณาสร้างทีมก่อน");
-          setLoading(false);
-          return;
-        }
-
-        // Get project for this team
-        const projectData = await projectService.getProjectByTeamId(
-          team.team_id,
-        );
-        if (!projectData) {
-          setAccessError(
-            "ทีมของคุณยังไม่มีโครงงาน กรุณาสร้างหัวข้อโครงงานก่อน",
-          );
-          setLoading(false);
-          return;
-        }
-
-        // Check if project is approved
-        if (projectData.status !== "APPROVED") {
-          setAccessError("โครงงานของคุณยังไม่ได้รับการอนุมัติจากอาจารย์");
-          setLoading(false);
-          return;
-        }
-
-        // Project approved - load events
-        setEvents(MOCK_EVENTS);
-        setSubmissions(MOCK_SUBMISSIONS);
-        setLoading(false);
-      } catch (err: any) {
-        setAccessError(err.message || "เกิดข้อผิดพลาด");
-        setLoading(false);
-      }
-    };
-
-    if (status === "authenticated") {
-      checkProjectAccess();
-    }
-  }, [status]);
-
-  const getSubmission = (eventId: number) => {
-    return submissions.find((s) => s.event_id === eventId);
-  };
-
-  const getEventStatus = (eventId: number) => {
-    const sub = getSubmission(eventId);
-    return sub?.status || "PENDING";
-  };
-
-  // Calculate progress
-  const approvedCount = events.filter(
-    (e) => getEventStatus(e.event_id) === "APPROVED",
-  ).length;
-  const totalProgress =
-    events.length > 0 ? Math.round((approvedCount / events.length) * 100) : 0;
-
-  // Find current/next event (first non-approved)
-  const currentEventIndex = events.findIndex(
-    (e) => getEventStatus(e.event_id) !== "APPROVED",
-  );
-  const currentEvent =
-    currentEventIndex >= 0 ? events[currentEventIndex] : null;
-
-  const handleSubmit = (event: Event) => {
-    setSelectedEvent(event);
+  const handleSubmit = (sub: SubmissionWithEvent) => {
+    setSelectedSubmission(sub);
     setSubmitModalOpen(true);
   };
 
   const handleSubmitWork = async () => {
-    if (!selectedEvent) return;
-    const sub = getSubmission(selectedEvent.event_id);
-    if (sub) {
-      setSubmissions((prev) =>
-        prev.map((s) =>
-          s.submission_id === sub.submission_id
-            ? {
-                ...s,
-                status: "SUBMITTED" as const,
-                submittedAt: new Date().toISOString(),
-              }
-            : s,
-        ),
-      );
-    }
+    if (!selectedSubmission) return;
+    await submitWork(selectedSubmission.submission_id);
     setSubmitModalOpen(false);
-  };
-
-  const formatThaiDate = (dateStr?: string) => {
-    if (!dateStr) return "-";
-    const date = new Date(dateStr);
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear() + 543}`;
   };
 
   if (status === "loading" || loading) {
@@ -303,7 +272,7 @@ export default function StudentEventsPage() {
   }
 
   // Error state - project not approved
-  if (accessError) {
+  if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen p-6">
         <div className="text-center max-w-md">
@@ -314,7 +283,7 @@ export default function StudentEventsPage() {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             ไม่สามารถเข้าถึง Events ได้
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">{accessError}</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">{error}</p>
           <a
             href="/Teams"
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -369,7 +338,10 @@ export default function StudentEventsPage() {
             </div>
             {currentEvent && (
               <button
-                onClick={() => handleSubmit(currentEvent)}
+                onClick={() => {
+                  const sub = getSubmission(currentEvent.event_id);
+                  if (sub) handleSubmit(sub as SubmissionWithEvent);
+                }}
                 className="mt-6 w-fit bg-white text-blue-600 px-6 py-2.5 rounded-lg font-bold shadow-sm hover:bg-blue-50 transition flex items-center gap-2"
               >
                 ส่งงานตอนนี้ <ArrowRight className="w-4 h-4" />
@@ -379,61 +351,25 @@ export default function StudentEventsPage() {
         </div>
       </div>
 
-      {/* Events List */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+      {/* Section Groups */}
+      <div>
         <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-4">
-          รายการทั้งหมด
+          รายการตาม Section
         </h3>
-        <div className="space-y-2">
-          {events.map((event, index) => {
-            const eventStatus = getEventStatus(event.event_id);
-            const isApproved = eventStatus === "APPROVED";
-            const isRevision = eventStatus === "NEEDS_REVISION";
 
-            return (
-              <div
-                key={event.event_id}
-                onClick={() => handleSubmit(event)}
-                className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl cursor-pointer transition border-b border-gray-50 dark:border-gray-700 last:border-0"
-              >
-                <div className="flex items-center gap-4">
-                  {/* Number/Check Circle */}
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                      isApproved
-                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : "bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500"
-                    }`}
-                  >
-                    {isApproved ? (
-                      <CheckCircle2 className="w-5 h-5" />
-                    ) : (
-                      index + 1
-                    )}
-                  </div>
-
-                  {/* Event Info */}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-800 dark:text-gray-200">
-                        {event.name}
-                      </p>
-                      {isRevision && (
-                        <AlertCircle className="w-4 h-4 text-rose-500" />
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {formatThaiDate(event.dueDate)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Status Badge */}
-                <StatusBadge status={eventStatus} />
-              </div>
-            );
-          })}
-        </div>
+        {sectionGroups.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-8 text-center text-gray-400">
+            ยังไม่มีกำหนดการ
+          </div>
+        ) : (
+          sectionGroups.map((group) => (
+            <SectionAccordion
+              key={group.section.section_id}
+              group={group}
+              onSubmit={handleSubmit}
+            />
+          ))
+        )}
       </div>
 
       {/* Submit Modal */}
@@ -441,7 +377,7 @@ export default function StudentEventsPage() {
         isOpen={submitModalOpen}
         onClose={() => setSubmitModalOpen(false)}
         onSubmit={handleSubmitWork}
-        eventName={selectedEvent?.name || ""}
+        eventName={selectedSubmission?.Event?.name || ""}
       />
     </div>
   );

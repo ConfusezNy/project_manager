@@ -10,6 +10,11 @@ export async function GET() {
     const sections = await prisma.section.findMany({
       include: {
         Term: true,
+        _count: {
+          select: {
+            Team: true,
+          },
+        },
       },
       orderBy: {
         section_id: "asc",

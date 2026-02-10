@@ -1,126 +1,30 @@
 "use client";
 
-// Student Dashboard - Main dashboard page
+// Student Dashboard - Main dashboard page (Real API)
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  Loader2,
+  Calendar,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+} from "lucide-react";
 import {
   TaskStatusChart,
   CalendarMini,
   NotificationPanel,
-  SchedulePanel,
   ActivityFeed,
 } from "@/modules/dashboard";
 import type { Activity } from "@/modules/dashboard";
 import { SubmitModal } from "@/modules/event";
-import type { Event, Submission } from "@/modules/event";
+import {
+  useStudentEvents,
+  type SubmissionWithEvent,
+} from "@/modules/event/hooks/useStudentEvents";
+import { api } from "@/lib/api";
 
-// Mock Events
-const MOCK_EVENTS: Event[] = [
-  {
-    event_id: 1,
-    name: "รายงานความก้าวหน้า #1",
-    type: "PROGRESS_REPORT",
-    order: 1,
-    dueDate: "2024-12-11T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    event_id: 2,
-    name: "รายงานความก้าวหน้า #2",
-    type: "PROGRESS_REPORT",
-    order: 2,
-    dueDate: "2025-01-08T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    event_id: 3,
-    name: "รายงานความก้าวหน้า #3",
-    type: "PROGRESS_REPORT",
-    order: 3,
-    dueDate: "2025-02-05T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    event_id: 4,
-    name: "เอกสารขอสอบ + โปสเตอร์",
-    type: "DOCUMENT",
-    order: 4,
-    dueDate: "2025-03-05T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    event_id: 5,
-    name: "สอบปริญญานิพนธ์",
-    type: "EXAM",
-    order: 5,
-    dueDate: "2025-03-13T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    event_id: 6,
-    name: "ส่งไฟล์ฉบับสมบูรณ์",
-    type: "FINAL_SUBMISSION",
-    order: 6,
-    dueDate: "2025-03-20T23:59:59Z",
-    section_id: 1,
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-];
-
-// Mock Submissions
-const MOCK_SUBMISSIONS: Submission[] = [
-  {
-    submission_id: 1,
-    event_id: 1,
-    team_id: 1,
-    status: "APPROVED",
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    submission_id: 2,
-    event_id: 2,
-    team_id: 1,
-    status: "APPROVED",
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    submission_id: 3,
-    event_id: 3,
-    team_id: 1,
-    status: "NEEDS_REVISION",
-    feedback: "กรุณาเพิ่มผลการทดลอง",
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    submission_id: 4,
-    event_id: 4,
-    team_id: 1,
-    status: "PENDING",
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    submission_id: 5,
-    event_id: 5,
-    team_id: 1,
-    status: "PENDING",
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    submission_id: 6,
-    event_id: 6,
-    team_id: 1,
-    status: "PENDING",
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-];
-
-// Mock Notifications
+// Mock Notifications (can be replaced with real API later)
 const MOCK_NOTIFICATIONS = [
   {
     id: 1,
@@ -148,7 +52,7 @@ const MOCK_NOTIFICATIONS = [
   },
 ];
 
-// Mock Activities
+// Mock Activities (can be replaced with real API later)
 const MOCK_ACTIVITIES: Activity[] = [
   {
     id: 1,
@@ -174,84 +78,216 @@ const MOCK_ACTIVITIES: Activity[] = [
     target: "ทำหน้า Login",
     time: "2 วันที่แล้ว",
   },
-  {
-    id: 4,
-    type: "task_create",
-    user: "สมชาย",
-    action: "สร้าง Task",
-    target: "API Authentication",
-    time: "3 วันที่แล้ว",
-  },
-  {
-    id: 5,
-    type: "approval",
-    user: "อ.สมชาย",
-    action: "อนุมัติ",
-    target: "รายงาน #2",
-    time: "สัปดาห์ที่แล้ว",
-  },
 ];
 
-export default function StudentDashboardPage() {
-  const { status } = useSession();
-  const [loading, setLoading] = useState(true);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [taskStats] = useState({ todo: 2, inProgress: 3, done: 8 });
-
-  // Submit modal state
-  const [submitModalOpen, setSubmitModalOpen] = useState(false);
-  const [selectedEventName, setSelectedEventName] = useState("");
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState<
-    number | null
-  >(null);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      setTimeout(() => {
-        setEvents(MOCK_EVENTS);
-        setSubmissions(MOCK_SUBMISSIONS);
-        setLoading(false);
-      }, 500);
-    }
-  }, [status]);
-
-  const handleSubmit = (eventId: number, submissionId: number) => {
-    const event = events.find((e) => e.event_id === eventId);
-    if (event) {
-      setSelectedEventName(event.name);
-      setSelectedSubmissionId(submissionId);
-      setSubmitModalOpen(true);
+// Simple Schedule Panel for Dashboard
+const DashboardSchedulePanel = ({
+  submissions,
+  onSubmit,
+}: {
+  submissions: SubmissionWithEvent[];
+  onSubmit: (sub: SubmissionWithEvent) => void;
+}) => {
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case "APPROVED":
+        return {
+          icon: CheckCircle,
+          color: "text-green-500",
+          bgColor: "bg-green-100 dark:bg-green-900/30",
+          label: "ผ่านแล้ว",
+        };
+      case "SUBMITTED":
+        return {
+          icon: Clock,
+          color: "text-blue-500",
+          bgColor: "bg-blue-100 dark:bg-blue-900/30",
+          label: "รอตรวจ",
+        };
+      case "NEEDS_REVISION":
+        return {
+          icon: AlertTriangle,
+          color: "text-yellow-500",
+          bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
+          label: "ต้องแก้ไข",
+        };
+      default:
+        return {
+          icon: Clock,
+          color: "text-gray-400",
+          bgColor: "bg-gray-100 dark:bg-gray-700",
+          label: "ยังไม่ส่ง",
+        };
     }
   };
 
-  const handleSubmitWork = async () => {
-    if (!selectedSubmissionId) return;
-    setSubmissions((prev) =>
-      prev.map((s) =>
-        s.submission_id === selectedSubmissionId
-          ? {
-              ...s,
-              status: "SUBMITTED" as const,
-              submittedAt: new Date().toISOString(),
-            }
-          : s,
-      ),
+  const approvedCount = submissions.filter(
+    (s) => s.status === "APPROVED",
+  ).length;
+  const progressPercent =
+    submissions.length > 0
+      ? Math.round((approvedCount / submissions.length) * 100)
+      : 0;
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "-";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+  };
+
+  // Sort by event order
+  const sortedSubmissions = [...submissions].sort(
+    (a, b) => (a.Event?.order || 0) - (b.Event?.order || 0),
+  );
+
+  if (submissions.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 h-full flex items-center justify-center">
+        <div className="text-center">
+          <Calendar
+            size={40}
+            className="text-gray-300 dark:text-gray-600 mx-auto mb-3"
+          />
+          <p className="text-gray-500 dark:text-gray-400">ยังไม่มีกำหนดการ</p>
+        </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 h-full flex flex-col">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+        📅 ตารางเวลา / กิจกรรม
+      </h3>
+
+      {/* Progress Bar */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            ความคืบหน้า
+          </span>
+          <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+            {progressPercent}%
+          </span>
+        </div>
+        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Submissions Timeline */}
+      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+        {sortedSubmissions.slice(0, 5).map((sub, index) => {
+          const {
+            icon: Icon,
+            color,
+            bgColor,
+            label,
+          } = getStatusConfig(sub.status);
+          const isLast = index === Math.min(sortedSubmissions.length, 5) - 1;
+
+          return (
+            <div key={sub.submission_id} className="relative flex gap-3">
+              {/* Timeline line */}
+              {!isLast && (
+                <div className="absolute left-3 top-8 w-0.5 h-full bg-gray-200 dark:bg-gray-700" />
+              )}
+
+              {/* Status icon */}
+              <div
+                className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center ${bgColor}`}
+              >
+                <Icon size={14} className={color} />
+              </div>
+
+              {/* Event card */}
+              <button
+                onClick={() => onSubmit(sub)}
+                className="flex-1 text-left p-2.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                      {sub.Event?.name || "Unknown"}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {formatDate(sub.Event?.dueDate)}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${bgColor} ${color}`}
+                  >
+                    {label}
+                  </span>
+                </div>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default function StudentDashboardPage() {
+  const { status } = useSession();
+  const { submissions, loading, error, submitWork } = useStudentEvents();
+
+  const [taskStats, setTaskStats] = useState({
+    todo: 0,
+    inProgress: 0,
+    done: 0,
+  });
+
+  // Submit modal state
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<SubmissionWithEvent | null>(null);
+
+  // Fetch task stats
+  useEffect(() => {
+    const fetchTaskStats = async () => {
+      try {
+        const tasks = await api.get("/api/tasks/my-tasks");
+        if (Array.isArray(tasks)) {
+          const todo = tasks.filter((t: any) => t.status === "TODO").length;
+          const inProgress = tasks.filter(
+            (t: any) => t.status === "IN_PROGRESS",
+          ).length;
+          const done = tasks.filter((t: any) => t.status === "DONE").length;
+          setTaskStats({ todo, inProgress, done });
+        }
+      } catch (err) {
+        console.error("Error fetching tasks:", err);
+      }
+    };
+
+    if (status === "authenticated") {
+      fetchTaskStats();
+    }
+  }, [status]);
+
+  const handleSubmit = (sub: SubmissionWithEvent) => {
+    setSelectedSubmission(sub);
+    setSubmitModalOpen(true);
+  };
+
+  const handleSubmitWork = async () => {
+    if (!selectedSubmission) return;
+    await submitWork(selectedSubmission.submission_id);
     setSubmitModalOpen(false);
   };
 
   // Calendar highlighted dates
-  const highlightedDates = events
-    .filter((e) => e.dueDate)
-    .map((e) => ({
-      date: new Date(e.dueDate!),
-      color:
-        submissions.find((s) => s.event_id === e.event_id)?.status ===
-        "APPROVED"
-          ? "#22c55e"
-          : "#f59e0b",
-      label: e.name,
+  const highlightedDates = submissions
+    .filter((s) => s.Event?.dueDate)
+    .map((s) => ({
+      date: new Date(s.Event!.dueDate!),
+      color: s.status === "APPROVED" ? "#22c55e" : "#f59e0b",
+      label: s.Event?.name || "",
     }));
 
   if (status === "loading" || loading) {
@@ -274,12 +310,18 @@ export default function StudentDashboardPage() {
         </p>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-700 dark:text-amber-400">
+          ⚠️ {error}
+        </div>
+      )}
+
       {/* Top Row: Schedule + Calendar + Notifications (3 columns) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
         {/* Schedule Panel - 5 cols */}
         <div className="lg:col-span-5">
-          <SchedulePanel
-            events={events}
+          <DashboardSchedulePanel
             submissions={submissions}
             onSubmit={handleSubmit}
           />
@@ -305,7 +347,7 @@ export default function StudentDashboardPage() {
           doneCount={taskStats.done}
         />
 
-        {/* Activity Feed (replacing EventProgressChart) */}
+        {/* Activity Feed */}
         <ActivityFeed activities={MOCK_ACTIVITIES} />
       </div>
 
@@ -314,7 +356,7 @@ export default function StudentDashboardPage() {
         isOpen={submitModalOpen}
         onClose={() => setSubmitModalOpen(false)}
         onSubmit={handleSubmitWork}
-        eventName={selectedEventName}
+        eventName={selectedSubmission?.Event?.name || ""}
       />
     </div>
   );

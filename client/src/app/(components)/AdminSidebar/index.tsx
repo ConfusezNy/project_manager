@@ -11,7 +11,8 @@ import {
   User,
   Settings,
   Users,
-  Folder, // 1. เพิ่มไอคอน Folder
+  Folder,
+  Calendar,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -59,11 +60,11 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
       {/* 3. เอา shadow-md ตรงนี้ออก (ซ้ำซ้อน) */}
       <div className="h-full flex flex-col overflow-y-auto overflow-x-hidden">
         <nav className="flex flex-col gap-2 mt-0">
-          <Link href="/" className={linkBaseClass}>
+          <Link href="/admin-dashboard" className={linkBaseClass}>
             <div className={iconClass}>
               <Home size={24} />
             </div>
-            <span className={contentClass}>Home</span>
+            <span className={contentClass}>Dashboard</span>
           </Link>
 
           <Link href="/sections" className={linkBaseClass}>
@@ -99,6 +100,13 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
               <Users size={24} />
             </div>
             <span className={contentClass}>จัดการทีม</span>
+          </Link>
+
+          <Link href="/admin-events" className={linkBaseClass}>
+            <div className={iconClass}>
+              <Calendar size={24} />
+            </div>
+            <span className={contentClass}>กำหนดการ</span>
           </Link>
 
           <Link href="/settings" className={linkBaseClass}>

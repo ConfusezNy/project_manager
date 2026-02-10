@@ -133,11 +133,11 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
     <div className={sidebarClassNames}>
       <div className="h-full flex flex-col overflow-y-auto overflow-x-hidden">
         <nav className="flex flex-col gap-2 mt-0">
-          <Link href="/" className={linkBaseClass}>
+          <Link href="/advisor-dashboard" className={linkBaseClass}>
             <div className={iconClass}>
               <Home size={24} />
             </div>
-            <span className={contentClass}>Home</span>
+            <span className={contentClass}>Dashboard</span>
           </Link>
 
           <Link href="/Timeline" className={linkBaseClass}>
@@ -158,7 +158,14 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
             <div className={iconClass}>
               <User size={24} />
             </div>
-            <span className={contentClass}>User</span>
+            <span className={contentClass}>Profile</span>
+          </Link>
+
+          <Link href="/advisor-users" className={linkBaseClass}>
+            <div className={iconClass}>
+              <Users size={24} />
+            </div>
+            <span className={contentClass}>ผู้ใช้งาน</span>
           </Link>
 
           <Link href="/advisorteams" className={linkBaseClass}>

@@ -281,6 +281,9 @@ enum EventType {
   EXAM
   FINAL_SUBMISSION
   SEMINAR
+  PRESENTATION
+  MEETING
+  PROPOSAL
 }
 
 enum SubmissionStatus {

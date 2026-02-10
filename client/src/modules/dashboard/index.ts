@@ -8,3 +8,7 @@ export { NotificationPanel } from "./components/NotificationPanel";
 export { SchedulePanel } from "./components/SchedulePanel";
 export { ActivityFeed } from "./components/ActivityFeed";
 export type { Activity } from "./components/ActivityFeed";
+
+// Hooks
+export { useAdminDashboard } from "./hooks/useAdminDashboard";
+export { useAdvisorDashboard } from "./hooks/useAdvisorDashboard";

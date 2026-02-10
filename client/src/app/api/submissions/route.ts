@@ -50,6 +50,22 @@ export async function GET(req: NextRequest) {
             name: true,
             type: true,
             dueDate: true,
+            order: true,
+            description: true,
+            Section: {
+              select: {
+                section_id: true,
+                section_code: true,
+                course_type: true,
+                Term: {
+                  select: {
+                    term_id: true,
+                    semester: true,
+                    academicYear: true,
+                  },
+                },
+              },
+            },
           },
         },
         Team: {
@@ -67,7 +83,10 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { Event: { Section: { section_code: "asc" } } },
+        { Event: { order: "asc" } },
+      ],
     });
 
     return NextResponse.json(submissions);

@@ -1,58 +1,119 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const user = await getAuthUser();
+
+  if (!user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // ดึงเฉพาะ users ที่ลงทะเบียนใน Section
-    const users = await prisma.users.findMany({
-      where: {
-        Section_Enrollment: {
-          some: {}, // มี enrollment อย่างน้อย 1 รายการ
-        },
-      },
-      include: {
-        Section_Enrollment: {
-          include: {
-            Section: {
-              select: {
-                section_id: true,
-                section_code: true,
-                course_type: true,
-              },
-            },
-          },
-        },
-        Teammember: {
-          include: {
-            Team: {
-              select: {
-                team_id: true,
-                name: true,
-                groupNumber: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { users_id: "asc" },
-    });
+    const { searchParams } = new URL(req.url);
+    const roleFilter = searchParams.get("role");
 
-    // Format response with section info
-    const formattedUsers = users.map((user) => ({
-      users_id: user.users_id,
-      titles: user.titles,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      email: user.email,
-      tel_number: user.tel_number,
-      role: user.role,
-      profilePicture: user.profilePicture,
-      sections: user.Section_Enrollment.map((e) => ({
+    let users: any[] = [];
+
+    if (user.role === "ADMIN" || user.role === "ADVISOR") {
+      // Admin และ Advisor เห็น users ทั้งหมด
+      const where: any = {};
+      if (roleFilter && roleFilter !== "All") {
+        where.role = roleFilter;
+      }
+
+      users = await prisma.users.findMany({
+        where,
+        include: {
+          Section_Enrollment: {
+            include: {
+              Section: {
+                select: {
+                  section_id: true,
+                  section_code: true,
+                  course_type: true,
+                },
+              },
+            },
+          },
+          Teammember: {
+            include: {
+              Team: {
+                select: {
+                  team_id: true,
+                  name: true,
+                  groupNumber: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: [{ role: "asc" }, { users_id: "asc" }],
+      });
+    } else {
+      // Student เห็นเฉพาะคนใน Section เดียวกัน
+      // หา sections ที่ student นี้ลงทะเบียนอยู่
+      const enrollments = await prisma.section_Enrollment.findMany({
+        where: { users_id: user.users_id },
+        select: { section_id: true },
+      });
+
+      const sectionIds = enrollments.map((e) => e.section_id);
+
+      if (sectionIds.length > 0) {
+        users = await prisma.users.findMany({
+          where: {
+            Section_Enrollment: {
+              some: {
+                section_id: { in: sectionIds },
+              },
+            },
+          },
+          include: {
+            Section_Enrollment: {
+              include: {
+                Section: {
+                  select: {
+                    section_id: true,
+                    section_code: true,
+                    course_type: true,
+                  },
+                },
+              },
+            },
+            Teammember: {
+              include: {
+                Team: {
+                  select: {
+                    team_id: true,
+                    name: true,
+                    groupNumber: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: [{ users_id: "asc" }],
+        });
+      }
+    }
+
+    // Format response
+    const formattedUsers = users.map((u) => ({
+      users_id: u.users_id,
+      titles: u.titles,
+      firstname: u.firstname,
+      lastname: u.lastname,
+      email: u.email,
+      tel_number: u.tel_number,
+      role: u.role,
+      profilePicture: u.profilePicture,
+      sections: u.Section_Enrollment.map((e: any) => ({
         section_id: e.Section.section_id,
         section_code: e.Section.section_code,
         course_type: e.Section.course_type,
       })),
-      teams: user.Teammember.map((t) => ({
+      teams: u.Teammember.map((t: any) => ({
         team_id: t.Team.team_id,
         name: t.Team.name,
         groupNumber: t.Team.groupNumber,
