@@ -1,6 +1,6 @@
 # 🧠 Clean Code Guidelines
 
-> หลักคิดการเขียนโค้ดที่สะอาด ขยายได้ และ maintain ง่าย (Updated: 2026-01-28)
+> หลักคิดการเขียนโค้ดที่สะอาด ขยายได้ และ maintain ง่าย (Updated: 2026-02-25)
 
 ---
 
@@ -136,15 +136,30 @@ services/getGrades.ts (30 บรรทัด)
 Prisma → Database
 ```
 
-### Backend Flow
+### Backend Flow (NestJS) ✅
 
 ```
-api/grades/route.ts (20 บรรทัด)
+Controller (20 บรรทัด) — รับ request + Guards + DTO validation
     ↓
-services/createGrade.ts (50 บรรทัด)
+Service (100-200 บรรทัด) — Business logic + Prisma
     ↓
 Prisma → Database
 ```
+
+```typescript
+// ✅ NestJS Controller Pattern
+@Controller('grades')
+@UseGuards(JwtAuthGuard)
+export class GradesController {
+  @UseGuards(RolesGuard) @Roles('ADMIN')
+  @Post()
+  async batchSave(@CurrentUser('users_id') userId: string, @Body() dto: BatchGradesDto) {
+    return this.gradesService.batchSave(userId, dto);
+  }
+}
+```
+
+> ⚠️ Legacy Next.js `route.ts` files จะถูกลบใน Phase 6
 
 ---
 

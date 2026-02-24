@@ -2,7 +2,8 @@
 
 // useAdvisorTeams Hook - Manages advisor teams page state and logic
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 
 export interface AdvisorProject {
   project_id: number;
@@ -45,8 +46,7 @@ export interface AdvisorProject {
 }
 
 export function useAdvisorTeams() {
-  const { data: session, status } = useSession();
-  const user = session?.user as any;
+  const { user, status } = useAuth();
 
   const [projects, setProjects] = useState<AdvisorProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<AdvisorProject | null>(
@@ -59,10 +59,8 @@ export function useAdvisorTeams() {
     async (keepSelectedId?: number) => {
       try {
         setLoading(true);
-        const response = await fetch("/api/advisors/my-projects");
-
-        if (response.ok) {
-          const data = await response.json();
+        const data = await api.get<AdvisorProject[]>("/advisors/my-projects");
+        if (data) {
           setProjects(data);
 
           // Keep selected project or auto-select first
@@ -98,22 +96,9 @@ export function useAdvisorTeams() {
 
     try {
       setActionLoading(true);
-      const response = await fetch(
-        `/api/projects/${selectedProject.project_id}/status`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "APPROVED" }),
-        },
-      );
-
-      if (response.ok) {
-        alert("อนุมัติโครงงานสำเร็จ!");
-        await fetchProjects(selectedProject.project_id);
-      } else {
-        const data = await response.json();
-        alert(data.message || "เกิดข้อผิดพลาด");
-      }
+      await api.put(`/projects/${selectedProject.project_id}/status`, { status: "APPROVED" });
+      alert("อนุมัติโครงงานสำเร็จ!");
+      await fetchProjects(selectedProject.project_id);
     } catch (error) {
       alert("เกิดข้อผิดพลาด");
     } finally {
@@ -127,22 +112,9 @@ export function useAdvisorTeams() {
 
     try {
       setActionLoading(true);
-      const response = await fetch(
-        `/api/projects/${selectedProject.project_id}/status`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "REJECTED" }),
-        },
-      );
-
-      if (response.ok) {
-        alert("ปฏิเสธโครงงานแล้ว");
-        await fetchProjects(selectedProject.project_id);
-      } else {
-        const data = await response.json();
-        alert(data.message || "เกิดข้อผิดพลาด");
-      }
+      await api.put(`/projects/${selectedProject.project_id}/status`, { status: "REJECTED" });
+      alert("ปฏิเสธโครงงานแล้ว");
+      await fetchProjects(selectedProject.project_id);
     } catch (error) {
       alert("เกิดข้อผิดพลาด");
     } finally {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 
 interface TeamSubmission {
@@ -37,7 +37,7 @@ interface SectionWithEvents {
 }
 
 export function useAdminSubmissions() {
-  const { status } = useSession();
+  const { status } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sections, setSections] = useState<SectionWithEvents[]>([]);
@@ -49,7 +49,7 @@ export function useAdminSubmissions() {
       setError(null);
 
       // Fetch terms to find current term
-      const terms = await api.get<any[]>("/api/terms");
+      const terms = await api.get<any[]>("/terms");
       const now = new Date();
       const currentTerm = terms?.find((t) => {
         const start = new Date(t.startDate);
@@ -58,7 +58,7 @@ export function useAdminSubmissions() {
       });
 
       // Fetch all sections
-      const allSections = await api.get<any[]>("/api/sections");
+      const allSections = await api.get<any[]>("/sections");
 
       // Filter by current term
       const filteredSections = currentTerm
@@ -71,7 +71,7 @@ export function useAdminSubmissions() {
         try {
           // Fetch events for this section
           const events = await api.get<any[]>(
-            `/api/events?section_id=${section.section_id}`,
+            `/events?section_id=${section.section_id}`,
           );
 
           // Get teams in this section
@@ -171,7 +171,7 @@ export function useAdminSubmissions() {
   // Approve submission
   const approveSubmission = async (submissionId: number) => {
     try {
-      await api.patch(`/api/submissions/${submissionId}/approve`, {});
+      await api.patch(`/submissions/${submissionId}/approve`, {});
       await fetchData();
       return { success: true };
     } catch (err: any) {
@@ -182,7 +182,7 @@ export function useAdminSubmissions() {
   // Reject/Request revision
   const rejectSubmission = async (submissionId: number, feedback: string) => {
     try {
-      await api.patch(`/api/submissions/${submissionId}/reject`, { feedback });
+      await api.patch(`/submissions/${submissionId}/reject`, { feedback });
       await fetchData();
       return { success: true };
     } catch (err: any) {

@@ -1,7 +1,7 @@
 # 📋 Feature Gap Analysis - รายละเอียดสิ่งที่ต้องทำ
 
-> **Document Version:** 1.0  
-> **Last Updated:** 2026-01-28
+> **Document Version:** 2.0
+> **Last Updated:** 2026-02-19
 
 ---
 
@@ -31,36 +31,21 @@
 - Timeline Component (แสดงสัปดาห์)
 - Task Model ใน Database
 - TaskAssignment Model
+- ✅ **Task CRUD API** — `/tasks` (GET, POST), `/tasks/:id` (GET, PUT, DELETE)
+- ✅ **Task Assignment API** — `/tasks/:id/assign` (POST)
+- ✅ **Task Comments API** — `/tasks/:id/comments` (GET, POST)
 
 ### 🔴 สิ่งที่ยังขาด
 
-#### API ที่ต้องสร้าง
-
-```typescript
-// 1. Task CRUD
-POST   /api/tasks              - สร้าง Task
-GET    /api/tasks?project_id=X - ดู Tasks ของ Project
-PUT    /api/tasks/:id          - แก้ไข Task
-DELETE /api/tasks/:id          - ลบ Task
-
-// 2. Task Assignment
-POST   /api/tasks/:id/assign   - มอบหมายให้สมาชิก
-DELETE /api/tasks/:id/assign/:userId - ยกเลิกมอบหมาย
-
-// 3. Weekly Progress
-POST   /api/progress           - ส่งรายงานประจำสัปดาห์
-GET    /api/progress?project_id=X&week=Y - ดูรายงาน
-```
-
 #### UI ที่ต้องสร้าง
 
-| Component    | ไฟล์                                       | หน้าที่          |
-| ------------ | ------------------------------------------ | ---------------- |
-| TaskBoard    | `modules/task/components/TaskBoard.tsx`    | Kanban Board     |
-| TaskCard     | `modules/task/components/TaskCard.tsx`     | แสดง Task        |
-| TaskForm     | `modules/task/components/TaskForm.tsx`     | สร้าง/แก้ไข Task |
-| WeeklyReport | `modules/task/components/WeeklyReport.tsx` | ฟอร์มส่งรายงาน   |
-| ProgressView | `modules/task/components/ProgressView.tsx` | ดูความคืบหน้า    |
+| Component    | ไฟล์                                       | หน้าที่          | Status |
+| ------------ | ------------------------------------------ | ---------------- | ------ |
+| TaskBoard    | `modules/task/components/TaskBoard.tsx`    | Kanban Board     | 🔄     |
+| TaskCard     | `modules/task/components/TaskCard.tsx`     | แสดง Task        | 🔄     |
+| TaskForm     | `modules/task/components/TaskForm.tsx`     | สร้าง/แก้ไข Task | ⏳     |
+| WeeklyReport | `modules/task/components/WeeklyReport.tsx` | ฟอร์มส่งรายงาน   | ⏳     |
+| ProgressView | `modules/task/components/ProgressView.tsx` | ดูความคืบหน้า    | ⏳     |
 
 ---
 
@@ -70,19 +55,10 @@ GET    /api/progress?project_id=X&week=Y - ดูรายงาน
 
 - Comment Model ใน Database
 - Notification System
+- ✅ **Task Comment API** — `/tasks/:id/comments` (GET, POST)
+- ✅ **Submission Approve/Reject** — `/submissions/:id/approve`, `/submissions/:id/reject`
 
 ### 🔴 สิ่งที่ยังขาด
-
-#### API ที่ต้องสร้าง
-
-```typescript
-// Comment CRUD
-POST   /api/comments           - สร้าง Comment
-GET    /api/comments?task_id=X - ดู Comments ของ Task
-PUT    /api/comments/:id       - แก้ไข Comment
-DELETE /api/comments/:id       - ลบ Comment
-PATCH  /api/comments/:id/read  - Mark as Read
-```
 
 #### UI ที่ต้องสร้าง
 
@@ -99,24 +75,11 @@ PATCH  /api/comments/:id/read  - Mark as Read
 ### ✅ สิ่งที่มีแล้ว
 
 - Grade Model ใน Database
-- GradeScore Enum (A, A+, B, B+, C, C+, D, D+)
+- GradeScore Enum (A, B_PLUS, B, C_PLUS, C, D_PLUS, D, F)
 - Relation: Grade → Project, Student, Evaluator, Term
+- ✅ **Grade CRUD API** — `/grades` (GET, POST), `/grades/:id` (PATCH, DELETE)
 
 ### 🔴 สิ่งที่ยังขาด
-
-#### API ที่ต้องสร้าง
-
-```typescript
-// Grade Management
-POST   /api/grades             - บันทึกเกรด
-GET    /api/grades?project_id=X - ดูเกรดของ Project
-GET    /api/grades/my-grades   - นักศึกษาดูเกรดตัวเอง
-PUT    /api/grades/:id         - แก้ไขเกรด
-DELETE /api/grades/:id         - ลบเกรด
-
-// Reports
-GET    /api/grades/report?term_id=X - Export รายงานเกรด
-```
 
 #### UI ที่ต้องสร้าง
 
@@ -144,10 +107,10 @@ GET    /api/grades/report?term_id=X - Export รายงานเกรด
 
 ```typescript
 // Archive
-PATCH  /api/projects/:id/archive - เปลี่ยนสถานะเป็น Archived
+PATCH  /projects/:id/archive - เปลี่ยนสถานะเป็น Archived
 
 // Advanced Search
-GET    /api/projects/search?q=X&type=Y&year=Z&advisor=W
+GET    /projects/search?q=X&type=Y&year=Z&advisor=W
 ```
 
 #### UI ที่ต้องเพิ่ม
@@ -173,7 +136,7 @@ GET    /api/projects/search?q=X&type=Y&year=Z&advisor=W
 
 ```typescript
 // Similarity Check
-POST   /api/projects/check-similarity
+POST   /projects/check-similarity
 Body: { title: string, description?: string }
 Response: {
   similar_projects: Array<{
@@ -201,19 +164,30 @@ Response: {
 
 ## 📊 สรุป Effort Estimation
 
-| Category          | Items          | Estimated Days |
-| ----------------- | -------------- | -------------- |
-| **API Endpoints** | ~15 endpoints  | 4-5 days       |
-| **UI Components** | ~20 components | 7-10 days      |
-| **Pages**         | ~5 pages       | 3-4 days       |
-| **Testing**       | Unit + E2E     | 2-3 days       |
-| **Total**         |                | **16-22 days** |
+| Category              | Items          | Status         |
+| --------------------- | -------------- | -------------- |
+| **API Endpoints**     | ~63 endpoints  | ✅ Code exists, migrating to NestJS |
+| **UI Components**     | ~20 components | ⚠️ ~40% done   |
+| **Pages**             | ~5 pages       | ⚠️ Partial      |
+| **NestJS Migration**  | 12 modules     | 🔄 In Progress |
+| **Testing**           | Unit + E2E     | 🔴 TODO         |
 
 ---
 
 ## 🔧 Technical Dependencies
 
-### NPM Packages ที่อาจต้องเพิ่ม
+### NestJS Backend (New)
+
+```bash
+npm install @nestjs/core @nestjs/common @nestjs/platform-express
+npm install @nestjs/jwt @nestjs/passport passport passport-jwt
+npm install @nestjs/config
+npm install class-validator class-transformer
+npm install @prisma/client prisma
+npm install bcryptjs
+```
+
+### Frontend (Existing)
 
 ```bash
 # For Kanban Drag & Drop
@@ -224,9 +198,6 @@ npm install jspdf jspdf-autotable
 
 # For Excel Export
 npm install xlsx
-
-# For Text Similarity (Optional - Backend)
-npm install string-similarity
 ```
 
 ---
@@ -235,14 +206,18 @@ npm install string-similarity
 
 ### Must Have (MVP)
 
-- [ ] Task CRUD API + UI
-- [ ] Comment CRUD API + UI
-- [ ] Grade CRUD API + UI
-- [ ] Weekly Progress Form
+- [x] Task CRUD API ✅
+- [x] Comment API (via Task) ✅
+- [x] Grade CRUD API ✅
+- [x] Event/Submission API ✅
+- [/] NestJS Backend Migration 🔄
+- [ ] Task Board UI (Kanban)
+- [ ] Grading UI
+- [ ] Frontend API Integration
 
 ### Should Have
 
-- [ ] Kanban Board
+- [ ] Kanban Board (Drag & Drop)
 - [ ] Notification Enhancement
 - [ ] Archive Feature
 - [ ] Report Export

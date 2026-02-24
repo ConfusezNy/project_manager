@@ -77,7 +77,7 @@ export default function AdminTeamsPage() {
       if (searchQuery) params.append("search", searchQuery);
 
       const data = await api.get<{ teams: Team[]; total: number }>(
-        `/api/admin/teams?${params.toString()}`,
+        `/admin/teams?${params.toString()}`,
       );
       setTeams(data.teams);
       setError("");
@@ -91,7 +91,7 @@ export default function AdminTeamsPage() {
   // Fetch sections for filter dropdown
   const fetchSections = useCallback(async () => {
     try {
-      const data = await api.get<Section[]>("/api/sections");
+      const data = await api.get<Section[]>("/sections");
       setSections(data);
     } catch (err) {
       console.error("Failed to fetch sections:", err);
@@ -114,7 +114,7 @@ export default function AdminTeamsPage() {
     }
 
     try {
-      await api.delete("/api/admin/teams", {
+      await api.delete("/admin/teams", {
         body: JSON.stringify({ team_id: teamId }),
         headers: { "Content-Type": "application/json" },
       });

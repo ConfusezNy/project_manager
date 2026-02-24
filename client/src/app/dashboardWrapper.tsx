@@ -1,10 +1,17 @@
 "use client";
 
+/**
+ * DashboardWrapper — Layout ที่ wrap ทุกหน้า (Navbar + Sidebar)
+ * ⚠️ สิ่งที่เปลี่ยนจากเดิม:
+ * - เดิม: useSession() จาก next-auth/react
+ * - ใหม่: useAuth() จาก lib/auth-context
+ */
+
 import React, { useState } from "react";
 import Navbar from "./(components)/Navbar";
 import { usePathname } from "next/navigation";
 import AdminSidebar from "./(components)/AdminSidebar";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import StudentSidebar from "./(components)/StudentSidebar";
 import AdvisorSidebar from "./(components)/AdvisorSidebar";
 
@@ -12,8 +19,8 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
 
-  const { data: session } = useSession();
-  const userRole = (session?.user as any)?.role;
+  const { user } = useAuth();
+  const userRole = user?.role;
 
   // หน้าที่ไม่ต้องการ navbar/sidebar
   const publicPages = ["/signin", "/signup"];

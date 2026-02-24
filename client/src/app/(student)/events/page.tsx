@@ -1,7 +1,7 @@
 "use client";
 
 // Student Events Page - Shows all events from all sections
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useState } from "react";
 import {
   Loader2,
@@ -119,11 +119,10 @@ const SectionAccordion = ({
       >
         <div className="flex items-center gap-3">
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold ${
-              group.isCurrent
-                ? "bg-gradient-to-br from-blue-500 to-indigo-600"
-                : "bg-slate-400 dark:bg-slate-600"
-            }`}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold ${group.isCurrent
+              ? "bg-gradient-to-br from-blue-500 to-indigo-600"
+              : "bg-slate-400 dark:bg-slate-600"
+              }`}
           >
             {group.section.course_type === "PRE_PROJECT" ? "Pre" : "Pro"}
           </div>
@@ -186,11 +185,10 @@ const SectionAccordion = ({
                   <div className="flex items-center gap-3">
                     {/* Number/Check Circle */}
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${
-                        isApproved
-                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500"
-                      }`}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${isApproved
+                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500"
+                        }`}
                     >
                       {isApproved ? (
                         <CheckCircle2 className="w-5 h-5" />
@@ -236,7 +234,7 @@ const formatThaiDate = (dateStr?: string) => {
 };
 
 export default function StudentEventsPage() {
-  const { status } = useSession();
+  const { status } = useAuth();
   const {
     sectionGroups,
     loading,

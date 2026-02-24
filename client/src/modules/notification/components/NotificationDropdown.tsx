@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Bell, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 
 export interface NotificationItem {
   notification_id: number;
@@ -55,9 +56,8 @@ export const NotificationDropdown = () => {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/teams/pending-invites");
-      if (res.ok) {
-        const data = await res.json();
+      const data = await api.get<NotificationItem[]>("/teams/pending-invites");
+      if (data) {
         setNotifications(data);
       }
     } catch (error) {

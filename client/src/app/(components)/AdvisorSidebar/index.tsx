@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import {
   Home,
   Timer,
@@ -28,7 +29,7 @@ interface ProjectData {
 }
 
 const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
-  const { status } = useSession();
+  const { status } = useAuth();
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(
@@ -44,17 +45,15 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
         setLoading(true);
 
         // Get advisor's projects
-        const res = await fetch("/api/advisors/my-projects", {
-          credentials: "include",
-        });
-        if (!res.ok) return;
-
-        const data = await res.json();
+        const data = await api.get<any[]>("/advisors/my-projects");
         if (Array.isArray(data)) {
-          const projectList = data.map((p: any) => ({
-            project_id: p.project_id,
-            projectname: p.projectname || "โครงงาน",
-          }));
+          // แสดงเฉพาะโปรเจกต์ที่อนุมัติแล้วใน sidebar
+          const projectList = data
+            .filter((p: any) => p.status === "APPROVED")
+            .map((p: any) => ({
+              project_id: p.project_id,
+              projectname: p.projectname || "โครงงาน",
+            }));
           setProjects(projectList);
           // Expand first project by default
           if (projectList.length > 0) {
@@ -87,10 +86,9 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
     fixed inset-y-0 left-0 z-50 h-screen bg-white shadow-xl dark:bg-black 
     transition-[width] duration-300 ease-in-out overflow-hidden
     md:relative md:shadow-md
-    ${
-      isSidebarOpen
-        ? "w-64 translate-x-0"
-        : "w-64 -translate-x-full md:w-20 md:translate-x-0"
+    ${isSidebarOpen
+      ? "w-64 translate-x-0"
+      : "w-64 -translate-x-full md:w-20 md:translate-x-0"
     }
   `;
 
@@ -103,19 +101,17 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   const contentClass = `
     text-lg font-bold
     whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out
-    ${
-      isSidebarOpen
-        ? "max-w-[200px] opacity-100 ml-4 translate-x-0"
-        : "max-w-0 opacity-0 ml-0 -translate-x-5"
+    ${isSidebarOpen
+      ? "max-w-[200px] opacity-100 ml-4 translate-x-0"
+      : "max-w-0 opacity-0 ml-0 -translate-x-5"
     }
   `;
 
   const subContentClass = `
     whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out
-    ${
-      isSidebarOpen
-        ? "max-w-[160px] opacity-100 ml-3 translate-x-0"
-        : "max-w-0 opacity-0 ml-0 -translate-x-5"
+    ${isSidebarOpen
+      ? "max-w-[160px] opacity-100 ml-3 translate-x-0"
+      : "max-w-0 opacity-0 ml-0 -translate-x-5"
     }
   `;
 
@@ -185,9 +181,8 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
           {/* Project Section Header */}
           <div className="flex items-center w-full py-3 px-6 text-gray-500 dark:text-gray-500 mt-2">
             <span
-              className={`text-sm font-medium uppercase tracking-wider ${
-                isSidebarOpen ? "opacity-100" : "opacity-0 w-0"
-              } transition-all duration-300`}
+              className={`text-sm font-medium uppercase tracking-wider ${isSidebarOpen ? "opacity-100" : "opacity-0 w-0"
+                } transition-all duration-300`}
             >
               PROJECTS ({projects.length})
             </span>
@@ -231,9 +226,8 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
                     </span>
                   </div>
                   <div
-                    className={`transition-all duration-300 ${
-                      isSidebarOpen ? "opacity-100" : "opacity-0"
-                    }`}
+                    className={`transition-all duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0"
+                      }`}
                   >
                     {expandedProjects.has(project.project_id) ? (
                       <ChevronDown size={16} />

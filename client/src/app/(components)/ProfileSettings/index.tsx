@@ -1,13 +1,21 @@
 'use client';
 
-import { useSession } from "next-auth/react";
+/**
+ * ProfileSettings — แก้ไขข้อมูลส่วนตัว
+ * ⚠️ สิ่งที่เปลี่ยนจากเดิม:
+ * - เดิม: useSession() + update() + raw fetch("/api/profile")
+ * - ใหม่: useAuth() + api.patch("/users/profile")
+ */
+
+import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import { useEffect, useState, useRef } from "react";
 
 export default function ProfileSettings() {
-  const { data: session, status, update } = useSession();
+  const { user, status } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // ปรับชื่อให้ตรงกับ Schema
   const [formData, setFormData] = useState({
     firstname: "",
@@ -17,66 +25,52 @@ export default function ProfileSettings() {
   });
 
   useEffect(() => {
-    if (session?.user) {
-      const u = session.user as any;
+    if (user) {
       setFormData({
-        firstname: u.firstname || "",
-        lastname: u.lastname || "",
-        tel_number: u.tel_number || "", // ใช้ tel_number
-        profilePicture: u.profilePicture || null, // ใช้ profilePicture
+        firstname: user.firstname || "",
+        lastname: user.lastname || "",
+        tel_number: "",
+        profilePicture: null,
       });
     }
-  }, [session]);
+  }, [user]);
 
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        // ย่อขนาดเหลือแค่ 100px พอครับ สำหรับรูปโปรไฟล์จิ๋ว
-        const MAX_WIDTH = 100; 
-        const scaleSize = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scaleSize;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          // ย่อขนาดเหลือแค่ 100px พอครับ สำหรับรูปโปรไฟล์จิ๋ว
+          const MAX_WIDTH = 100;
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
 
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        // บีบอัดคุณภาพเหลือ 0.5 (50%) เพื่อให้ไฟล์เล็กระดับไม่กี่ KB
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
-        setFormData({ ...formData, profilePicture: compressedBase64 });
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // บีบอัดคุณภาพเหลือ 0.5 (50%) เพื่อให้ไฟล์เล็กระดับไม่กี่ KB
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+          setFormData({ ...formData, profilePicture: compressedBase64 });
+        };
       };
-    };
-    reader.readAsDataURL(file);
-  }
-};
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
-        alert("บันทึกข้อมูลสำเร็จ!");
-        await update(); // รีเฟรชข้อมูลใน Session
-      } else {
-        // แสดง Error จริงจาก Server
-        alert(`เกิดข้อผิดพลาด: ${result.error || "ไม่ทราบสาเหตุ"}`);
-      }
-    } catch (error) {
-      alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (ตรวจสอบ Path API)");
+      await api.patch("/users/profile", formData);
+      alert("บันทึกข้อมูลสำเร็จ!");
+    } catch (error: any) {
+      alert(`เกิดข้อผิดพลาด: ${error.message || "ไม่ทราบสาเหตุ"}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +84,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex items-center space-x-6">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-500/20 bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
-            {formData.profilePicture ? <img src={formData.profilePicture} className="w-full h-full object-cover"/> : formData.firstname?.charAt(0)}
+            {formData.profilePicture ? <img src={formData.profilePicture} className="w-full h-full object-cover" /> : formData.firstname?.charAt(0)}
           </div>
           <div>
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
@@ -101,15 +95,15 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
             <label className="text-sm font-semibold dark:text-gray-300">ชื่อจริง</label>
-            <input type="text" value={formData.firstname} onChange={e => setFormData({...formData, firstname: e.target.value})} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="text" value={formData.firstname} onChange={e => setFormData({ ...formData, firstname: e.target.value })} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-semibold dark:text-gray-300">นามสกุล</label>
-            <input type="text" value={formData.lastname} onChange={e => setFormData({...formData, lastname: e.target.value})} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="text" value={formData.lastname} onChange={e => setFormData({ ...formData, lastname: e.target.value })} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-semibold dark:text-gray-300">เบอร์โทรศัพท์ (สูงสุด 10 หลัก)</label>
-            <input type="tel" maxLength={10} value={formData.tel_number} onChange={e => setFormData({...formData, tel_number: e.target.value})} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="tel" maxLength={10} value={formData.tel_number} onChange={e => setFormData({ ...formData, tel_number: e.target.value })} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
         </div>
 

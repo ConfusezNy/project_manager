@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import SettingsTabs from "../(components)/SettingsTabs";
 import ProfileSettings from "../(components)/ProfileSettings";
 import SystemSettings from "../(components)/SystemsSettings";
 import NotificationSettings from "../(components)/NotificationSettings"; // 👈 เพิ่มการ Import นี้
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { user: session } = useAuth();
   const [activeTab, setActiveTab] = useState<
     "profile" | "notification" | "system"
   >("profile");
 
-  const userRole = (session?.user as any)?.role;
+  const userRole = session?.role;
   const isAdmin = userRole === "ADMIN";
 
   return (

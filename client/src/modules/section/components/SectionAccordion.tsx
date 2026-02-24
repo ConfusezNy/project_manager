@@ -150,9 +150,8 @@ export const SectionAccordion: React.FC<Props> = ({
             >
               <div className="flex items-center gap-4">
                 <span
-                  className={`text-white transition-transform duration-200 ${
-                    isOpen ? "rotate-90" : ""
-                  }`}
+                  className={`text-white transition-transform duration-200 ${isOpen ? "rotate-90" : ""
+                    }`}
                 >
                   ▶
                 </span>
@@ -197,20 +196,18 @@ export const SectionAccordion: React.FC<Props> = ({
 
                       {/* Section Card */}
                       <div
-                        className={`border rounded-lg p-4 ${
-                          s.course_type === "PRE_PROJECT"
+                        className={`border rounded-lg p-4 ${s.course_type === "PRE_PROJECT"
                             ? "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10"
                             : "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/10"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
                             <span
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                s.course_type === "PRE_PROJECT"
+                              className={`px-3 py-1 rounded-full text-sm font-medium ${s.course_type === "PRE_PROJECT"
                                   ? "bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200"
                                   : "bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
-                              }`}
+                                }`}
                             >
                               {s.course_type === "PROJECT"
                                 ? "โปรเจกต์"
@@ -250,50 +247,31 @@ export const SectionAccordion: React.FC<Props> = ({
                           <button
                             onClick={() => handleToggleLock(s.section_id)}
                             disabled={togglingLock === s.section_id}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                              lockStates[s.section_id]
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${lockStates[s.section_id]
                                 ? "bg-red-500"
                                 : "bg-gray-300 dark:bg-gray-600"
-                            }`}
+                              }`}
                           >
                             {togglingLock === s.section_id ? (
                               <Loader2 className="absolute left-1/2 -translate-x-1/2 w-3 h-3 animate-spin text-white" />
                             ) : (
                               <span
-                                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                                  lockStates[s.section_id]
+                                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${lockStates[s.section_id]
                                     ? "translate-x-5"
                                     : "translate-x-1"
-                                }`}
+                                  }`}
                               />
                             )}
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-                          <div>
-                            <span className="text-gray-500 dark:text-gray-400">
-                              ขนาดทีม:
-                            </span>{" "}
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {s.min_team_size}-{s.max_team_size} คน
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 dark:text-gray-400">
-                              Deadline:
-                            </span>{" "}
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {new Date(s.project_deadline).toLocaleDateString(
-                                "th-TH",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "2-digit",
-                                },
-                              )}
-                            </span>
-                          </div>
+                        <div className="mb-3 text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">
+                            ขนาดทีม:
+                          </span>{" "}
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {s.min_team_size}-{s.max_team_size} คน
+                          </span>
                         </div>
 
                         <div className="flex gap-2">

@@ -1,7 +1,7 @@
 "use client";
 
 // Student Tasks Page - View tasks for student's own project
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useEffect, useState } from "react";
 import { TaskBoard } from "@/modules/task";
 import { projectService } from "@/modules/team/services/projectService";
@@ -15,7 +15,7 @@ interface ProjectData {
 }
 
 export default function StudentTasksPage() {
-  const { data: session, status } = useSession();
+  const { status } = useAuth();
   const [project, setProject] = useState<ProjectData | null>(null);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

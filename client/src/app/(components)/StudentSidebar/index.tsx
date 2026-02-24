@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import {
   Home,
   Timer,
@@ -28,7 +29,7 @@ interface ProjectData {
 }
 
 const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
-  const { status } = useSession();
+  const { status } = useAuth();
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(false);
   const [isProjectExpanded, setIsProjectExpanded] = useState(true);
@@ -42,24 +43,14 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
         setLoading(true);
 
         // Get team
-        const teamRes = await fetch("/api/teams/my-team", {
-          credentials: "include",
-        });
-        if (!teamRes.ok) return;
-
-        const teamData = await teamRes.json();
-        const team = teamData.team || teamData.Team || teamData;
+        const teamData = await api.get<any>("/teams/my-team");
+        const team = teamData?.team || teamData?.Team || teamData;
         if (!team?.team_id) return;
 
         // Get project
-        const projectRes = await fetch(
-          `/api/projects?team_id=${team.team_id}`,
-          { credentials: "include" },
-        );
-        if (!projectRes.ok) return;
-
-        const projectData = await projectRes.json();
-        if (projectData?.project_id) {
+        const projectData = await api.get<any>(`/projects?team_id=${team.team_id}`);
+        // แสดงใน sidebar เฉพาะโปรเจกต์ที่อนุมัติแล้ว
+        if (projectData?.project_id && projectData?.status === "APPROVED") {
           setProject({
             project_id: projectData.project_id,
             projectname: projectData.projectname || "โครงงาน",
@@ -79,10 +70,9 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
     fixed inset-y-0 left-0 z-50 h-screen bg-white shadow-xl dark:bg-black 
     transition-[width] duration-300 ease-in-out overflow-hidden
     md:relative md:shadow-md
-    ${
-      isSidebarOpen
-        ? "w-64 translate-x-0"
-        : "w-64 -translate-x-full md:w-20 md:translate-x-0"
+    ${isSidebarOpen
+      ? "w-64 translate-x-0"
+      : "w-64 -translate-x-full md:w-20 md:translate-x-0"
     }
   `;
 
@@ -95,19 +85,17 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   const contentClass = `
     text-lg font-bold
     whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out
-    ${
-      isSidebarOpen
-        ? "max-w-[200px] opacity-100 ml-4 translate-x-0"
-        : "max-w-0 opacity-0 ml-0 -translate-x-5"
+    ${isSidebarOpen
+      ? "max-w-[200px] opacity-100 ml-4 translate-x-0"
+      : "max-w-0 opacity-0 ml-0 -translate-x-5"
     }
   `;
 
   const subContentClass = `
     whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out
-    ${
-      isSidebarOpen
-        ? "max-w-[160px] opacity-100 ml-3 translate-x-0"
-        : "max-w-0 opacity-0 ml-0 -translate-x-5"
+    ${isSidebarOpen
+      ? "max-w-[160px] opacity-100 ml-3 translate-x-0"
+      : "max-w-0 opacity-0 ml-0 -translate-x-5"
     }
   `;
 
@@ -177,9 +165,8 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
           {/* Project Section Header */}
           <div className="flex items-center w-full py-3 px-6 text-gray-500 dark:text-gray-500 mt-2">
             <span
-              className={`text-sm font-medium uppercase tracking-wider ${
-                isSidebarOpen ? "opacity-100" : "opacity-0 w-0"
-              } transition-all duration-300`}
+              className={`text-sm font-medium uppercase tracking-wider ${isSidebarOpen ? "opacity-100" : "opacity-0 w-0"
+                } transition-all duration-300`}
             >
               PROJECT
             </span>
@@ -202,9 +189,8 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
                   </span>
                 </div>
                 <div
-                  className={`transition-all duration-300 ${
-                    isSidebarOpen ? "opacity-100" : "opacity-0"
-                  }`}
+                  className={`transition-all duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0"
+                    }`}
                 >
                   {isProjectExpanded ? (
                     <ChevronDown size={16} />

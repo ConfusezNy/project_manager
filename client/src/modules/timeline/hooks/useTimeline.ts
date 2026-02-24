@@ -1,8 +1,9 @@
 "use client";
 
 // useTimeline Hook - State management for timeline page
+// ⚠️ NOTE: /api/timeline ยังไม่มี NestJS endpoint — ใช้ raw fetch กับ Next.js API route ชั่วคราว
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 
 export interface TimelineItem {
   id: number;
@@ -17,8 +18,8 @@ export interface TimelineItem {
 }
 
 export function useTimeline() {
-  const { data: session } = useSession();
-  const isAdmin = (session?.user as any)?.role === "ADMIN";
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
 
   const [data, setData] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

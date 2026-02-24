@@ -1,11 +1,12 @@
 "use client";
 
 // Advisor Tasks Page - View tasks for supervised projects
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { TaskBoard } from "@/modules/task";
 import { ClipboardList, Lock } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface ProjectData {
   project_id: number;
@@ -14,7 +15,7 @@ interface ProjectData {
 }
 
 function TasksContent() {
-  const { status } = useSession();
+  const { status } = useAuth();
   const searchParams = useSearchParams();
   const projectIdParam = searchParams.get("project");
 
@@ -34,15 +35,12 @@ function TasksContent() {
         }
 
         // Get advisor's projects to verify access
-        const res = await fetch("/api/advisors/my-projects", {
-          credentials: "include",
-        });
-        if (!res.ok) {
+        const projects = await api.get<any[]>("/advisors/my-projects");
+        if (!projects) {
           setError("ไม่สามารถดึงข้อมูลโครงงานได้");
           return;
         }
 
-        const projects = await res.json();
         const projectData = projects.find(
           (p: any) => p.project_id === parseInt(projectIdParam),
         );

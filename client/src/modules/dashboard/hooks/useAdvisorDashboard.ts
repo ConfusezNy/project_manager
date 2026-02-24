@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 
 interface TeamWithProgress {
@@ -36,7 +36,7 @@ interface UpcomingDeadline {
 }
 
 export function useAdvisorDashboard() {
-  const { status } = useSession();
+  const { status } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +60,7 @@ export function useAdvisorDashboard() {
       setLoading(true);
 
       // Get advisor's teams
-      const teamsData = await api.get<any[]>("/api/teams/advisor-teams");
+      const teamsData = await api.get<any[]>("/teams/advisor-teams");
 
       if (!teamsData || teamsData.length === 0) {
         setTeams([]);
@@ -83,7 +83,7 @@ export function useAdvisorDashboard() {
       for (const team of teamsData) {
         // Get submissions for this team
         const submissions = await api.get<any[]>(
-          `/api/submissions?team_id=${team.team_id}`,
+          `/submissions?team_id=${team.team_id}`,
         );
 
         const approvedCount =
@@ -178,7 +178,7 @@ export function useAdvisorDashboard() {
   // Approve submission
   const approveSubmission = async (submissionId: number) => {
     try {
-      await api.patch(`/api/submissions/${submissionId}/approve`, {});
+      await api.patch(`/submissions/${submissionId}/approve`, {});
       await fetchData();
       return { success: true };
     } catch (err: any) {
@@ -189,7 +189,7 @@ export function useAdvisorDashboard() {
   // Reject submission
   const rejectSubmission = async (submissionId: number, feedback: string) => {
     try {
-      await api.patch(`/api/submissions/${submissionId}/reject`, { feedback });
+      await api.patch(`/submissions/${submissionId}/reject`, { feedback });
       await fetchData();
       return { success: true };
     } catch (err: any) {

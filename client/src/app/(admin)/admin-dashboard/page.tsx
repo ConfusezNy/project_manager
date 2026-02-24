@@ -1,7 +1,7 @@
 "use client";
 
 // Admin Dashboard - Overview of all system data
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import {
   Loader2,
   Users,
@@ -181,7 +181,7 @@ const getActivityIcon = (type: string) => {
 };
 
 export default function AdminDashboardPage() {
-  const { data: session, status: authStatus } = useSession();
+  const { user, status: authStatus } = useAuth();
   const {
     loading,
     error,
@@ -208,7 +208,7 @@ export default function AdminDashboardPage() {
           แดชบอร์ดผู้ดูแลระบบ
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          ยินดีต้อนรับ, {session?.user?.firstname || "Admin"}
+          ยินดีต้อนรับ, {user?.firstname || "Admin"}
         </p>
       </div>
 
@@ -308,13 +308,12 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
                   <span
-                    className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      deadline.daysLeft <= 3
-                        ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                        : deadline.daysLeft <= 7
-                          ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-                          : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    }`}
+                    className={`text-xs font-medium px-2 py-1 rounded-full ${deadline.daysLeft <= 3
+                      ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                      : deadline.daysLeft <= 7
+                        ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                        : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                      }`}
                   >
                     {deadline.daysLeft === 0
                       ? "วันนี้"

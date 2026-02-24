@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 
 interface DashboardStats {
@@ -41,7 +41,7 @@ interface RecentActivity {
 }
 
 export function useAdminDashboard() {
-  const { status } = useSession();
+  const { status } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +68,7 @@ export function useAdminDashboard() {
       setLoading(true);
 
       // Fetch all terms to find current term
-      const terms = await api.get<any[]>("/api/terms");
+      const terms = await api.get<any[]>("/terms");
       const now = new Date();
 
       // Find current term (where now is between startDate and endDate)
@@ -79,7 +79,7 @@ export function useAdminDashboard() {
       });
 
       // Fetch sections with team count
-      const allSections = await api.get<any[]>("/api/sections");
+      const allSections = await api.get<any[]>("/sections");
 
       // Filter sections by current term only
       const sections = currentTerm
@@ -87,7 +87,7 @@ export function useAdminDashboard() {
         : allSections;
 
       // Fetch all users
-      const users = await api.get<any[]>("/api/users");
+      const users = await api.get<any[]>("/users");
 
       // Calculate stats (use all sections for total count)
       const sectionsCount = allSections?.length || 0;
@@ -109,7 +109,7 @@ export function useAdminDashboard() {
         try {
           // Fetch events for this section
           const sectionEvents = await api.get<any[]>(
-            `/api/events?section_id=${section.section_id}`,
+            `/events?section_id=${section.section_id}`,
           );
 
           eventsCount += sectionEvents?.length || 0;

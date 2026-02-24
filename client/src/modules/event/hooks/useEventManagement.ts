@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 
 export interface Section {
@@ -64,7 +64,7 @@ export interface CreateEventData {
 }
 
 export function useEventManagement() {
-  const { data: session, status } = useSession();
+  const { user, status } = useAuth();
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -76,12 +76,12 @@ export function useEventManagement() {
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN";
 
   // Fetch sections
   const fetchSections = useCallback(async () => {
     try {
-      const data = await api.get("/api/sections");
+      const data = await api.get("/sections");
       setSections(data);
       if (data.length > 0 && !selectedSection) {
         setSelectedSection(data[0]);
@@ -100,7 +100,7 @@ export function useEventManagement() {
     setError(null);
     try {
       const data = await api.get(
-        `/api/events?section_id=${selectedSection.section_id}`,
+        `/events?section_id=${selectedSection.section_id}`,
       );
       setEvents(data);
     } catch (err) {
@@ -114,7 +114,7 @@ export function useEventManagement() {
   // Create event
   const createEvent = async (eventData: CreateEventData) => {
     try {
-      await api.post("/api/events", {
+      await api.post("/events", {
         ...eventData,
         createSubmissionsForAllTeams: true,
       });
@@ -133,7 +133,7 @@ export function useEventManagement() {
     eventData: Partial<CreateEventData>,
   ) => {
     try {
-      await api.patch(`/api/events/${eventId}`, eventData);
+      await api.patch(`/events/${eventId}`, eventData);
       await fetchEvents();
       setEditingEvent(null);
       return { success: true };
@@ -148,7 +148,7 @@ export function useEventManagement() {
     if (!confirm("ยืนยันการลบกำหนดการนี้?")) return { success: false };
 
     try {
-      await api.delete(`/api/events/${eventId}`);
+      await api.delete(`/events/${eventId}`);
       await fetchEvents();
       return { success: true };
     } catch (err: any) {
@@ -160,7 +160,7 @@ export function useEventManagement() {
   // Approve submission
   const approveSubmission = async (submissionId: number) => {
     try {
-      await api.patch(`/api/submissions/${submissionId}/approve`, {});
+      await api.patch(`/submissions/${submissionId}/approve`, {});
       await fetchEvents();
       // Refresh viewing event
       if (viewingEvent) {
@@ -179,7 +179,7 @@ export function useEventManagement() {
   // Reject submission
   const rejectSubmission = async (submissionId: number, feedback: string) => {
     try {
-      await api.patch(`/api/submissions/${submissionId}/reject`, { feedback });
+      await api.patch(`/submissions/${submissionId}/reject`, { feedback });
       await fetchEvents();
       return { success: true };
     } catch (err: any) {

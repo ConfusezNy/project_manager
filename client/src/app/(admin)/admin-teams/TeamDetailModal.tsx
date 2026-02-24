@@ -99,7 +99,7 @@ export function TeamDetailModal({
           lastname: string;
           email: string;
         }[]
-      >(`/api/admin/teams/${team.team_id}/available-members${params}`);
+      >(`/admin/teams/${team.team_id}/available-members${params}`);
       setAvailableUsers(users);
     } catch (err) {
       console.error("Failed to fetch available users:", err);
@@ -119,7 +119,7 @@ export function TeamDetailModal({
     if (!team) return;
     setAddingMember(true);
     try {
-      await api.post(`/api/admin/teams/${team.team_id}/members`, {
+      await api.post(`/admin/teams/${team.team_id}/members`, {
         user_id: userId,
       });
       onTeamUpdated();
@@ -139,7 +139,7 @@ export function TeamDetailModal({
     setSaving(true);
     setError("");
     try {
-      await api.put(`/api/admin/teams/${team.team_id}`, {
+      await api.put(`/admin/teams/${team.team_id}`, {
         name: editForm.name,
         groupNumber: editForm.groupNumber,
       });
@@ -157,7 +157,7 @@ export function TeamDetailModal({
     if (!confirm("คุณแน่ใจหรือไม่ที่จะลบสมาชิกนี้ออกจากทีม?")) return;
 
     try {
-      await api.delete(`/api/admin/teams/${team.team_id}/members/${userId}`);
+      await api.delete(`/admin/teams/${team.team_id}/members/${userId}`);
       onTeamUpdated();
     } catch (err: any) {
       alert(err.message || "เกิดข้อผิดพลาดในการลบสมาชิก");
@@ -175,7 +175,7 @@ export function TeamDetailModal({
     }
 
     try {
-      await api.delete("/api/admin/teams", {
+      await api.delete("/admin/teams", {
         body: JSON.stringify({ team_id: team.team_id }),
         headers: { "Content-Type": "application/json" },
       });

@@ -1,9 +1,18 @@
 "use client";
 
-// useAuthForm Hook - Shared state management for auth forms
+/**
+ * useAuthForm Hook - Shared state management for auth forms
+ * ย้ายมาจาก: client/src/modules/auth/hooks/useAuthForm.ts (เวอร์ชัน NextAuth)
+ *
+ * ⚠️ สิ่งที่เปลี่ยนจากเดิม:
+ * - Login: เดิมใช้ signIn("credentials") จาก NextAuth → ใหม่ใช้ useAuth().login()
+ * - Signup: เดิมใช้ raw fetch("/api/auth/signup") → ใหม่ใช้ useAuth().signup()
+ * - ลบ NextAuth imports ทั้งหมด
+ */
+
 import { useState, useCallback } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 
 export interface SignupFormData {
   titles: string;
@@ -40,6 +49,8 @@ export function useSignupForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+  const { signup } = useAuth();
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -56,26 +67,28 @@ export function useSignupForm() {
       setMessage(null);
 
       try {
-        const res = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+        // ใช้ useAuth().signup() → POST /auth/signup ไปที่ NestJS
+        await signup({
+          titles: form.titles || undefined,
+          firstname: form.firstname,
+          lastname: form.lastname,
+          tel_number: form.tel_number || undefined,
+          email: form.email,
+          password: form.password,
         });
-        const data = await res.json();
 
-        if (res.ok) {
-          setMessage("สมัครสมาชิกสำเร็จ");
-          setForm(initialSignupForm);
-        } else {
-          setMessage(data?.error || data?.message || "เกิดข้อผิดพลาด");
-        }
-      } catch (err) {
-        setMessage("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+        setMessage("สมัครสมาชิกสำเร็จ");
+        setForm(initialSignupForm);
+
+        // Redirect to dashboard หลังสมัครสำเร็จ
+        router.push("/dashboard");
+      } catch (err: any) {
+        setMessage(err.message || "เกิดข้อผิดพลาด");
       } finally {
         setLoading(false);
       }
     },
-    [form],
+    [form, signup, router],
   );
 
   return {
@@ -91,6 +104,7 @@ export function useSignupForm() {
 
 export function useLoginForm() {
   const router = useRouter();
+  const { login } = useAuth();
   const [form, setForm] = useState<LoginFormData>(initialLoginForm);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -122,32 +136,19 @@ export function useLoginForm() {
       setLoading(true);
 
       try {
-        const result = await signIn("credentials", {
-          redirect: false,
-          email: form.email,
-          password: form.password,
-        });
-
-        if (result?.error) {
-          alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-          setLoading(false);
-          return;
-        }
-
-        // Fetch session to get user role
-        const sessionRes = await fetch("/api/auth/session");
-        const session = await sessionRes.json();
-        const role = session?.user?.role || "STUDENT";
+        // ใช้ useAuth().login() → POST /auth/login ไปที่ NestJS
+        const result = await login(form.email, form.password);
 
         // Redirect based on role
+        const role = result.user?.role || "STUDENT";
         const redirectPath = getRedirectPath(role);
         router.push(redirectPath);
-      } catch (error) {
+      } catch (error: any) {
         setLoading(false);
-        alert("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
+        alert(error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
       }
     },
-    [form, router],
+    [form, router, login],
   );
 
   return {

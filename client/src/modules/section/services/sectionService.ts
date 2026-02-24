@@ -9,7 +9,7 @@ export interface Section {
   study_type: string;
   min_team_size: number;
   max_team_size: number;
-  project_deadline: string;
+
   team_locked: boolean;
   term: {
     term_id: number;
@@ -50,7 +50,7 @@ export interface CreateSectionForm {
   study_type: string;
   min_team_size: number;
   max_team_size: number;
-  project_deadline: string;
+
   team_locked: boolean;
   term_id: string;
 }
@@ -95,7 +95,7 @@ export interface SectionTeamsResponse {
 export const sectionService = {
   // Fetch all sections
   async getSections(): Promise<Section[]> {
-    const data = await api.get<any[]>("/api/sections", { cache: "no-store" });
+    const data = await api.get<any[]>("/sections", { cache: "no-store" });
     if (!data) return [];
     // Transform Prisma's capital property names to lowercase for frontend compatibility
     return data.map((s: any) => ({
@@ -106,7 +106,7 @@ export const sectionService = {
 
   // Fetch all terms
   async getTerms(): Promise<Term[]> {
-    const data = await api.get<Term[]>("/api/terms", { cache: "no-store" });
+    const data = await api.get<Term[]>("/terms", { cache: "no-store" });
     if (!data) return [];
     return data.sort(
       (a: Term, b: Term) =>
@@ -117,37 +117,37 @@ export const sectionService = {
 
   // Create section
   async createSection(form: CreateSectionForm) {
-    return api.post("/api/sections", form);
+    return api.post("/sections", form);
   },
 
   // Create term
   async createTerm(form: CreateTermForm) {
-    return api.post("/api/terms", form);
+    return api.post("/terms", form);
   },
 
   // Get enrollments for a section
   async getEnrollments(sectionId: number): Promise<Enrollment[]> {
-    return api.get<Enrollment[]>(`/api/sections/${sectionId}/enrollments`);
+    return api.get<Enrollment[]>(`/sections/${sectionId}/enrollments`);
   },
 
   // Get candidates for enrollment
   async getCandidates(sectionId: number): Promise<Candidate[]> {
     const data = await api.get<{ candidates: Candidate[] }>(
-      `/api/sections/${sectionId}/candidates`,
+      `/sections/${sectionId}/candidates`,
     );
     return data?.candidates || [];
   },
 
   // Enroll students
   async enrollStudents(sectionId: number, userIds: string[]) {
-    return api.post(`/api/sections/${sectionId}/enroll`, {
+    return api.post(`/sections/${sectionId}/enroll`, {
       users_ids: userIds,
     });
   },
 
   // Get teams for a section (for continue to project)
   async getTeamsBySection(sectionId: number): Promise<SectionTeamsResponse> {
-    return api.get<SectionTeamsResponse>(`/api/sections/${sectionId}/teams`);
+    return api.get<SectionTeamsResponse>(`/sections/${sectionId}/teams`);
   },
 
   // Continue to project (for PRE_PROJECT sections)
@@ -156,7 +156,7 @@ export const sectionService = {
     newTermId: string,
     teamIds?: number[],
   ) {
-    return api.post(`/api/sections/${sectionId}/continue-to-project`, {
+    return api.post(`/sections/${sectionId}/continue-to-project`, {
       new_term_id: newTermId,
       team_ids: teamIds,
     });
@@ -164,12 +164,12 @@ export const sectionService = {
 
   // Delete a section (Admin only)
   async deleteSection(sectionId: number) {
-    return api.delete(`/api/sections/${sectionId}`);
+    return api.delete(`/sections/${sectionId}`);
   },
 
   // Toggle team lock for a section
   async toggleTeamLock(sectionId: number, locked: boolean) {
-    return api.patch(`/api/sections/${sectionId}`, {
+    return api.patch(`/sections/${sectionId}`, {
       team_locked: locked,
     });
   },

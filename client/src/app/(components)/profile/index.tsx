@@ -1,18 +1,22 @@
 "use client";
 
+/**
+ * Profile Component — Dropdown menu บน Navbar
+ * ⚠️ สิ่งที่เปลี่ยนจากเดิม:
+ * - เดิม: useSession() + signOut() จาก next-auth/react
+ * - ใหม่: useAuth() จาก lib/auth-context
+ */
+
 import React, { useState, useEffect, useRef } from "react";
 import { User, LogOut, Settings } from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 
 const Profile = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { data: session, status } = useSession();
+  const { user, status, logout } = useAuth();
   const router = useRouter();
-
-  // ดึงข้อมูล User จาก Session
-  const user = session?.user as any;
 
   // ปิด Dropdown เมื่อคลิกข้างนอก
   useEffect(() => {
@@ -29,7 +33,7 @@ const Profile = () => {
   }, []);
 
   const handleLogout = () => {
-    signOut({ callbackUrl: "/signin" });
+    logout();
   };
 
   const handleViewProfile = () => {
@@ -52,15 +56,7 @@ const Profile = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700 transition-all overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm"
       >
-        {user?.profilePicture ? (
-          <img
-            src={user.profilePicture}
-            alt="Profile"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          getInitial()
-        )}
+        {getInitial()}
       </button>
 
       {/* Dropdown Content */}
@@ -72,15 +68,7 @@ const Profile = () => {
               <div className="flex items-center gap-3">
                 {/* --- 2. แก้ไขรูปภาพในส่วน Header ของ Dropdown --- */}
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 font-bold text-white text-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-sm">
-                  {user.profilePicture ? (
-                    <img
-                      src={user.profilePicture}
-                      alt="Profile"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    getInitial()
-                  )}
+                  {getInitial()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-900 dark:text-white truncate">

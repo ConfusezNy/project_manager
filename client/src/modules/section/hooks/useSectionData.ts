@@ -19,7 +19,6 @@ const initialCreateForm: CreateSectionForm = {
   study_type: "LE",
   min_team_size: 1,
   max_team_size: 3,
-  project_deadline: "",
   team_locked: false,
   term_id: "",
 };

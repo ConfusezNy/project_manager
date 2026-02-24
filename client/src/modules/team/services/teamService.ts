@@ -53,7 +53,7 @@ export const teamService = {
   // Fetch user's team
   async getMyTeam() {
     try {
-      const data = await api.get<any>("/api/teams/my-team");
+      const data = await api.get<any>("/teams/my-team");
       if (!data) return null;
 
       // Prisma returns relation as 'Team' (uppercase)
@@ -73,9 +73,9 @@ export const teamService = {
             users_id: usersId, // Standard field for components
             user: userObj
               ? {
-                  ...userObj,
-                  users_id: userObj.users_id || usersId,
-                }
+                ...userObj,
+                users_id: userObj.users_id || usersId,
+              }
               : undefined,
             firstname: userObj?.firstname || m.firstname,
             lastname: userObj?.lastname || m.lastname,
@@ -90,7 +90,7 @@ export const teamService = {
   // Fetch user's section
   async getMySection() {
     try {
-      return await api.get<any>("/api/sections/my-section");
+      return await api.get<any>("/sections/my-section");
     } catch {
       return null;
     }
@@ -99,7 +99,7 @@ export const teamService = {
   // Fetch pending invites
   async getPendingInvites(): Promise<PendingInvite[]> {
     try {
-      return await api.get<PendingInvite[]>("/api/teams/pending-invites");
+      return await api.get<PendingInvite[]>("/teams/pending-invites");
     } catch {
       return [];
     }
@@ -108,7 +108,7 @@ export const teamService = {
   // Create new team
   async createTeam(sectionId: number) {
     try {
-      return await api.post("/api/teams", { sectionId });
+      return await api.post("/teams", { sectionId });
     } catch (error: any) {
       throw new Error(error.message || "สร้างกลุ่มไม่สำเร็จ");
     }
@@ -118,7 +118,7 @@ export const teamService = {
   async getAvailableStudents(sectionId: number): Promise<AvailableStudent[]> {
     try {
       return await api.get<AvailableStudent[]>(
-        `/api/sections/${sectionId}/available-students`,
+        `/sections/${sectionId}/available-students`,
       );
     } catch {
       return [];
@@ -128,7 +128,7 @@ export const teamService = {
   // Invite member to team
   async inviteMember(teamId: number, inviteeUserId: string) {
     try {
-      return await api.post("/api/teams/invite", { teamId, inviteeUserId });
+      return await api.post("/teams/invite", { teamId, inviteeUserId });
     } catch (error: any) {
       throw new Error(error.message || "เชิญสมาชิกไม่สำเร็จ");
     }
@@ -137,7 +137,7 @@ export const teamService = {
   // Accept invite
   async acceptInvite(notificationId: number) {
     try {
-      return await api.post("/api/teams/join", { notificationId });
+      return await api.post("/teams/join", { notificationId });
     } catch (error: any) {
       throw new Error(error.message || "เข้าร่วมกลุ่มไม่สำเร็จ");
     }
@@ -146,7 +146,7 @@ export const teamService = {
   // Reject invite
   async rejectInvite(notificationId: number) {
     try {
-      return await api.post("/api/teams/reject", { notificationId });
+      return await api.post("/teams/reject", { notificationId });
     } catch (error: any) {
       throw new Error(error.message || "ปฏิเสธไม่สำเร็จ");
     }
@@ -155,7 +155,7 @@ export const teamService = {
   // Leave team
   async leaveTeam() {
     try {
-      return await api.post("/api/teams/leave", {});
+      return await api.post("/teams/leave", {});
     } catch (error: any) {
       throw new Error(error.message || "ออกจากกลุ่มไม่สำเร็จ");
     }
@@ -164,7 +164,7 @@ export const teamService = {
   // Remove member from team
   async removeMember(teamId: number, userId: string) {
     try {
-      return await api.delete(`/api/teams/${teamId}/members/${userId}`);
+      return await api.delete(`/teams/${teamId}/members/${userId}`);
     } catch (error: any) {
       throw new Error(error.message || "ลบสมาชิกไม่สำเร็จ");
     }

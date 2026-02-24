@@ -77,7 +77,7 @@ export function useGrading() {
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const data = await api.get<SectionOption[]>("/api/sections");
+        const data = await api.get<SectionOption[]>("/sections");
         if (data && data.length > 0) {
           // หา term_id ล่าสุด (ค่ามากที่สุด)
           const latestTermId = Math.max(...data.map((s) => s.term_id));
@@ -106,7 +106,7 @@ export function useGrading() {
     try {
       // API คืนค่า { section_id, teams: [...] }
       const response = await api.get<any>(
-        `/api/sections/${selectedSection.section_id}/teams`,
+        `/sections/${selectedSection.section_id}/teams`,
       );
 
       const teamsData = response?.teams || response;
@@ -126,9 +126,9 @@ export function useGrading() {
         project:
           t.project || t.Project
             ? {
-                project_id: (t.project || t.Project).project_id,
-                projectname: (t.project || t.Project).projectname,
-              }
+              project_id: (t.project || t.Project).project_id,
+              projectname: (t.project || t.Project).projectname,
+            }
             : undefined,
         members: (t.members || t.Teammember || []).map((m: any) => ({
           users_id: m.users_id || m.user_id,
@@ -141,7 +141,7 @@ export function useGrading() {
 
       // ดึงเกรดที่มีอยู่แล้ว
       const gradesData = await api.get<any[]>(
-        `/api/grades?section_id=${selectedSection.section_id}`,
+        `/grades?section_id=${selectedSection.section_id}`,
       );
 
       const existingMap: Record<
@@ -268,7 +268,7 @@ export function useGrading() {
       }
 
       const result = await api.post<{ message: string; count: number }>(
-        "/api/grades",
+        "/grades",
         {
           section_id: selectedSection.section_id,
           grades: gradesToSave,

@@ -4,7 +4,7 @@
 // Usage: const { teamData, loading, handlers } = useTeamData();
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import {
   teamService,
   TeamData,
@@ -67,8 +67,7 @@ export interface UseTeamDataReturn {
 }
 
 export function useTeamData(): UseTeamDataReturn {
-  const { data: session, status } = useSession();
-  const user = session?.user as any;
+  const { user, status } = useAuth();
 
   // Core data states
   const [teamData, setTeamData] = useState<TeamData | null>(null);

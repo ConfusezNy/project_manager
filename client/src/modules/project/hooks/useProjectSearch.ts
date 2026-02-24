@@ -2,6 +2,7 @@
 
 // useProjectSearch Hook - State management for project search page
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api";
 
 export interface ProjectData {
   id: number;
@@ -43,13 +44,7 @@ export function useProjectSearch() {
       if (year) params.append("year", year);
       if (projectType) params.append("category", projectType);
 
-      const response = await fetch(`/api/projects?${params.toString()}`);
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const data: ProjectData[] = await response.json();
+      const data = await api.get<ProjectData[]>(`/projects?${params.toString()}`);
       setResults(data);
     } catch (error) {
       console.error("Error fetching projects:", error);

@@ -2,7 +2,8 @@
 
 // AdvisorEventsDashboard - View and manage submissions for each project
 import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import {
   FileText,
   CheckCircle2,
@@ -114,7 +115,7 @@ const MOCK_SUBMISSIONS: Submission[] = [
 ];
 
 export const AdvisorEventsDashboard: React.FC = () => {
-  const { data: session, status } = useSession();
+  const { user, status } = useAuth();
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<AdvisorProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<AdvisorProject | null>(
@@ -131,9 +132,8 @@ export const AdvisorEventsDashboard: React.FC = () => {
     const fetchProjects = async () => {
       if (status !== "authenticated") return;
       try {
-        const res = await fetch("/api/advisors/my-projects");
-        if (res.ok) {
-          const data = await res.json();
+        const data = await api.get<any[]>("/advisors/my-projects");
+        if (Array.isArray(data)) {
           setProjects(data);
           if (data.length > 0) setSelectedProject(data[0]);
         }
@@ -151,15 +151,10 @@ export const AdvisorEventsDashboard: React.FC = () => {
     const fetchSubmissions = async () => {
       if (!selectedProject) return;
       try {
-        const res = await fetch(
-          `/api/submissions?team_id=${selectedProject.team.team_id}`,
+        const data = await api.get<Submission[]>(
+          `/submissions?team_id=${selectedProject.team.team_id}`,
         );
-        if (res.ok) {
-          const data = await res.json();
-          setSubmissions(data.length > 0 ? data : MOCK_SUBMISSIONS);
-        } else {
-          setSubmissions(MOCK_SUBMISSIONS);
-        }
+        setSubmissions(data && data.length > 0 ? data : MOCK_SUBMISSIONS);
       } catch {
         setSubmissions(MOCK_SUBMISSIONS);
       }
@@ -170,9 +165,7 @@ export const AdvisorEventsDashboard: React.FC = () => {
   const handleApprove = async (submission: Submission) => {
     setActionLoading(true);
     try {
-      await fetch(`/api/submissions/${submission.submission_id}/approve`, {
-        method: "POST",
-      });
+      await api.post(`/submissions/${submission.submission_id}/approve`, {});
       setSubmissions((prev) =>
         prev.map((s) =>
           s.submission_id === submission.submission_id
@@ -191,10 +184,8 @@ export const AdvisorEventsDashboard: React.FC = () => {
   const handleReject = async (submission: Submission) => {
     setActionLoading(true);
     try {
-      await fetch(`/api/submissions/${submission.submission_id}/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback: feedbackText }),
+      await api.post(`/submissions/${submission.submission_id}/reject`, {
+        feedback: feedbackText,
       });
       setSubmissions((prev) =>
         prev.map((s) =>
@@ -358,11 +349,10 @@ const ProjectListItem: React.FC<{
 }> = ({ project, isSelected, onSelect }) => (
   <button
     onClick={onSelect}
-    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-      isSelected
-        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300"
-    }`}
+    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${isSelected
+      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300"
+      }`}
   >
     <h3 className="font-semibold text-gray-900 dark:text-white text-base line-clamp-2 mb-2">
       {project.projectname}
@@ -432,11 +422,10 @@ const SubmissionItem: React.FC<{
     >
       <div className="flex items-center gap-4">
         <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            submission.status === "APPROVED"
-              ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
-              : "bg-gray-200 dark:bg-gray-600 text-gray-500"
-          }`}
+          className={`w-10 h-10 rounded-full flex items-center justify-center ${submission.status === "APPROVED"
+            ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
+            : "bg-gray-200 dark:bg-gray-600 text-gray-500"
+            }`}
         >
           {submission.status === "APPROVED" ? (
             <CheckCircle2 size={20} />
@@ -494,94 +483,94 @@ const SubmissionModal: React.FC<{
   actionLoading,
   formatDate,
 }) => (
-  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-      <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-          {submission.Event.name}
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          กำหนด: {formatDate(submission.Event.dueDate)}
-        </p>
-      </div>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            {submission.Event.name}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            กำหนด: {formatDate(submission.Event.dueDate)}
+          </p>
+        </div>
 
-      <div className="p-6 space-y-4">
-        {submission.file ? (
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 flex items-center gap-3">
-            <FileText className="text-blue-600" />
+        <div className="p-6 space-y-4">
+          {submission.file ? (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 flex items-center gap-3">
+              <FileText className="text-blue-600" />
+              <div>
+                <p className="font-medium text-blue-900 dark:text-blue-200">
+                  ไฟล์ที่ส่ง
+                </p>
+                <p className="text-sm text-blue-600 dark:text-blue-400">
+                  {submission.file}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center text-gray-500">
+              ยังไม่มีไฟล์ที่ส่ง
+            </div>
+          )}
+
+          {submission.status === "SUBMITTED" && (
             <div>
-              <p className="font-medium text-blue-900 dark:text-blue-200">
-                ไฟล์ที่ส่ง
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <MessageSquare size={16} className="inline mr-2" />
+                ข้อเสนอแนะ (สำหรับกรณีขอแก้ไข)
+              </label>
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                placeholder="กรอกข้อเสนอแนะสำหรับนักศึกษา..."
+                className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                rows={3}
+              />
+            </div>
+          )}
+
+          {submission.feedback && (
+            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-100 dark:border-rose-800">
+              <p className="text-xs font-medium text-rose-500 mb-1">
+                Feedback ล่าสุด:
               </p>
-              <p className="text-sm text-blue-600 dark:text-blue-400">
-                {submission.file}
+              <p className="text-sm text-rose-700 dark:text-rose-300">
+                {submission.feedback}
               </p>
             </div>
-          </div>
-        ) : (
-          <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center text-gray-500">
-            ยังไม่มีไฟล์ที่ส่ง
-          </div>
-        )}
+          )}
+        </div>
 
-        {submission.status === "SUBMITTED" && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              <MessageSquare size={16} className="inline mr-2" />
-              ข้อเสนอแนะ (สำหรับกรณีขอแก้ไข)
-            </label>
-            <textarea
-              value={feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="กรอกข้อเสนอแนะสำหรับนักศึกษา..."
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-              rows={3}
-            />
-          </div>
-        )}
-
-        {submission.feedback && (
-          <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-100 dark:border-rose-800">
-            <p className="text-xs font-medium text-rose-500 mb-1">
-              Feedback ล่าสุด:
-            </p>
-            <p className="text-sm text-rose-700 dark:text-rose-300">
-              {submission.feedback}
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex gap-3">
-        <button
-          onClick={onClose}
-          className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 font-medium"
-        >
-          ปิด
-        </button>
-        {submission.status === "SUBMITTED" && (
-          <>
-            <Button
-              variant="secondary"
-              onClick={onReject}
-              disabled={actionLoading}
-              className="flex-1 !bg-rose-50 dark:!bg-rose-900/20 !text-rose-600 flex items-center justify-center gap-2"
-            >
-              <XCircle size={18} /> ขอแก้ไข
-            </Button>
-            <Button
-              variant="primary"
-              onClick={onApprove}
-              disabled={actionLoading}
-              className="flex-1 flex items-center justify-center gap-2"
-            >
-              <CheckCircle2 size={18} /> อนุมัติ
-            </Button>
-          </>
-        )}
+        <div className="p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 font-medium"
+          >
+            ปิด
+          </button>
+          {submission.status === "SUBMITTED" && (
+            <>
+              <Button
+                variant="secondary"
+                onClick={onReject}
+                disabled={actionLoading}
+                className="flex-1 !bg-rose-50 dark:!bg-rose-900/20 !text-rose-600 flex items-center justify-center gap-2"
+              >
+                <XCircle size={18} /> ขอแก้ไข
+              </Button>
+              <Button
+                variant="primary"
+                onClick={onApprove}
+                disabled={actionLoading}
+                className="flex-1 flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 size={18} /> อนุมัติ
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 
 export default AdvisorEventsDashboard;

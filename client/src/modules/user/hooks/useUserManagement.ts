@@ -2,7 +2,7 @@
 
 // useUserManagement Hook - State management for user management page
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 
 export interface User {
@@ -15,8 +15,7 @@ export interface User {
 }
 
 export function useUserManagement() {
-  const { data: session } = useSession();
-  const currentUser = session?.user as any;
+  const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "ADMIN";
 
   const [users, setUsers] = useState<User[]>([]);
@@ -30,7 +29,7 @@ export function useUserManagement() {
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await api.get<any[]>("/api/users");
+      const data = await api.get<any[]>("/users");
 
       if (data) {
         const mappedUsers = data.map((u: any) => ({
@@ -72,7 +71,7 @@ export function useUserManagement() {
   const handleDeleteClick = useCallback(async (id: string | number) => {
     if (confirm("คุณต้องการลบผู้ใช้งานนี้ใช่หรือไม่?")) {
       try {
-        await api.delete(`/api/users/${id}`);
+        await api.delete(`/users/${id}`);
         setUsers((prev) => prev.filter((u) => u.id !== id));
       } catch (error) {
         alert("ลบไม่สำเร็จ");
@@ -90,7 +89,7 @@ export function useUserManagement() {
       try {
         if (editingUser) {
           // Update existing user
-          await api.patch(`/api/users/${editingUser.id}`, {
+          await api.patch(`/users/${editingUser.id}`, {
             role: formData.role,
             // Split name back to firstname/lastname if needed
           });
@@ -108,7 +107,7 @@ export function useUserManagement() {
   const handleRoleChange = useCallback(
     async (userId: string | number, newRole: string) => {
       try {
-        await api.patch(`/api/users/${userId}`, { role: newRole });
+        await api.patch(`/users/${userId}`, { role: newRole });
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
         );

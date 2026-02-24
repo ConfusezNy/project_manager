@@ -1,0 +1,21 @@
+# Server
+server/node_modules/
+server/dist/
+
+# Agent config
+.agent/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+!.env.example

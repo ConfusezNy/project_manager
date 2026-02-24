@@ -1,7 +1,7 @@
 "use client";
 
 // Student Dashboard - Main dashboard page (Real API)
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useState, useEffect } from "react";
 import {
   Loader2,
@@ -234,7 +234,7 @@ const DashboardSchedulePanel = ({
 };
 
 export default function StudentDashboardPage() {
-  const { data: session, status } = useSession();
+  const { user, status } = useAuth();
   const { submissions, loading, error, submitWork } = useStudentEvents();
 
   const [taskStats, setTaskStats] = useState({
@@ -252,7 +252,7 @@ export default function StudentDashboardPage() {
   useEffect(() => {
     const fetchTaskStats = async () => {
       try {
-        const tasks = await api.get("/api/tasks/my-tasks");
+        const tasks = await api.get("/tasks/my-tasks");
         if (Array.isArray(tasks)) {
           const todo = tasks.filter((t: any) => t.status === "TODO").length;
           const inProgress = tasks.filter(
@@ -290,17 +290,17 @@ export default function StudentDashboardPage() {
     const fetchGrades = async () => {
       try {
         const data = await api.get<any[]>(
-          `/api/grades?student_id=${(session as any)?.user?.users_id}`,
+          `/grades?student_id=${user?.users_id}`,
         );
         if (data) setMyGrades(data);
       } catch (err) {
         console.error("Error fetching grades:", err);
       }
     };
-    if (status === "authenticated" && (session as any)?.user?.users_id) {
+    if (status === "authenticated" && user?.users_id) {
       fetchGrades();
     }
-  }, [status, session]);
+  }, [status, user]);
 
   const handleSubmit = (sub: SubmissionWithEvent) => {
     setSelectedSubmission(sub);

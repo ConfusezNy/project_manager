@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { teamService } from "@/modules/team/services/teamService";
 import { projectService } from "@/modules/team/services/projectService";
@@ -52,7 +52,7 @@ export interface SectionGroup {
 }
 
 export function useStudentEvents() {
-  const { data: session, status } = useSession();
+  const { status } = useAuth();
   const [submissions, setSubmissions] = useState<SubmissionWithEvent[]>([]);
   const [sectionGroups, setSectionGroups] = useState<SectionGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,7 @@ export function useStudentEvents() {
 
       // 4. Fetch all submissions for this team (includes events from all sections)
       const submissionsData = await api.get<SubmissionWithEvent[]>(
-        `/api/submissions?team_id=${team.team_id}`,
+        `/submissions?team_id=${team.team_id}`,
       );
 
       setSubmissions(submissionsData || []);
@@ -143,7 +143,7 @@ export function useStudentEvents() {
   // Submit work
   const submitWork = async (submissionId: number, file?: string) => {
     try {
-      await api.patch(`/api/submissions/${submissionId}/submit`, {
+      await api.patch(`/submissions/${submissionId}/submit`, {
         file: file || null,
       });
       await fetchData();

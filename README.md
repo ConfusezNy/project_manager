@@ -21,9 +21,9 @@
 
 ## 🎯 ภาพรวมโครงการ | Project Overview
 
-ระบบบริหารจัดการโครงงานนักศึกษาเป็นแพลตฟอร์มแบบ Full-Stack ที่พัฒนาด้วย **Next.js 14** และ **PostgreSQL** โดยออกแบบมาเพื่อจัดการโครงงานของนักศึกษาในระดับมหาวิทยาลัยอย่างมีประสิทธิภาพ รองรับการทำงานของ 3 บทบาทหลัก: **นักศึกษา (Student)**, **อาจารย์ที่ปรึกษา (Advisor)** และ **ผู้ดูแลระบบ (Admin)**
+ระบบบริหารจัดการโครงงานนักศึกษาเป็นแพลตฟอร์มแบบ Client-Server ที่พัฒนาด้วย **Next.js 14** (Frontend) + **NestJS 11** (Backend) และ **PostgreSQL** โดยออกแบบมาเพื่อจัดการโครงงานของนักศึกษาในระดับมหาวิทยาลัยอย่างมีประสิทธิภาพ รองรับการทำงานของ 3 บทบาทหลัก: **นักศึกษา (Student)**, **อาจารย์ที่ปรึกษา (Advisor)** และ **ผู้ดูแลระบบ (Admin)**
 
-**Project Management System** is a comprehensive full-stack platform built with **Next.js 14** and **PostgreSQL**, designed to efficiently manage university student projects. It supports three main roles: **Students**, **Advisors**, and **Administrators**.
+**Project Management System** is a comprehensive client-server platform built with **Next.js 14** (Frontend) + **NestJS 11** (Backend) and **PostgreSQL**, designed to efficiently manage university student projects. It supports three main roles: **Students**, **Advisors**, and **Administrators**.
 
 ### 🎯 วัตถุประสงค์ | Objectives
 
@@ -66,35 +66,35 @@
 
 ```
 ┌─────────────────────────────────────────────────┐
-│           Frontend (Next.js 14 App Router)      │
+│       Frontend (Next.js 14 App Router)          │
 │  ┌──────────┬──────────┬──────────┬──────────┐ │
 │  │  Admin   │ Advisor  │ Student  │  Public  │ │
-│  │ Dashboard│Dashboard │Dashboard │  Pages   │ │
+│  │Dashboard │Dashboard │Dashboard │  Pages   │ │
 │  └──────────┴──────────┴──────────┴──────────┘ │
 │              ↓                                   │
-│        React Server Components                  │
-│        Client Components (Hydration)            │
+│        API Client (fetch + JWT Bearer Token)    │
 └────────────────┬────────────────────────────────┘
-                 │
-                 ↓ API Routes & Server Actions
+                 │ HTTP
+                 ↓
 ┌────────────────┴────────────────────────────────┐
-│              Backend (Next.js API)              │
+│            Backend (NestJS 11)                  │
 │  ┌──────────────────────────────────────────┐   │
-│  │      NextAuth.js Authentication          │   │
-│  │      (Session-based + JWT)               │   │
+│  │    Passport.js + JWT Authentication      │   │
+│  │    Guards, Decorators, DTOs              │   │
 │  └──────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────┐   │
-│  │      Prisma ORM (Type-safe queries)      │   │
+│  │    12 Modules (sections, teams, etc.)    │   │
+│  └──────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────┐   │
+│  │    Prisma ORM 6.x (Type-safe queries)    │   │
 │  └──────────────────────────────────────────┘   │
 └────────────────┬────────────────────────────────┘
                  │
                  ↓
 ┌────────────────┴────────────────────────────────┐
 │         Database (PostgreSQL 15)                │
-│  ┌──────────────────────────────────────────┐   │
-│  │  Users │ Teams │ Projects │ Tasks        │   │
-│  │  Sections │ Terms │ Grades │ Notifications│  │
-│  └──────────────────────────────────────────┘   │
+│  Users │ Teams │ Projects │ Tasks │ Events      │
+│  Sections │ Terms │ Grades │ Submissions        │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -102,26 +102,28 @@
 
 ## 🛠️ เทคโนโลยี | Tech Stack
 
-### Frontend
+### Frontend (Next.js)
 | Technology | Version | Purpose |
 |-----------|---------|---------|
-| **Next.js** | 14.2.33 | React Framework with App Router |
+| **Next.js** | 14.2.x | React Framework with App Router |
 | **React** | 18.2.0 | UI Library |
 | **TypeScript** | 5.x | Type Safety |
-| **Tailwind CSS** | 3.4.18 | Utility-first CSS |
-| **Material-UI** | 7.3.6 | Component Library |
-| **Lucide React** | 0.469.0 | Icon Library |
-| **React Hook Form** | 7.68.0 | Form Management |
-| **Next Themes** | 0.4.6 | Dark Mode Support |
+| **Tailwind CSS** | 3.4.x | Utility-first CSS |
+| **Material-UI** | 7.x | Component Library |
+| **Lucide React** | 0.469.x | Icon Library |
+| **React Hook Form** | 7.x | Form Management |
+| **Next Themes** | 0.4.x | Dark Mode Support |
 
-### Backend & Database
+### Backend (NestJS)
 | Technology | Version | Purpose |
 |-----------|---------|---------|
-| **Next.js API Routes** | 14.2.33 | Backend API |
-| **NextAuth.js** | 4.24.13 | Authentication |
-| **Prisma ORM** | 5.22.0 | Database ORM |
+| **NestJS** | 11.x | Backend Framework |
+| **Passport.js** | 0.7.x | Authentication Strategy |
+| **@nestjs/jwt** | 11.x | JWT Token Management |
+| **Prisma ORM** | 6.x | Database ORM |
+| **class-validator** | 0.14.x | DTO Validation |
+| **bcryptjs** | 3.x | Password Hashing |
 | **PostgreSQL** | 15-alpine | Relational Database |
-| **bcryptjs** | 3.0.3 | Password Hashing |
 
 ### Data Visualization & UI Components
 | Library | Purpose |
@@ -130,15 +132,14 @@
 | **Gantt Task React** | 📅 Gantt Chart for Timeline |
 | **React DnD** | 🎯 Drag & Drop for Kanban |
 | **Date-fns** | 📅 Date Formatting |
-| **Axios** | 🌐 HTTP Client |
 
 ### DevOps & Tools
 | Tool | Purpose |
 |------|---------|
 | **Docker** | 🐳 Containerization |
 | **Docker Compose** | 🔧 Multi-container Orchestration |
+| **Node.js** | 22.x LTS Runtime |
 | **ESLint** | ✅ Code Linting |
-| **Autoprefixer** | 🎨 CSS Compatibility |
 
 ---
 
@@ -165,55 +166,68 @@ cd project_manager
 #### 2. Install Dependencies
 
 ```bash
+# Frontend
 cd client
+npm install
+
+# Backend
+cd ../server
 npm install
 ```
 
 #### 3. Setup Environment Variables
 
-สร้างไฟล์ `.env` ในโฟลเดอร์ `client/`:
+สร้างไฟล์ `.env` ในโฟลเดอร์ `server/`:
 
 ```env
 # Database
-DATABASE_URL="your db"
+DATABASE_URL="postgresql://postgres:password@localhost:5432/projectmanagement"
 
-# NextAuth
-NEXTAUTH_SECRET="your nextauth key"
-NEXTAUTH_URL="http://localhost:3000"
+# JWT
+JWT_SECRET="your-jwt-secret-key"
+JWT_EXPIRES_IN="7d"
+
+# Server
+PORT=4000
+```
+
+สร้างไฟล์ `.env` ในโฟลเดอร์ `client/`:
+
+```env
+# API
+NEXT_PUBLIC_API_URL="http://localhost:4000"
 ```
 
 #### 4. Database Setup
 
 **Option A: ใช้ Docker Compose (แนะนำ)**
 ```bash
-# กลับไปที่ root directory
-cd ..
+# ที่ root directory
 docker-compose up -d
 ```
 
-**Option B: ใช้ PostgreSQL ที่ติดตั้งเอง**
+**Option B: Manual Setup**
 ```bash
-# สร้าง Database
 createdb projectmanagement
-
-# Run migrations
-cd client
+cd server
 npx prisma migrate deploy
-```
-
-#### 5. Generate Prisma Client
-
-```bash
 npx prisma generate
 ```
 
-#### 6. Start Development Server
+#### 5. Start Development Servers
 
 ```bash
+# Terminal 1: Backend
+cd server
+npm run start:dev
+
+# Terminal 2: Frontend
+cd client
 npm run dev
 ```
 
-เปิดเบราว์เซอร์ที่ [http://localhost:3000](http://localhost:3000)
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend API: [http://localhost:4000](http://localhost:4000)
 
 ---
 
@@ -221,11 +235,13 @@ npm run dev
 
 ### 🔐 Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | ✅ |
-| `NEXTAUTH_SECRET` | Secret key for NextAuth.js | ✅ |
-| `NEXTAUTH_URL` | Base URL of application | ✅ |
+| Variable | Location | Description | Required |
+|----------|----------|-------------|----------|
+| `DATABASE_URL` | server/.env | PostgreSQL connection string | ✅ |
+| `JWT_SECRET` | server/.env | Secret key for JWT tokens | ✅ |
+| `JWT_EXPIRES_IN` | server/.env | JWT expiration (e.g. "7d") | ✅ |
+| `PORT` | server/.env | NestJS server port (default: 4000) | ✅ |
+| `NEXT_PUBLIC_API_URL` | client/.env | NestJS backend URL | ✅ |
 
 ### 🗄️ Database Migration
 
@@ -249,38 +265,45 @@ npx prisma studio
 
 ```
 project_manager/
-├── docker-compose.yml          # Docker configuration
+├── docker-compose.yml          # Docker: PostgreSQL + NestJS + Next.js
 ├── README.md                   # Documentation
-└── client/                     # Next.js application
-    ├── prisma/
-    │   ├── schema.prisma      # Database schema
-    │   └── migrations/         # Database migrations
+├── notion/                     # Project documentation
+│
+├── server/                     # NestJS Backend
+│   ├── src/
+│   │   ├── auth/              # JWT + Passport authentication
+│   │   ├── sections/          # Section management (11 endpoints)
+│   │   ├── teams/             # Team management (12 endpoints)
+│   │   ├── projects/          # Project management (6 endpoints)
+│   │   ├── tasks/             # Task management (7 endpoints)
+│   │   ├── events/            # Event management (5 endpoints)
+│   │   ├── submissions/       # Submission management (4 endpoints)
+│   │   ├── grades/            # Grade management (4 endpoints)
+│   │   ├── users/             # User management (4 endpoints)
+│   │   ├── advisors/          # Advisor management (2 endpoints)
+│   │   ├── admin/             # Admin team management (5 endpoints)
+│   │   ├── terms/             # Term management (2 endpoints)
+│   │   ├── profile/           # Profile management (1 endpoint)
+│   │   └── prisma/            # Shared Prisma module
+│   ├── prisma/
+│   │   ├── schema.prisma      # Database schema
+│   │   └── migrations/        # Database migrations
+│   └── package.json
+│
+└── client/                     # Next.js Frontend
     ├── src/
     │   ├── app/
     │   │   ├── (admin)/       # Admin dashboard pages
     │   │   ├── (advisor)/     # Advisor dashboard pages
     │   │   ├── (student)/     # Student dashboard pages
-    │   │   ├── (components)/  # Reusable components
-    │   │   ├── (publlic)/     # Public pages (signin/signup)
-    │   │   ├── api/           # API routes
-    │   │   │   ├── auth/      # Authentication endpoints
-    │   │   │   ├── sections/  # Section management
-    │   │   │   ├── teams/     # Team management
-    │   │   │   ├── terms/     # Term management
-    │   │   │   └── profile/   # User profile
-    │   │   ├── layout.tsx     # Root layout
-    │   │   ├── page.tsx       # Home page
-    │   │   └── providers.tsx  # Context providers
-    │   ├── lib/
-    │   │   ├── auth.ts        # NextAuth configuration
-    │   │   ├── prisma.ts      # Prisma client instance
-    │   │   └── require-user.ts # Auth middleware
-    │   └── types/
-    │       └── next-auth.d.ts # NextAuth type definitions
-    ├── Dockerfile             # Docker image config
-    ├── package.json           # Dependencies
-    ├── tsconfig.json          # TypeScript config
-    └── tailwind.config.ts     # Tailwind CSS config
+    │   │   └── (publlic)/     # Public pages (signin/signup)
+    │   ├── modules/           # Feature modules (UI components)
+    │   ├── shared/            # Shared components & utils
+    │   └── lib/
+    │       └── api.ts         # API client (→ NestJS backend)
+    ├── Dockerfile
+    ├── package.json
+    └── tailwind.config.ts
 ```
 
 ---
@@ -370,45 +393,37 @@ Users 1:N Grade (as Evaluator)
 
 ## 🌐 API Endpoints
 
+> ดูรายละเอียดทั้งหมดได้ที่ [Backend-API-Standards.md](./notion/Backend-API-Standards.md)
+
 ### Authentication
 ```
-POST   /api/auth/signup          # ลงทะเบียนผู้ใช้ใหม่
-POST   /api/auth/signin          # เข้าสู่ระบบ
-POST   /api/auth/signout         # ออกจากระบบ
-GET    /api/auth/session         # ดูข้อมูล session ปัจจุบัน
+POST   /auth/signup              # ลงทะเบียนผู้ใช้ใหม่
+POST   /auth/login               # เข้าสู่ระบบ → JWT
 ```
 
-### Sections (หมู่เรียน)
+### Sections (หมู่เรียน) — 11 endpoints
 ```
-GET    /api/sections             # ดูรายการ sections ทั้งหมด
-POST   /api/sections             # สร้าง section ใหม่
-GET    /api/sections/[id]        # ดูข้อมูล section
-PUT    /api/sections/[id]        # แก้ไข section
-DELETE /api/sections/[id]        # ลบ section
-```
-
-### Teams (ทีม)
-```
-GET    /api/teams                # ดูรายการทีมทั้งหมด
-POST   /api/teams                # สร้างทีมใหม่
-GET    /api/teams/[id]           # ดูข้อมูลทีม
-PUT    /api/teams/[id]           # แก้ไขทีม
-DELETE /api/teams/[id]           # ลบทีม
+GET    /sections                 # รายการ sections ทั้งหมด
+POST   /sections                 # สร้าง section (Admin)
+GET    /sections/:id             # ข้อมูล section
+PATCH  /sections/:id             # แก้ไข section
+DELETE /sections/:id             # ลบ section (Admin)
+POST   /sections/:id/enroll      # ลงทะเบียนนักศึกษา
 ```
 
-### Terms (ภาคการศึกษา)
+### Teams (ทีม) — 10 endpoints
 ```
-GET    /api/terms                # ดูรายการภาคการศึกษา
-POST   /api/terms                # สร้างภาคการศึกษาใหม่
-GET    /api/terms/[id]           # ดูข้อมูลภาคการศึกษา
-PUT    /api/terms/[id]           # แก้ไขภาคการศึกษา
-DELETE /api/terms/[id]           # ลบภาคการศึกษา
+GET    /teams                    # ทีมทั้งหมด
+POST   /teams                    # สร้างทีม (Student)
+GET    /teams/my-team            # ทีมของตนเอง
+POST   /teams/invite             # เชิญสมาชิก
+POST   /teams/join               # ตอบรับคำเชิญ
+POST   /teams/leave              # ออกจากทีม
 ```
 
-### Profile
+### Projects / Tasks / Events / Grades / Users
 ```
-GET    /api/profile              # ดูข้อมูลโปรไฟล์
-PUT    /api/profile              # แก้ไขโปรไฟล์
+→ ดู Backend-API-Standards.md สำหรับ endpoints ทั้งหมด (63 endpoints)
 ```
 
 ---
@@ -442,7 +457,7 @@ PUT    /api/profile              # แก้ไขโปรไฟล์
 
 ## 🚢 Deployment
 
-### 🐳 Docker Deployment
+### 🐳 Docker Deployment (แนะนำ)
 
 #### Production Build
 ```bash
@@ -453,29 +468,22 @@ docker-compose up -d --build
 docker-compose down
 
 # ดู logs
+docker-compose logs -f server
 docker-compose logs -f client
 ```
 
 #### Environment Variables for Production
 ```env
+# Server
 DATABASE_URL="postgresql://postgres:password@postgres:5432/projectmanagement"
-NEXTAUTH_SECRET="<generate-secure-secret>"
-NEXTAUTH_URL="https://yourdomain.com"
+JWT_SECRET="<generate-secure-secret>"
+JWT_EXPIRES_IN="7d"
+PORT=4000
 NODE_ENV="production"
+
+# Client
+NEXT_PUBLIC_API_URL="http://server:4000"
 ```
-
-### ☁️ Vercel Deployment
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-cd client
-vercel --prod
-```
-
-ตั้งค่า Environment Variables ใน Vercel Dashboard
 
 ### 🗄️ Database Migration on Production
 
@@ -570,7 +578,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 <div align="center">
 
-**Built with ❤️ using Next.js, TypeScript, and PostgreSQL**
+**Built with ❤️ using Next.js, NestJS, TypeScript, and PostgreSQL**
 
 [⬆ กลับสู่ด้านบน | Back to Top](#-project-management-system)
 

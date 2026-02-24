@@ -1,7 +1,7 @@
 "use client";
 
 // Advisor Dashboard - Overview of teams I advise
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useState } from "react";
 import {
   Loader2,
@@ -174,7 +174,7 @@ const PendingItem = ({
 };
 
 export default function AdvisorDashboardPage() {
-  const { data: session, status: authStatus } = useSession();
+  const { user, status: authStatus } = useAuth();
   const {
     loading,
     error,
@@ -226,7 +226,7 @@ export default function AdvisorDashboardPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          สวัสดี, อ.{session?.user?.firstname || "Advisor"}
+          สวัสดี, อ.{user?.firstname || "Advisor"}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
           Dashboard อาจารย์ที่ปรึกษา
@@ -336,11 +336,10 @@ export default function AdvisorDashboardPage() {
                       </p>
                     </div>
                     <span
-                      className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        deadline.daysLeft <= 3
-                          ? "bg-red-100 text-red-600 dark:bg-red-900/30"
-                          : "bg-amber-100 text-amber-600 dark:bg-amber-900/30"
-                      }`}
+                      className={`text-xs font-medium px-2 py-1 rounded-full ${deadline.daysLeft <= 3
+                        ? "bg-red-100 text-red-600 dark:bg-red-900/30"
+                        : "bg-amber-100 text-amber-600 dark:bg-amber-900/30"
+                        }`}
                     >
                       {deadline.daysLeft === 0
                         ? "วันนี้"

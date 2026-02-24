@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { api } from "@/lib/api";
 
 interface AdvisorData {
   users_id: string; // API returns string
@@ -43,13 +44,7 @@ export default function AdvisorSelectionModal({
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch("/api/advisors/available");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch advisors");
-      }
-
-      const data = await response.json();
+      const data = await api.get<AdvisorData[]>("/advisors/available");
       setAdvisors(data);
     } catch (err) {
       setError("ไม่สามารถโหลดรายชื่ออาจารย์ได้");
@@ -64,17 +59,7 @@ export default function AdvisorSelectionModal({
       setSelecting(true);
       setError(null);
 
-      const response = await fetch(`/api/projects/${projectId}/advisor`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ advisor_id: advisorId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "เกิดข้อผิดพลาด");
-      }
+      await api.post(`/projects/${projectId}/advisor`, { advisor_id: advisorId });
 
       alert("เพิ่มอาจารย์ที่ปรึกษาสำเร็จ");
       onAdvisorSelected();
@@ -149,11 +134,10 @@ export default function AdvisorSelectionModal({
               {advisors.map((advisor) => (
                 <div
                   key={advisor.users_id}
-                  className={`border-2 rounded-xl p-6 transition-all ${
-                    advisor.canSelect
+                  className={`border-2 rounded-xl p-6 transition-all ${advisor.canSelect
                       ? "border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-lg"
                       : "border-gray-200 dark:border-gray-700 opacity-60"
-                  }`}
+                    }`}
                 >
                   {/* Profile Picture */}
                   <div className="flex justify-center mb-4">
@@ -186,13 +170,12 @@ export default function AdvisorSelectionModal({
                   {/* Project Count */}
                   <div className="flex items-center justify-center mb-4">
                     <div
-                      className={`px-4 py-2 rounded-lg ${
-                        advisor.currentProjects === 0
+                      className={`px-4 py-2 rounded-lg ${advisor.currentProjects === 0
                           ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
                           : advisor.currentProjects === 1
                             ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
                             : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                      }`}
+                        }`}
                     >
                       <span className="font-semibold">
                         โปรเจกต์: {advisor.currentProjects}/2

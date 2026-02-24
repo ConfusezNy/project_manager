@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Bell, Check, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 
 interface NotificationItem {
   notification_id: number;
@@ -37,9 +38,8 @@ const NotificationDropdown = () => {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/teams/pending-invites');
-      if (res.ok) {
-        const data = await res.json();
+      const data = await api.get<NotificationItem[]>('/teams/pending-invites');
+      if (data) {
         setNotifications(data);
       }
     } catch (error) {
@@ -80,23 +80,23 @@ const NotificationDropdown = () => {
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
     const diffInMins = Math.floor(diffInMs / 60000);
-    
+
     if (diffInMins < 1) return 'เมื่อสักครู่';
     if (diffInMins < 60) return `${diffInMins} นาทีที่แล้ว`;
-    
+
     const diffInHours = Math.floor(diffInMins / 60);
     if (diffInHours < 24) return `${diffInHours} ชั่วโมงที่แล้ว`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays === 1) return 'เมื่อวาน';
     if (diffInDays < 7) return `${diffInDays} วันที่แล้ว`;
-    
+
     return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
   };
 
   return (
     <div className="relative" ref={notiRef}>
-      <button 
+      <button
         className="relative rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         onClick={() => setIsNotiOpen(!isNotiOpen)}
       >
@@ -111,7 +111,7 @@ const NotificationDropdown = () => {
       {/* Dropdown Content */}
       {isNotiOpen && (
         <div className="absolute right-0 mt-3 w-80 sm:w-96 rounded-xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 dark:bg-[#1c1c1e] dark:border dark:border-gray-700 z-50 overflow-hidden transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
-          
+
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-[#2c2c2e]">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">การแจ้งเตือน</h3>
             {unreadCount > 0 && (
@@ -132,8 +132,8 @@ const NotificationDropdown = () => {
               </div>
             ) : (
               notifications.map((item) => (
-                <div 
-                  key={item.notification_id} 
+                <div
+                  key={item.notification_id}
                   onClick={() => handleNotificationClick(item)}
                   className={`relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0 cursor-pointer ${!item.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
                 >
