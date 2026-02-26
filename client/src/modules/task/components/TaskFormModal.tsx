@@ -2,6 +2,7 @@
 
 // TaskFormModal - Create/Edit task form
 import React, { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 import { X, Calendar, Tag, AlertCircle } from "lucide-react";
 import type {
   CreateTaskInput,
@@ -36,6 +37,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   teamMembers = [],
   initialData,
 }) => {
+  const { user: currentUser } = useAuth();
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(
     initialData?.description || "",
@@ -49,6 +51,12 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Exclude current user from assignable members
+  const currentUserId = currentUser?.users_id || "";
+  const assignableMembers = teamMembers.filter(
+    (m) => (m.users_id || m.user?.users_id || "") !== currentUserId,
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,11 +159,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   key={p.value}
                   type="button"
                   onClick={() => setPriority(p.value)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    priority === p.value
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${priority === p.value
                       ? `${p.color} ring-2 ring-offset-2 ring-blue-500`
                       : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
-                  }`}
+                    }`}
                 >
                   {p.label}
                 </button>
@@ -207,7 +214,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           </div>
 
           {/* Assignees */}
-          {teamMembers.length > 0 && (
+          {assignableMembers.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -216,28 +223,27 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    if (selectedAssignees.length === teamMembers.length) {
+                    if (selectedAssignees.length === assignableMembers.length) {
                       setSelectedAssignees([]);
                     } else {
-                      setSelectedAssignees(teamMembers.map((m) => m.users_id));
+                      setSelectedAssignees(assignableMembers.map((m) => m.users_id));
                     }
                   }}
                   className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  {selectedAssignees.length === teamMembers.length
+                  {selectedAssignees.length === assignableMembers.length
                     ? "ยกเลิกทั้งหมด"
                     : "เลือกทั้งหมด"}
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-100 dark:border-gray-700 rounded-lg">
-                {teamMembers.map((member, index) => (
+                {assignableMembers.map((member, index) => (
                   <label
                     key={`member-${index}-${member.users_id || "unknown"}`}
-                    className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${
-                      selectedAssignees.includes(member.users_id)
+                    className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${selectedAssignees.includes(member.users_id)
                         ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800"
                         : "border-transparent hover:bg-gray-50 dark:hover:bg-gray-700"
-                    }`}
+                      }`}
                   >
                     <input
                       type="checkbox"

@@ -33,7 +33,7 @@ export class SubmissionsService {
         userId: string,
         userRole: string,
     ) {
-        const where: any = {};
+        const where: Record<string, unknown> = {};
 
         if (eventId) where.event_id = eventId;
         if (teamId) where.team_id = teamId;

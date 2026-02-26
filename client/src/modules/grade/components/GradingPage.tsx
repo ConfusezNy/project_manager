@@ -14,6 +14,8 @@ import {
   Download,
 } from "lucide-react";
 import { exportToCSV, formatGradeLabel } from "@/lib/exportCSV";
+import { exportToExcel } from "@/modules/export/utils/exportExcel";
+import { exportToPdf } from "@/modules/export/utils/exportPdf";
 import {
   useGrading,
   GRADE_OPTIONS,
@@ -143,6 +145,76 @@ export const GradingPage: React.FC = () => {
     );
   };
 
+  // Excel Export
+  const handleExportExcel = () => {
+    const rows: Record<string, string | number | null>[] = [];
+    for (const team of allTeams) {
+      for (const member of team.members) {
+        const score = gradeMap[member.users_id];
+        rows.push({
+          group: team.groupNumber,
+          team_name: team.name,
+          project: team.project?.projectname || "-",
+          student_id: member.users_id,
+          firstname: member.firstname,
+          lastname: member.lastname,
+          grade: score ? formatGradeLabel(score) : "-",
+        });
+      }
+    }
+    const sectionName = selectedSection?.section_code || "grades";
+    exportToExcel(
+      rows,
+      [
+        { header: "กลุ่ม", key: "group", width: 8 },
+        { header: "ชื่อทีม", key: "team_name", width: 20 },
+        { header: "ชื่อโครงงาน", key: "project", width: 30 },
+        { header: "รหัสนักศึกษา", key: "student_id", width: 15 },
+        { header: "ชื่อ", key: "firstname", width: 15 },
+        { header: "นามสกุล", key: "lastname", width: 15 },
+        { header: "เกรด", key: "grade", width: 8 },
+      ],
+      `grades_${sectionName}`,
+      `ตารางเกรด - ${sectionName}`,
+    );
+  };
+
+  // PDF Export
+  const handleExportPdf = () => {
+    const rows: Record<string, string | number | null>[] = [];
+    for (const team of allTeams) {
+      for (const member of team.members) {
+        const score = gradeMap[member.users_id];
+        rows.push({
+          group: team.groupNumber,
+          team_name: team.name,
+          project: team.project?.projectname || "-",
+          student_id: member.users_id,
+          firstname: member.firstname,
+          lastname: member.lastname,
+          grade: score ? formatGradeLabel(score) : "-",
+        });
+      }
+    }
+    const sectionName = selectedSection?.section_code || "grades";
+    exportToPdf(
+      rows,
+      [
+        { header: "Group", key: "group" },
+        { header: "Team", key: "team_name" },
+        { header: "Project", key: "project" },
+        { header: "Student ID", key: "student_id" },
+        { header: "Name", key: "firstname" },
+        { header: "Surname", key: "lastname" },
+        { header: "Grade", key: "grade" },
+      ],
+      `grades_${sectionName}`,
+      `Grades Report - ${sectionName}`,
+    );
+  };
+
+  const [showExportMenu, setShowExportMenu] = React.useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-10 font-sans text-slate-900">
       {/* Header */}
@@ -173,14 +245,38 @@ export const GradingPage: React.FC = () => {
               คน
             </span>
           </div>
-          <button
-            onClick={handleExportGrades}
-            disabled={totalStudents === 0}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={totalStudents === 0}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl border border-slate-200 shadow-lg z-20 overflow-hidden">
+                <button
+                  onClick={() => { handleExportGrades(); setShowExportMenu(false); }}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 text-slate-700 transition"
+                >
+                  Export CSV
+                </button>
+                <button
+                  onClick={() => { handleExportExcel(); setShowExportMenu(false); }}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 text-slate-700 transition"
+                >
+                  Export Excel
+                </button>
+                <button
+                  onClick={() => { handleExportPdf(); setShowExportMenu(false); }}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 text-slate-700 transition"
+                >
+                  Export PDF
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -257,11 +353,10 @@ export const GradingPage: React.FC = () => {
             <button
               key={opt.value}
               onClick={() => setGradeFilter(opt.value)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                gradeFilter === opt.value
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-              }`}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${gradeFilter === opt.value
+                ? "bg-blue-600 text-white shadow-sm"
+                : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                }`}
             >
               {opt.label}
             </button>
@@ -272,7 +367,7 @@ export const GradingPage: React.FC = () => {
       {/* Messages */}
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-200 text-sm">
-          ⚠️ {error}
+          {error}
         </div>
       )}
       {successMessage && (
@@ -314,7 +409,7 @@ export const GradingPage: React.FC = () => {
                     </h3>
                     {team.project && (
                       <span className="text-xs text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">
-                        📋 {team.project.projectname}
+                        {team.project.projectname}
                       </span>
                     )}
                   </div>
@@ -357,11 +452,10 @@ export const GradingPage: React.FC = () => {
                                 onClick={() =>
                                   setGrade(member.users_id, option.value)
                                 }
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 ${
-                                  isSelected
-                                    ? `${colors.bg} ${colors.text} ring-2 ${colors.ring} ring-offset-1 scale-105 shadow-sm`
-                                    : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
-                                }`}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 ${isSelected
+                                  ? `${colors.bg} ${colors.text} ring-2 ${colors.ring} ring-offset-1 scale-105 shadow-sm`
+                                  : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                                  }`}
                               >
                                 {option.label}
                               </button>

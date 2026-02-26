@@ -56,9 +56,16 @@ function TasksContent() {
           description: projectData.description,
         });
 
-        // Get team members from project
+        // Normalize team members so each has users_id at root level
+        // (advisor API returns { user: { users_id } } without root users_id)
         if (projectData.team?.members) {
-          setTeamMembers(projectData.team.members);
+          const normalized = projectData.team.members.map((m: Record<string, unknown>) => ({
+            ...m,
+            users_id: (m as { users_id?: string }).users_id
+              || ((m as { user?: { users_id?: string } }).user?.users_id)
+              || "",
+          }));
+          setTeamMembers(normalized);
         }
       } catch (err: any) {
         setError(err.message || "เกิดข้อผิดพลาด");
@@ -108,11 +115,6 @@ function TasksContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header Bar - Full Width */}
-      <div className="bg-gradient-to-r from-blue-400 to-blue-500 px-6 py-3">
-        <span className="text-white font-medium">Advisor Panel</span>
-      </div>
-
       {/* Main Content - Full Width */}
       <div className="p-6">
         {/* Project Title */}

@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { X } from "lucide-react";
 import Button from "@/shared/components/Button";
+import { PROJECT_TYPES } from "@/shared/constants/project-types";
+import { SimilarityWarning } from "./SimilarityWarning";
+import { api } from "@/lib/api";
 
 interface ProjectFormModalProps {
   isOpen: boolean;
@@ -19,15 +22,7 @@ export interface ProjectFormData {
   description: string;
 }
 
-const PROJECT_TYPES = [
-  "Software",
-  "AI / Data",
-  "Embedded / IoT",
-  "Network / Security",
-  "Image / Signal",
-  "Game / AR-VR",
-  "Research",
-];
+
 
 export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   isOpen,
@@ -63,6 +58,40 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
     onSubmit(formData);
   };
 
+  // Similarity check (debounced)
+  const [similarProjects, setSimilarProjects] = useState<any[]>([]);
+  const [checkingSimil, setCheckingSimil] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const title = formData.projectname.trim();
+    if (title.length < 4) {
+      setSimilarProjects([]);
+      return;
+    }
+
+    // Debounce 800ms
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        setCheckingSimil(true);
+        const result = await api.post<{ similar: any[] }>(
+          "/projects/check-similarity",
+          { title, description: formData.description },
+        );
+        setSimilarProjects(result?.similar || []);
+      } catch {
+        setSimilarProjects([]);
+      } finally {
+        setCheckingSimil(false);
+      }
+    }, 800);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [formData.projectname, formData.description]);
+
   if (!isOpen) return null;
 
   return (
@@ -95,6 +124,15 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
               className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               placeholder="ระบุชื่อโครงงานภาษาไทย"
             />
+            {/* Similarity Warning */}
+            {(checkingSimil || similarProjects.length > 0) && (
+              <div className="mt-2">
+                <SimilarityWarning
+                  similar={similarProjects}
+                  loading={checkingSimil}
+                />
+              </div>
+            )}
           </div>
 
           <div>

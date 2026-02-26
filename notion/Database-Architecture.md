@@ -1,6 +1,6 @@
 # 🗄️ Database Architecture
 
-> Schema, Models, และ Relationships (Updated: 2026-02-19)
+> Schema, Models, และ Relationships (Updated: 2026-02-25)
 
 ---
 
@@ -179,7 +179,6 @@ model Section {
   study_type       StudyType
   min_team_size    Int
   max_team_size    Int
-  project_deadline DateTime
   team_deadline    DateTime
   team_locked      Boolean    @default(false)
   term_id          Int

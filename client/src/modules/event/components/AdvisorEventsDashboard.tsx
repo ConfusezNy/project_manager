@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import Button from "@/app/(components)/Button";
+import Button from "@/shared/components/Button";
 
 // Types
 interface TeamMember {

@@ -2,7 +2,7 @@
 
 // ConfirmModal Component - Confirmation modal for creating team
 import React from "react";
-import Button from "@/app/(components)/Button";
+import Button from "@/shared/components/Button";
 
 interface Props {
   isOpen: boolean;

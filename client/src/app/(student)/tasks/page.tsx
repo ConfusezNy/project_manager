@@ -102,11 +102,6 @@ export default function StudentTasksPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header Bar - Full Width */}
-      <div className="bg-gradient-to-r from-green-400 to-green-500 px-6 py-3">
-        <span className="text-white font-medium">Student Panel</span>
-      </div>
-
       {/* Main Content - Full Width */}
       <div className="p-6">
         {/* Project Title */}

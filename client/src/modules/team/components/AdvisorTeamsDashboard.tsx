@@ -3,7 +3,7 @@
 // AdvisorTeamsDashboard - Main container for advisor teams page
 import React from "react";
 import { FileText, CheckCircle, XCircle, Users } from "lucide-react";
-import Button from "@/app/(components)/Button";
+import Button from "@/shared/components/Button";
 import { useAdvisorTeams, AdvisorProject } from "../hooks/useAdvisorTeams";
 
 export const AdvisorTeamsDashboard: React.FC = () => {
@@ -121,11 +121,10 @@ const ProjectListItem: React.FC<{
 }> = ({ project, isSelected, onSelect }) => (
   <button
     onClick={onSelect}
-    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-      isSelected
+    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${isSelected
         ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
         : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-700"
-    }`}
+      }`}
   >
     <div className="flex items-start justify-between gap-3 mb-3">
       <h3 className="font-semibold text-gray-900 dark:text-white text-base line-clamp-2">

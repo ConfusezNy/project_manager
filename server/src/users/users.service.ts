@@ -5,6 +5,8 @@ import {
     ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,8 +15,8 @@ export class UsersService {
     // GET /users?role= — ดึง users ตาม role-scoped visibility
     async findAll(userId: string, userRole: string, roleFilter?: string) {
         if (userRole === 'ADMIN' || userRole === 'ADVISOR') {
-            const where: any = {};
-            if (roleFilter && roleFilter !== 'All') where.role = roleFilter;
+            const where: Prisma.UsersWhereInput = {};
+            if (roleFilter && roleFilter !== 'All') where.role = roleFilter as Prisma.EnumRoleFilter;
 
             const users = await this.prisma.users.findMany({
                 where,
@@ -107,7 +109,7 @@ export class UsersService {
     }
 
     // PATCH /users/:id (Admin) — update user
-    async update(id: string, data: any) {
+    async update(id: string, data: UpdateUserDto) {
         const user = await this.prisma.users.findUnique({ where: { users_id: id } });
         if (!user) throw new NotFoundException('User not found');
 
@@ -116,7 +118,7 @@ export class UsersService {
             throw new BadRequestException('Invalid role');
         }
 
-        const updateData: any = {};
+        const updateData: Prisma.UsersUpdateInput = {};
         if (data.role !== undefined) updateData.role = data.role;
         if (data.firstname !== undefined) updateData.firstname = data.firstname;
         if (data.lastname !== undefined) updateData.lastname = data.lastname;
@@ -159,7 +161,7 @@ export class UsersService {
         return { message: 'ลบผู้ใช้เรียบร้อย', deleted_user_id: id };
     }
 
-    private formatUser(u: any) {
+    private formatUser(u: Record<string, unknown>) {
         return {
             users_id: u.users_id,
             titles: u.titles,
@@ -169,15 +171,15 @@ export class UsersService {
             tel_number: u.tel_number,
             role: u.role,
             profilePicture: u.profilePicture,
-            sections: u.Section_Enrollment?.map((e: any) => ({
-                section_id: e.Section.section_id,
-                section_code: e.Section.section_code,
-                course_type: e.Section.course_type,
+            sections: (u.Section_Enrollment as Array<Record<string, unknown>>)?.map((e) => ({
+                section_id: (e.Section as Record<string, unknown>).section_id,
+                section_code: (e.Section as Record<string, unknown>).section_code,
+                course_type: (e.Section as Record<string, unknown>).course_type,
             })) || [],
-            teams: u.Teammember?.map((t: any) => ({
-                team_id: t.Team.team_id,
-                name: t.Team.name,
-                groupNumber: t.Team.groupNumber,
+            teams: (u.Teammember as Array<Record<string, unknown>>)?.map((t) => ({
+                team_id: (t.Team as Record<string, unknown>).team_id,
+                name: (t.Team as Record<string, unknown>).name,
+                groupNumber: (t.Team as Record<string, unknown>).groupNumber,
             })) || [],
         };
     }

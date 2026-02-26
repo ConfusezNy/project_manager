@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { SubmitDto, FeedbackDto, RejectDto } from './dto/submission.dto';
 
 /**
@@ -29,7 +30,7 @@ export class SubmissionsController {
     async findAll(
         @Query('event_id') eventId: string,
         @Query('team_id') teamId: string,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
     ) {
         return this.submissionsService.findAll(
             eventId ? parseInt(eventId) : null,
@@ -43,7 +44,7 @@ export class SubmissionsController {
     @Patch(':id/submit')
     async submit(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
         @Body() dto: SubmitDto,
     ) {
         return this.submissionsService.submit(id, user.users_id, user.role, dto);

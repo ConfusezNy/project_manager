@@ -18,9 +18,9 @@ import { InviteMemberModal } from "./InviteMemberModal";
 import {
   ProjectFormModal,
   ProjectFormData,
-} from "@/app/(components)/ProjectFormModal";
-import AdvisorSelectionModal from "@/app/(components)/AdvisorSelectionModal";
-import Button from "@/app/(components)/Button";
+} from "./ProjectFormModal";
+import AdvisorSelectionModal from "./AdvisorSelectionModal";
+import Button from "@/shared/components/Button";
 
 export const TeamDashboard: React.FC = () => {
   const {
@@ -228,11 +228,11 @@ export const TeamDashboard: React.FC = () => {
         initialData={
           isEditingProject && projectData
             ? {
-                projectname: projectData.projectname,
-                projectnameEng: projectData.projectnameEng || "",
-                project_type: projectData.project_type || "",
-                description: projectData.description || "",
-              }
+              projectname: projectData.projectname,
+              projectnameEng: projectData.projectnameEng || "",
+              project_type: projectData.project_type || "",
+              description: projectData.description || "",
+            }
             : null
         }
         isSubmitting={projectSubmitting}

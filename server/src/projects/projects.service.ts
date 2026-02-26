@@ -323,7 +323,7 @@ export class ProjectsService {
 
         await this.prisma.project.update({
             where: { project_id: id },
-            data: { status: dto.status },
+            data: { status: dto.status as any },
         });
 
         // ถ้าปฏิเสธ → ลบ ProjectAdvisor record ด้วย
@@ -340,5 +340,245 @@ export class ProjectsService {
                     ? 'อนุมัติโปรเจกต์แล้ว'
                     : 'ปฏิเสธโปรเจกต์แล้ว',
         };
+    }
+
+    // =====================================================
+    // GET /projects/archive — คลังโครงงาน (ทุก role ที่ login)
+    // ดึงเฉพาะ isArchived = true
+    // Query: q (search), year, category
+    // =====================================================
+    async findArchived(query: { q?: string; year?: string; category?: string; advisor?: string }) {
+        const where: Record<string, unknown> = { isArchived: true };
+
+        // Search by project name TH/EN or team name or advisor name
+        if (query.q) {
+            where.OR = [
+                { projectname: { contains: query.q, mode: 'insensitive' } },
+                { projectnameEng: { contains: query.q, mode: 'insensitive' } },
+                { Team: { name: { contains: query.q, mode: 'insensitive' } } },
+                {
+                    ProjectAdvisor: {
+                        some: {
+                            Users: {
+                                OR: [
+                                    { firstname: { contains: query.q, mode: 'insensitive' } },
+                                    { lastname: { contains: query.q, mode: 'insensitive' } },
+                                ],
+                            },
+                        },
+                    },
+                },
+            ];
+        }
+
+        // Filter by specific advisor name
+        if (query.advisor) {
+            where.ProjectAdvisor = {
+                some: {
+                    Users: {
+                        OR: [
+                            { firstname: { contains: query.advisor, mode: 'insensitive' } },
+                            { lastname: { contains: query.advisor, mode: 'insensitive' } },
+                        ],
+                    },
+                },
+            };
+        }
+
+        // Filter by project type / category
+        if (query.category) {
+            where.project_type = query.category;
+        }
+
+        // Filter by academic year (through Team → Section → Term)
+        if (query.year) {
+            where.Team = {
+                ...(typeof where.Team === 'object' ? where.Team as Record<string, unknown> : {}),
+                Section: {
+                    Term: { academicYear: Number(query.year) },
+                },
+            };
+        }
+
+        const projects = await this.prisma.project.findMany({
+            where,
+            include: {
+                Team: {
+                    include: {
+                        Section: { include: { Term: true } },
+                        Teammember: {
+                            include: {
+                                Users: {
+                                    select: { users_id: true, firstname: true, lastname: true },
+                                },
+                            },
+                        },
+                    },
+                },
+                ProjectAdvisor: {
+                    include: {
+                        Users: {
+                            select: { users_id: true, firstname: true, lastname: true, titles: true },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        // Map to ProjectCard-compatible shape
+        return projects.map((p) => ({
+            id: p.project_id,
+            title: p.projectname,
+            titleEng: p.projectnameEng,
+            description: p.description,
+            category: p.project_type || 'other',
+            year: p.Team?.Section?.Term
+                ? String(p.Team.Section.Term.academicYear)
+                : '',
+            author: p.Team?.Teammember
+                .map((m) => `${m.Users.firstname || ''} ${m.Users.lastname || ''}`.trim())
+                .join(', ') || '',
+            advisors: p.ProjectAdvisor.map((pa) => ({
+                name: `${pa.Users.titles || ''} ${pa.Users.firstname || ''} ${pa.Users.lastname || ''}`.trim(),
+            })),
+            team: p.Team
+                ? {
+                    name: p.Team.name,
+                    groupNumber: p.Team.groupNumber,
+                    section: p.Team.Section?.section_code,
+                    semester: p.Team.Section?.Term?.semester,
+                }
+                : null,
+        }));
+    }
+
+    // =====================================================
+    // PATCH /projects/:id/archive — toggle isArchived (Admin only)
+    // =====================================================
+    async toggleArchive(id: number) {
+        const project = await this.prisma.project.findUnique({
+            where: { project_id: id },
+        });
+        if (!project) throw new NotFoundException('ไม่พบโครงงาน');
+
+        const updated = await this.prisma.project.update({
+            where: { project_id: id },
+            data: { isArchived: !project.isArchived },
+        });
+
+        return {
+            message: updated.isArchived
+                ? 'เผยแพร่โครงงานแล้ว'
+                : 'ยกเลิกเผยแพร่โครงงานแล้ว',
+            isArchived: updated.isArchived,
+        };
+    }
+
+    // =====================================================
+    // GET /projects/archive/filters — ดึงตัวกรองจากข้อมูลจริง
+    // =====================================================
+    async getArchiveFilters() {
+        // Get all academic years from Term table
+        const terms = await this.prisma.term.findMany({
+            select: { academicYear: true },
+            distinct: ['academicYear'],
+            orderBy: { academicYear: 'desc' },
+        });
+
+        const years = terms.map((t) => t.academicYear);
+
+        return { years };
+    }
+
+    // =====================================================
+    // POST /projects/check-similarity — ตรวจสอบโครงงานซ้ำ
+    // =====================================================
+    async checkSimilarity(dto: { title: string; description?: string }) {
+        // 1. ดึงโครงงานทั้งหมด
+        const allProjects = await this.prisma.project.findMany({
+            select: {
+                project_id: true,
+                projectname: true,
+                projectnameEng: true,
+                description: true,
+                project_type: true,
+                status: true,
+                createdAt: true,
+            },
+        });
+
+        // 2. Extract keywords จาก input
+        const inputKeywords = this.extractKeywords(dto.title + ' ' + (dto.description || ''));
+
+        if (inputKeywords.length === 0) {
+            return { similar: [], message: 'ไม่สามารถวิเคราะห์คำค้นได้' };
+        }
+
+        // 3. คำนวณ similarity score กับทุก project
+        const results = allProjects
+            .map((project) => {
+                const projectText = [
+                    project.projectname || '',
+                    project.projectnameEng || '',
+                    project.description || '',
+                ].join(' ');
+
+                const projectKeywords = this.extractKeywords(projectText);
+                if (projectKeywords.length === 0) return null;
+
+                // Jaccard-like similarity: intersection / union
+                const inputSet = new Set(inputKeywords);
+                const projectSet = new Set(projectKeywords);
+                const intersection = [...inputSet].filter((k) => projectSet.has(k));
+                const union = new Set([...inputSet, ...projectSet]);
+                const score = Math.round((intersection.length / union.size) * 100);
+
+                return {
+                    project_id: project.project_id,
+                    projectname: project.projectname,
+                    projectnameEng: project.projectnameEng,
+                    project_type: project.project_type,
+                    status: project.status,
+                    score,
+                    matchedKeywords: intersection,
+                };
+            })
+            .filter((r): r is NonNullable<typeof r> => r !== null && r.score >= 30)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 10); // top 10
+
+        return {
+            similar: results,
+            inputKeywords,
+            message: results.length > 0
+                ? `พบโครงงานที่คล้ายกัน ${results.length} รายการ`
+                : 'ไม่พบโครงงานที่คล้ายกัน',
+        };
+    }
+
+    /**
+     * Extract meaningful keywords from text (Thai + English)
+     * - Split on spaces, punctuation, common delimiters
+     * - Remove stopwords and short words
+     */
+    private extractKeywords(text: string): string[] {
+        const stopwords = new Set([
+            // Thai stopwords
+            'ระบบ', 'การ', 'ของ', 'และ', 'ใน', 'ที่', 'เพื่อ', 'ด้วย', 'จาก',
+            'ให้', 'ได้', 'มี', 'ไป', 'มา', 'เป็น', 'จะ', 'แล้ว', 'อยู่', 'โดย',
+            'กับ', 'หรือ', 'ก็', 'ไม่', 'นี้', 'นั้น', 'ซึ่ง', 'ต้อง', 'คือ',
+            // English stopwords
+            'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'for', 'to',
+            'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+            'system', 'management', 'application', 'using', 'based',
+        ]);
+
+        return text
+            .toLowerCase()
+            .replace(/[^\u0E00-\u0E7Fa-z0-9\s]/g, ' ') // keep Thai + English + digits
+            .split(/\s+/)
+            .filter((word) => word.length >= 2 && !stopwords.has(word));
     }
 }

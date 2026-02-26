@@ -7,6 +7,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from '../common/interfaces/jwt-payload.interface';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -20,7 +22,7 @@ export class UsersController {
 
     @Get()
     async findAll(
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
         @Query('role') roleFilter: string,
     ) {
         return this.usersService.findAll(user.users_id, user.role, roleFilter);
@@ -34,8 +36,8 @@ export class UsersController {
     @UseGuards(RolesGuard)
     @Roles('ADMIN')
     @Patch(':id')
-    async update(@Param('id') id: string, @Body() body: any) {
-        return this.usersService.update(id, body);
+    async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+        return this.usersService.update(id, dto);
     }
 
     @UseGuards(RolesGuard)

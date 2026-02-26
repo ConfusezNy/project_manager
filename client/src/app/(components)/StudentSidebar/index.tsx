@@ -182,7 +182,7 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
               >
                 <div className="flex items-center">
                   <div className={iconClass}>
-                    <Folder size={24} className="text-amber-500" />
+                    <Folder size={24} className="text-gray-600 dark:text-gray-400" />
                   </div>
                   <span className={contentClass} title={project.projectname}>
                     {truncateName(project.projectname)}

@@ -157,15 +157,13 @@ export const ContinueModal: React.FC<Props> = ({
                 {teams.map((team, idx) => (
                   <div
                     key={team.team_id}
-                    className={`flex items-start gap-4 p-4 cursor-pointer transition hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
-                      idx !== teams.length - 1
+                    className={`flex items-start gap-4 p-4 cursor-pointer transition hover:bg-gray-50 dark:hover:bg-gray-700/50 ${idx !== teams.length - 1
                         ? "border-b border-gray-200 dark:border-gray-700"
                         : ""
-                    } ${
-                      selectedTeamIds.includes(team.team_id)
+                      } ${selectedTeamIds.includes(team.team_id)
                         ? "bg-blue-50 dark:bg-blue-900/20"
                         : ""
-                    }`}
+                      }`}
                     onClick={() => toggleTeam(team.team_id)}
                   >
                     {/* Checkbox */}
@@ -210,7 +208,7 @@ export const ContinueModal: React.FC<Props> = ({
 
             {/* Info */}
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-              📌 ทีมที่สถานะ "อนุมัติแล้ว" มักจะไม่ต้องต่อวิชา
+              ทีมที่สถานะ "อนุมัติแล้ว" มักจะไม่ต้องต่อวิชา
               กรุณาตรวจสอบก่อนเลือก
             </p>
           </div>

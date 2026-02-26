@@ -61,8 +61,8 @@ export const CreateSectionModal: React.FC<Props> = ({
                 setForm({ ...form, course_type: e.target.value })
               }
             >
-              <option value="PROJECT">โปรเจกต์ (PROJECT)</option>
-              <option value="PRE_PROJECT">ก่อนโปรเจกต์ (PRE_PROJECT)</option>
+              <option value="PROJECT">Project</option>
+              <option value="PRE_PROJECT">Pre Project</option>
             </select>
           </div>
 
@@ -122,8 +122,8 @@ export const CreateSectionModal: React.FC<Props> = ({
                   setForm({ ...form, team_locked: !form.team_locked })
                 }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.team_locked
-                    ? "bg-red-500"
-                    : "bg-gray-300 dark:bg-gray-600"
+                  ? "bg-red-500"
+                  : "bg-gray-300 dark:bg-gray-600"
                   }`}
               >
                 <span
@@ -135,8 +135,8 @@ export const CreateSectionModal: React.FC<Props> = ({
                 className={`text-sm ${form.team_locked ? "text-red-500 font-medium" : "text-gray-500 dark:text-gray-400"}`}
               >
                 {form.team_locked
-                  ? "🔒 ล็อค (นศ. ไม่สามารถจัดการสมาชิกได้)"
-                  : "🔓 ปลดล็อค (นศ. จัดการสมาชิกได้)"}
+                  ? "ล็อค (นศ. ไม่สามารถจัดการสมาชิกได้)"
+                  : "ปลดล็อค (นศ. จัดการสมาชิกได้)"}
               </span>
             </div>
           </div>

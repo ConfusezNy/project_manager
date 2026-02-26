@@ -2,10 +2,10 @@
 
 // TimelineDashboard - Main container for timeline page
 import React from "react";
-import TimelineFilters from "@/app/(components)/TimelineFilters";
-import TimelineListView from "@/app/(components)/TimelineListView";
-import DocumentsView from "@/app/(components)/DocumentsView";
-import TimelineFormModal from "@/app/(components)/TimelineFormModal";
+import TimelineFilters from "./TimelineFilters";
+import TimelineListView from "./TimelineListView";
+import DocumentsView from "./DocumentsView";
+import TimelineFormModal from "./TimelineFormModal";
 import { useTimeline } from "../hooks/useTimeline";
 
 export const TimelineDashboard: React.FC = () => {

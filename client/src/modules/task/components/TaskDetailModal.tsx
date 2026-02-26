@@ -2,18 +2,18 @@
 
 // TaskDetailModal - View task details with comments
 import React, { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 import {
   X,
   Calendar,
   Tag,
-  MessageSquare,
   Trash2,
   Edit3,
   UserPlus,
   UserMinus,
-  Send,
 } from "lucide-react";
 import type { Task, UpdateTaskInput } from "../types/task.types";
+import { CommentSection } from "@/modules/comment";
 
 interface TaskDetailModalProps {
   task: Task;
@@ -57,8 +57,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onUnassign,
   teamMembers = [],
 }) => {
-  const [newComment, setNewComment] = useState("");
-  const [submittingComment, setSubmittingComment] = useState(false);
+  const { user: currentUser } = useAuth();
   const [showAssignMenu, setShowAssignMenu] = useState(false);
 
   const tags = task.tags?.split(",").filter(Boolean) || [];
@@ -82,15 +81,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     });
   };
 
-  const handleAddComment = async () => {
-    if (!newComment.trim()) return;
-    setSubmittingComment(true);
-    try {
-      await onAddComment(task.task_id, newComment.trim());
-      setNewComment("");
-    } finally {
-      setSubmittingComment(false);
-    }
+  const handleAddComment = async (text: string) => {
+    await onAddComment(task.task_id, text);
   };
 
   const handleDelete = async () => {
@@ -99,11 +91,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     }
   };
 
-  // Get assignable members (not already assigned)
+  // Get assignable members (exclude self + already assigned)
   const assignedIds = new Set(task.assignees?.map((a) => a.users_id) || []);
+  const currentUserId = currentUser?.users_id || "";
   const availableMembers = teamMembers.filter(
-    (m) =>
-      !assignedIds.has(m.users_id) && !assignedIds.has(m.user?.users_id || ""),
+    (m) => {
+      const memberId = m.users_id || m.user?.users_id || "";
+      return memberId !== currentUserId && !assignedIds.has(memberId);
+    },
   );
 
   return (
@@ -271,66 +266,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
 
           {/* Comments */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1">
-              <MessageSquare size={14} />
-              Comments ({task.comments?.length || 0})
-            </h3>
-
-            {/* Comment List */}
-            <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
-              {task.comments && task.comments.length > 0 ? (
-                task.comments.map((c) => (
-                  <div key={c.comment_id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm">
-                      {c.user?.firstname?.[0] || "U"}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {c.user?.firstname} {c.user?.lastname}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {formatTime(c.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {c.text}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                  ยังไม่มี comment
-                </p>
-              )}
-            </div>
-
-            {/* Add Comment */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="เขียน comment..."
-                className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddComment();
-                  }
-                }}
-              />
-              <button
-                onClick={handleAddComment}
-                disabled={submittingComment || !newComment.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send size={18} />
-              </button>
-            </div>
-          </div>
+          <CommentSection
+            comments={task.comments || []}
+            onAddComment={handleAddComment}
+          />
         </div>
       </div>
     </div>

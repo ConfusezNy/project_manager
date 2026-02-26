@@ -3,6 +3,12 @@ import { AdminTeamsService } from './admin-teams.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import {
+    AdminTeamQueryDto,
+    UpdateAdminTeamDto,
+    DeleteTeamBodyDto,
+    AddMemberDto,
+} from './dto/admin-team.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
@@ -12,7 +18,7 @@ export class AdminTeamsController {
 
     // GET /admin/teams?section_id=&status=&search=
     @Get()
-    async findAll(@Query() query: { section_id?: string; status?: string; search?: string }) {
+    async findAll(@Query() query: AdminTeamQueryDto) {
         return this.adminTeamsService.findAll(query);
     }
 
@@ -24,14 +30,14 @@ export class AdminTeamsController {
 
     // PUT /admin/teams/:teamId
     @Put(':teamId')
-    async update(@Param('teamId') teamId: string, @Body() dto: { name?: string; groupNumber?: string }) {
+    async update(@Param('teamId') teamId: string, @Body() dto: UpdateAdminTeamDto) {
         return this.adminTeamsService.update(Number(teamId), dto);
     }
 
     // DELETE /admin/teams — body: { team_id }
     // (frontend ส่ง team_id มาใน body สำหรับ delete จากตาราง)
     @Delete()
-    async removeByBody(@Body() dto: { team_id: number }) {
+    async removeByBody(@Body() dto: DeleteTeamBodyDto) {
         return this.adminTeamsService.removeByBody(dto);
     }
 
@@ -49,7 +55,7 @@ export class AdminTeamsController {
 
     // POST /admin/teams/:teamId/members — body: { user_id }
     @Post(':teamId/members')
-    async addMember(@Param('teamId') teamId: string, @Body() dto: { user_id: string }) {
+    async addMember(@Param('teamId') teamId: string, @Body() dto: AddMemberDto) {
         return this.adminTeamsService.addMember(Number(teamId), dto);
     }
 

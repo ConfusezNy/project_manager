@@ -69,7 +69,8 @@ model Project {
   createdAt      DateTime         @default(now())
   project_type   String?
   projectnameEng String?          @db.VarChar(100)
-  status         String?
+  status         ProjectStatus    @default(DRAFT)
+  isArchived     Boolean          @default(false)
   Grade          Grade[]
   Notification   Notification[]
   Team           Team             @relation(fields: [team_id], references: [team_id])
@@ -236,6 +237,13 @@ enum Role {
 enum StudyType {
   REG
   LE
+}
+
+enum ProjectStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // ===== Event System (กำหนดการ) =====

@@ -2,6 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
+
+/** Raw JWT token payload (from jsonwebtoken) */
+interface JwtTokenPayload {
+    sub: string;
+    email: string;
+    role: 'ADMIN' | 'ADVISOR' | 'STUDENT';
+    firstname: string;
+    lastname: string;
+    iat: number;
+    exp: number;
+}
 
 /**
  * JWT Strategy — Passport ใช้ตรวจสอบ token
@@ -26,7 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      * หลัง verify token สำเร็จ → return ค่านี้จะอยู่ใน request.user
      * ดึงได้ด้วย @CurrentUser() decorator
      */
-    async validate(payload: any) {
+    async validate(payload: JwtTokenPayload): Promise<JwtPayload> {
         return {
             users_id: payload.sub,
             email: payload.email,

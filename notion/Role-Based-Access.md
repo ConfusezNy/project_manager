@@ -135,10 +135,10 @@ async approveSubmission(@Param('id') id: string) {
 1. **Grades เป็น Admin only** — ทั้ง GET (by section), POST (batch save), PATCH, DELETE ต้อง Admin เท่านั้น
 2. **Project Status** — เฉพาะ Advisor ที่เป็นที่ปรึกษาของโครงงานนั้นเท่านั้นที่อนุมัติ/ปฏิเสธได้ (ไม่ใช่ Admin)
 3. **Submission Submit** — สมาชิกทีม หรือ Admin (ไม่จำกัดเฉพาะ Student)
-4. **Terms POST** — ⚠️ ไม่มี auth check ในโค้ดปัจจุบัน (ต้องเพิ่ม Admin guard ตอน migrate)
-5. **Users Search** — ⚠️ ไม่มี auth check ในโค้ดปัจจุบัน
-6. **Profile PATCH** — ใช้ `getServerSession` (email-based) ไม่ใช่ `getAuthUser` — ต้อง migrate เป็น JWT
-7. **Sections GET** — ⚠️ ไม่มี auth check ในโค้ดปัจจุบัน (public)
+4. **Terms POST** — ✅ มี JwtAuthGuard + RolesGuard('ADMIN') แล้ว (แก้ใน NestJS migration)
+5. **Users Search** — ✅ มี class-level JwtAuthGuard แล้ว (แก้ใน NestJS migration)
+6. **Profile PATCH** — ✅ migrate เป็น JWT แล้ว (ใช้ JwtAuthGuard)
+7. **Sections GET** — ✅ มี JwtAuthGuard แล้ว (แก้ใน NestJS migration)
 
 ---
 

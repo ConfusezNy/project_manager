@@ -52,7 +52,7 @@ export class AddAdvisorDto {
 export class UpdateStatusDto {
     @IsString()
     @IsIn(['APPROVED', 'REJECTED'])
-    status: string;
+    status: 'APPROVED' | 'REJECTED';
 
     @IsOptional()
     @IsString()

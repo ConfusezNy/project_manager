@@ -15,13 +15,13 @@ import {
 export interface Activity {
   id: number;
   type:
-    | "submission"
-    | "approval"
-    | "comment"
-    | "task_create"
-    | "task_update"
-    | "revision"
-    | "member";
+  | "submission"
+  | "approval"
+  | "comment"
+  | "task_create"
+  | "task_update"
+  | "revision"
+  | "member";
   user: string;
   userAvatar?: string;
   action: string;
@@ -97,7 +97,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-        📈 กิจกรรมล่าสุด
+        กิจกรรมล่าสุด
       </h3>
 
       <div className="space-y-3 max-h-64 overflow-y-auto pr-1">

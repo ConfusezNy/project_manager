@@ -74,7 +74,7 @@ export const EventProgressChart: React.FC<EventProgressChartProps> = ({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-        📊 ความคืบหน้าตามกำหนดการ
+        ความคืบหน้าตามกำหนดการ
       </h3>
 
       <div className="space-y-3 max-h-56 overflow-y-auto pr-2">

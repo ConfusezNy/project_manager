@@ -82,7 +82,7 @@ export class GradesService {
         if (!section) throw new NotFoundException('Section not found');
 
         const termId = section.term_id;
-        const results: any[] = [];
+        const results: { grade_id: number; score: GradeScore }[] = [];
 
         for (const grade of dto.grades) {
             const pid = typeof grade.project_id === 'number'

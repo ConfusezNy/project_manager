@@ -45,7 +45,7 @@ export const SectionCard: React.FC<Props> = ({
             </h3>
             <div className="flex items-center gap-2">
               <span className="text-blue-100 text-sm">
-                {s.course_type === "PROJECT" ? "โปรเจกต์" : "ก่อนโปรเจกต์"}
+                {s.course_type === "PROJECT" ? "Project" : "Pre Project"}
               </span>
               <span className="text-blue-100">•</span>
               <span className="text-blue-100 text-sm">
@@ -59,7 +59,7 @@ export const SectionCard: React.FC<Props> = ({
               className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition backdrop-blur-sm"
               title="ต่อวิชาไป PROJECT"
             >
-              ➡️ ต่อวิชา
+              ต่อวิชา
             </button>
           )}
         </div>
@@ -100,17 +100,15 @@ export const SectionCard: React.FC<Props> = ({
           <button
             onClick={handleToggleLock}
             disabled={toggling}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-              localLocked ? "bg-red-500" : "bg-gray-300 dark:bg-gray-600"
-            }`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${localLocked ? "bg-red-500" : "bg-gray-300 dark:bg-gray-600"
+              }`}
           >
             {toggling ? (
               <Loader2 className="absolute left-1/2 -translate-x-1/2 w-4 h-4 animate-spin text-white" />
             ) : (
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  localLocked ? "translate-x-6" : "translate-x-1"
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localLocked ? "translate-x-6" : "translate-x-1"
+                  }`}
               />
             )}
           </button>
@@ -121,14 +119,14 @@ export const SectionCard: React.FC<Props> = ({
             onClick={() => onEnroll(s.section_id)}
             className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm transition text-base"
           >
-            📝 เพิ่มนักศึกษา (Enroll)
+            เพิ่มนักศึกษา (Enroll)
           </button>
 
           <button
             onClick={() => onViewEnrollments(s.section_id)}
             className="w-full px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition"
           >
-            👥 ดูรายชื่อนักศึกษา
+            ดูรายชื่อนักศึกษา
           </button>
         </div>
       </div>

@@ -3,11 +3,11 @@
 // UserManagementDashboard - Main container for user management
 import React from "react";
 import { UserPlus } from "lucide-react";
-import Button from "@/app/(components)/Button";
-import UserStats from "@/app/(components)/UserStates";
-import UserFilters from "@/app/(components)/UserFilters";
-import UserTable from "@/app/(components)/UserTable";
-import UserFormModal from "@/app/(components)/UserFormModal";
+import Button from "@/shared/components/Button";
+import UserStats from "./UserStats";
+import UserFilters from "./UserFilters";
+import UserTable from "./UserTable";
+import UserFormModal from "./UserFormModal";
 import { useUserManagement } from "../hooks/useUserManagement";
 
 export const UserManagementDashboard: React.FC = () => {

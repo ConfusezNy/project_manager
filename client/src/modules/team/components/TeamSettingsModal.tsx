@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { PROJECT_TYPES } from "@/shared/constants/project-types";
 
 export interface TeamSettingsData {
   topicThai: string;
@@ -129,9 +130,9 @@ export const TeamSettingsModal = ({
                 }
               >
                 <option value="">-- เลือก --</option>
-                <option value="ฮาร์ดแวร์">ฮาร์ดแวร์</option>
-                <option value="ซอฟต์แวร์">ซอฟต์แวร์</option>
-                <option value="ไอโอที">ไอโอที (IoT)</option>
+                {PROJECT_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
               </select>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                 <svg

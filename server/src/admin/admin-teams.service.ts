@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AdminTeamsService {
@@ -10,7 +11,7 @@ export class AdminTeamsService {
     // Query: section_id, status, search
     // =====================================================
     async findAll(query: { section_id?: string; status?: string; search?: string }) {
-        const where: any = {};
+        const where: Prisma.TeamWhereInput = {};
 
         // Filter by section
         if (query.section_id) {
@@ -19,7 +20,7 @@ export class AdminTeamsService {
 
         // Filter by project status
         if (query.status) {
-            where.Project = { status: query.status };
+            where.Project = { status: query.status as 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' };
         }
 
         // Search by team name, groupNumber, or project name
@@ -130,7 +131,7 @@ export class AdminTeamsService {
             throw new NotFoundException('Team not found');
         }
 
-        const updateData: any = {};
+        const updateData: Prisma.TeamUpdateInput = {};
         if (dto.name !== undefined) updateData.name = dto.name;
         if (dto.groupNumber !== undefined) updateData.groupNumber = dto.groupNumber;
 
@@ -343,7 +344,7 @@ export class AdminTeamsService {
         }
 
         // สร้าง where clause พร้อม search
-        const userWhere: any = {
+        const userWhere: Prisma.UsersWhereInput = {
             users_id: { in: availableUserIds },
             role: 'STUDENT',
         };
@@ -364,5 +365,112 @@ export class AdminTeamsService {
         });
 
         return users;
+    }
+
+    // =====================================================
+    // GET /admin/projects — ดึงโครงงานทั้งหมด (พร้อม filter)
+    // Query: section_id, status, search
+    // =====================================================
+    async findAllProjects(query: { section_id?: string; status?: string; search?: string }) {
+        const where: Record<string, unknown> = {};
+
+        // Filter by section (through team)
+        if (query.section_id) {
+            where.Team = { section_id: Number(query.section_id) };
+        }
+
+        // Filter by project status
+        if (query.status) {
+            where.status = query.status;
+        }
+
+        // Search by project name TH/EN or team name
+        if (query.search) {
+            where.OR = [
+                { projectname: { contains: query.search, mode: 'insensitive' } },
+                { projectnameEng: { contains: query.search, mode: 'insensitive' } },
+                { Team: { name: { contains: query.search, mode: 'insensitive' } } },
+            ];
+        }
+
+        const projects = await this.prisma.project.findMany({
+            where,
+            include: {
+                Team: {
+                    include: {
+                        Section: { include: { Term: true } },
+                        Teammember: {
+                            include: {
+                                Users: {
+                                    select: { users_id: true, firstname: true, lastname: true, email: true },
+                                },
+                            },
+                        },
+                    },
+                },
+                ProjectAdvisor: {
+                    include: {
+                        Users: {
+                            select: { users_id: true, firstname: true, lastname: true, titles: true, email: true },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        // Map to frontend-expected shape
+        const mapped = projects.map((p) => ({
+            project_id: p.project_id,
+            projectname: p.projectname,
+            projectnameEng: p.projectnameEng,
+            description: p.description,
+            status: p.status,
+            isArchived: p.isArchived,
+            createdAt: p.createdAt,
+            team: p.Team
+                ? {
+                    team_id: p.Team.team_id,
+                    name: p.Team.name,
+                    groupNumber: p.Team.groupNumber,
+                    memberCount: p.Team.Teammember.length,
+                    members: p.Team.Teammember.map((m) => ({
+                        user_id: m.Users.users_id,
+                        firstname: m.Users.firstname,
+                        lastname: m.Users.lastname,
+                        email: m.Users.email,
+                    })),
+                    section: {
+                        section_id: p.Team.Section.section_id,
+                        section_code: p.Team.Section.section_code,
+                        course_type: p.Team.Section.course_type,
+                        term: p.Team.Section.Term
+                            ? {
+                                term_id: p.Team.Section.Term.term_id,
+                                academicYear: p.Team.Section.Term.academicYear,
+                                semester: p.Team.Section.Term.semester,
+                            }
+                            : undefined,
+                    },
+                }
+                : null,
+            advisors: p.ProjectAdvisor.map((pa) => ({
+                user_id: pa.Users.users_id,
+                firstname: pa.Users.firstname,
+                lastname: pa.Users.lastname,
+                titles: pa.Users.titles,
+                email: pa.Users.email,
+            })),
+        }));
+
+        // Stats
+        const stats = {
+            total: mapped.length,
+            approved: mapped.filter((p) => p.status === 'APPROVED').length,
+            pending: mapped.filter((p) => p.status === 'PENDING').length,
+            rejected: mapped.filter((p) => p.status === 'REJECTED').length,
+        };
+
+        return { projects: mapped, stats };
     }
 }

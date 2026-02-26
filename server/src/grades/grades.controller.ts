@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { BatchGradesDto, UpdateGradeDto } from './dto/grade.dto';
 
 @Controller('grades')
@@ -18,7 +19,7 @@ export class GradesController {
     async findAll(
         @Query('section_id') sectionId: string,
         @Query('student_id') studentId: string,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
     ) {
         return this.gradesService.findAll(
             sectionId ? parseInt(sectionId) : null,

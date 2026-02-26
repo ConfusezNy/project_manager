@@ -44,8 +44,9 @@ export class TasksService {
             (m) => m.user_id === userId,
         );
         const isAdvisor = userRole === 'ADVISOR';
+        const isAdmin = userRole === 'ADMIN';
 
-        if (!isMember && !isAdvisor) {
+        if (!isMember && !isAdvisor && !isAdmin) {
             throw new ForbiddenException('Forbidden');
         }
 
@@ -68,7 +69,7 @@ export class TasksService {
         const isMember = project.Team.Teammember.some(
             (m) => m.user_id === userId,
         );
-        if (!isMember && userRole !== 'ADVISOR') {
+        if (!isMember && userRole !== 'ADVISOR' && userRole !== 'ADMIN') {
             throw new ForbiddenException('Forbidden');
         }
 
@@ -120,7 +121,7 @@ export class TasksService {
         const isMember = project.Team.Teammember.some(
             (m) => m.user_id === userId,
         );
-        if (!isMember && userRole !== 'ADVISOR') {
+        if (!isMember && userRole !== 'ADVISOR' && userRole !== 'ADMIN') {
             throw new ForbiddenException('คุณไม่ใช่สมาชิกของทีมนี้');
         }
 
@@ -218,7 +219,7 @@ export class TasksService {
         const isMember = task.Project.Team.Teammember.some(
             (m) => m.user_id === userId,
         );
-        if (!isMember && userRole !== 'ADVISOR') {
+        if (!isMember && userRole !== 'ADVISOR' && userRole !== 'ADMIN') {
             throw new ForbiddenException('Forbidden');
         }
 

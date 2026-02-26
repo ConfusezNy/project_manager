@@ -152,9 +152,8 @@ const ExpandableEventRow = ({
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div
-              className={`h-2 rounded-full transition-all ${
-                isComplete ? "bg-emerald-500" : "bg-blue-500"
-              }`}
+              className={`h-2 rounded-full transition-all ${isComplete ? "bg-emerald-500" : "bg-blue-500"
+                }`}
               style={{
                 width: `${stats.totalTeams > 0 ? (stats.approved / stats.totalTeams) * 100 : 0}%`,
               }}
@@ -267,7 +266,7 @@ const ExpandableEventRow = ({
                               className="text-xs text-red-500 max-w-[150px] truncate"
                               title={sub.feedback}
                             >
-                              💬 {sub.feedback}
+                              {sub.feedback}
                             </span>
                           )}
                       </div>

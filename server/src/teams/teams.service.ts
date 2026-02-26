@@ -124,10 +124,11 @@ export class TeamsService {
     async findMyTeam(userId: string) {
         const member = await this.prisma.teammember.findFirst({
             where: { user_id: userId },
+            orderBy: { Team: { section_id: 'desc' } },
             include: {
                 Team: {
                     include: {
-                        Section: true,
+                        Section: { include: { Term: true } },
                         Teammember: {
                             include: {
                                 Users: {

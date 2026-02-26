@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import {
     CreateTeamDto,
     InviteDto,
@@ -49,7 +50,7 @@ export class TeamsController {
     // GET /teams/pending-invites — คำเชิญที่รอตอบรับ
     @UseGuards(JwtAuthGuard)
     @Get('pending-invites')
-    async getPendingInvites(@CurrentUser() user: any) {
+    async getPendingInvites(@CurrentUser() user: JwtPayload) {
         return this.teamsService.getPendingInvites(user.users_id, user.role);
     }
 

@@ -15,6 +15,7 @@ import {
 import { TasksService } from './tasks.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { CreateTaskDto, UpdateTaskDto, AssignTaskDto, CreateCommentDto } from './dto/task.dto';
 
 /**
@@ -30,7 +31,7 @@ export class TasksController {
     @Get()
     async findByProject(
         @Query('project_id', ParseIntPipe) projectId: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
     ) {
         return this.tasksService.findByProject(projectId, user.users_id, user.role);
     }
@@ -39,7 +40,7 @@ export class TasksController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     async create(
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
         @Body() dto: CreateTaskDto,
     ) {
         return this.tasksService.create(user.users_id, user.role, dto);
@@ -49,7 +50,7 @@ export class TasksController {
     @Get(':id')
     async findOne(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
     ) {
         return this.tasksService.findOne(id, user.users_id, user.role);
     }
@@ -58,7 +59,7 @@ export class TasksController {
     @Put(':id')
     async update(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
         @Body() dto: UpdateTaskDto,
     ) {
         return this.tasksService.update(id, user.users_id, user.role, dto);
@@ -68,7 +69,7 @@ export class TasksController {
     @Delete(':id')
     async remove(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
     ) {
         return this.tasksService.remove(id, user.users_id, user.role);
     }
@@ -77,7 +78,7 @@ export class TasksController {
     @Post(':id/assign')
     async assign(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
         @Body() dto: AssignTaskDto,
     ) {
         return this.tasksService.assign(id, user.users_id, user.role, dto);
@@ -87,7 +88,7 @@ export class TasksController {
     @Delete(':id/assign')
     async unassign(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
         @Body() dto: AssignTaskDto,
     ) {
         return this.tasksService.unassign(id, user.users_id, user.role, dto);
@@ -97,7 +98,7 @@ export class TasksController {
     @Get(':id/comments')
     async getComments(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
     ) {
         return this.tasksService.getComments(id, user.users_id, user.role);
     }
@@ -107,7 +108,7 @@ export class TasksController {
     @HttpCode(HttpStatus.CREATED)
     async addComment(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any,
+        @CurrentUser() user: JwtPayload,
         @Body() dto: CreateCommentDto,
     ) {
         return this.tasksService.addComment(id, user.users_id, user.role, dto);

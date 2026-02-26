@@ -75,7 +75,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-        🔔 การแจ้งเตือน
+        การแจ้งเตือน
         {notifications.filter((n) => !n.read).length > 0 && (
           <span className="px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">
             {notifications.filter((n) => !n.read).length}

@@ -3,7 +3,7 @@
 // PendingInvites Component - Shows pending team invitations
 import React from "react";
 import { Mail } from "lucide-react";
-import Button from "@/app/(components)/Button";
+import Button from "@/shared/components/Button";
 import { PendingInvite } from "../services/teamService";
 
 interface Props {

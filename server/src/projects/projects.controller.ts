@@ -3,6 +3,7 @@ import {
     Get,
     Post,
     Put,
+    Patch,
     Delete,
     Param,
     Body,
@@ -23,6 +24,7 @@ import {
     AddAdvisorDto,
     UpdateStatusDto,
 } from './dto/project.dto';
+import { CheckSimilarityDto } from './dto/similarity.dto';
 
 /**
  * Projects Controller
@@ -32,11 +34,33 @@ import {
 export class ProjectsController {
     constructor(private readonly projectsService: ProjectsService) { }
 
+    // GET /projects/archive/filters — ดึงตัวเลือก filter จากข้อมูลจริง
+    @UseGuards(JwtAuthGuard)
+    @Get('archive/filters')
+    async getArchiveFilters() {
+        return this.projectsService.getArchiveFilters();
+    }
+
+    // GET /projects/archive — คลังปริญญานิพนธ์ (ทุก role)
+    @UseGuards(JwtAuthGuard)
+    @Get('archive')
+    async findArchived(@Query() query: { q?: string; year?: string; category?: string; advisor?: string }) {
+        return this.projectsService.findArchived(query);
+    }
+
     // GET /projects?team_id= — โครงงานของทีม
     @UseGuards(JwtAuthGuard)
     @Get()
     async findByTeam(@Query('team_id', ParseIntPipe) teamId: number) {
         return this.projectsService.findByTeam(teamId);
+    }
+
+    // POST /projects/check-similarity — ตรวจสอบโครงงานซ้ำ
+    @UseGuards(JwtAuthGuard)
+    @Post('check-similarity')
+    @HttpCode(HttpStatus.OK)
+    async checkSimilarity(@Body() dto: CheckSimilarityDto) {
+        return this.projectsService.checkSimilarity(dto);
     }
 
     // POST /projects — สร้างโครงงาน

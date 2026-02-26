@@ -129,14 +129,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
               {task.assignees.slice(0, 3).map((a, idx) => (
                 <div
                   key={a.users_id}
-                  className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-[10px] text-white font-bold border-2 border-white dark:border-gray-800"
+                  className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-xs text-white font-bold border-2 border-white dark:border-gray-800"
                   title={`${a.user?.firstname || ""} ${a.user?.lastname || ""}`}
                 >
                   {a.user?.firstname?.[0] || "U"}
                 </div>
               ))}
               {task.assignees.length > 3 && (
-                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-bold border-2 border-white dark:border-gray-800">
+                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 font-bold border-2 border-white dark:border-gray-800">
                   +{task.assignees.length - 3}
                 </div>
               )}

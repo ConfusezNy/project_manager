@@ -3,7 +3,7 @@
 // AdvisorCard Component - Shows advisor information
 import React from "react";
 import { UserPlus } from "lucide-react";
-import Button from "@/app/(components)/Button";
+import Button from "@/shared/components/Button";
 import { ProjectData } from "../services/projectService";
 
 interface Props {

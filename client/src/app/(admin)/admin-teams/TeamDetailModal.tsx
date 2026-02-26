@@ -321,7 +321,7 @@ export function TeamDetailModal({
                         : "text-green-500 font-medium"
                     }
                   >
-                    {team.section.team_locked ? "🔒 ล็อค" : "🔓 ปลดล็อค"}
+                    {team.section.team_locked ? "ล็อค" : "ปลดล็อค"}
                   </p>
                 </div>
               </div>

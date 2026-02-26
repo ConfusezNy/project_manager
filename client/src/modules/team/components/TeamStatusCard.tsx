@@ -3,7 +3,7 @@
 // TeamStatusCard Component - Shows team status information
 import React from "react";
 import { Users, UserPlus } from "lucide-react";
-import Button from "@/app/(components)/Button";
+import Button from "@/shared/components/Button";
 import { TeamData } from "../services/teamService";
 
 interface Props {
@@ -58,7 +58,11 @@ export const TeamStatusCard: React.FC<Props> = ({
               ภาคเรียน
             </p>
             <p className="text-base font-semibold text-gray-900 dark:text-white">
-              {teamData?.semester || "---"}
+              {section?.Term
+                ? `${section.Term.semester}/${section.Term.academicYear}`
+                : section?.term
+                  ? `${section.term.semester}/${section.term.academicYear}`
+                  : teamData?.semester || "---"}
             </p>
           </div>
         </div>

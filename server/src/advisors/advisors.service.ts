@@ -90,7 +90,7 @@ export class AdvisorsService {
                             ? { semester: team.Section.Term.semester, academicYear: team.Section.Term.academicYear }
                             : undefined,
                     },
-                    members: (team.Teammember || []).map((m: any) => ({
+                    members: (team.Teammember || []).map((m) => ({
                         user: {
                             users_id: m.Users?.users_id || m.user_id,
                             firstname: m.Users?.firstname,
@@ -100,7 +100,7 @@ export class AdvisorsService {
                         },
                     })),
                 },
-                advisors: (project.ProjectAdvisor || []).map((a: any) => ({
+                advisors: (project.ProjectAdvisor || []).map((a) => ({
                     advisor: {
                         users_id: a.Users?.users_id || a.advisor_id,
                         firstname: a.Users?.firstname,

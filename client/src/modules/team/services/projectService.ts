@@ -38,7 +38,28 @@ export const projectService = {
   // Get project by team ID
   async getProjectByTeamId(teamId: number): Promise<ProjectData | null> {
     try {
-      return await api.get<ProjectData>(`/projects?team_id=${teamId}`);
+      const data = await api.get<any>(`/projects?team_id=${teamId}`);
+      if (!data) return null;
+
+      // Normalize Prisma PascalCase → camelCase for frontend
+      return {
+        project_id: data.project_id,
+        projectname: data.projectname,
+        projectnameEng: data.projectnameEng,
+        project_type: data.project_type,
+        description: data.description,
+        status: data.status,
+        advisors: (data.ProjectAdvisor || data.advisors || []).map((pa: any) => ({
+          advisor_id: pa.advisor_id,
+          advisor: pa.Users || pa.advisor || {
+            users_id: pa.advisor_id,
+            firstname: pa.Users?.firstname,
+            lastname: pa.Users?.lastname,
+            titles: pa.Users?.titles,
+            email: pa.Users?.email,
+          },
+        })),
+      };
     } catch {
       return null;
     }

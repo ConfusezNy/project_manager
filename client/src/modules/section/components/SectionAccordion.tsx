@@ -197,21 +197,21 @@ export const SectionAccordion: React.FC<Props> = ({
                       {/* Section Card */}
                       <div
                         className={`border rounded-lg p-4 ${s.course_type === "PRE_PROJECT"
-                            ? "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10"
-                            : "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/10"
+                          ? "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10"
+                          : "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/10"
                           }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
                             <span
                               className={`px-3 py-1 rounded-full text-sm font-medium ${s.course_type === "PRE_PROJECT"
-                                  ? "bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200"
-                                  : "bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+                                ? "bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200"
+                                : "bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
                                 }`}
                             >
                               {s.course_type === "PROJECT"
-                                ? "โปรเจกต์"
-                                : "ก่อนโปรเจกต์"}
+                                ? "Project"
+                                : "Pre Project"}
                             </span>
                             <span className="text-gray-600 dark:text-gray-400 text-sm">
                               Term {getTermDisplay(s)}
@@ -225,7 +225,6 @@ export const SectionAccordion: React.FC<Props> = ({
                                 onClick={() => onContinue(s.section_id)}
                                 className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-1"
                               >
-                                <span>➡️</span>
                                 <span>ต่อวิชา</span>
                               </button>
                             )}
@@ -248,8 +247,8 @@ export const SectionAccordion: React.FC<Props> = ({
                             onClick={() => handleToggleLock(s.section_id)}
                             disabled={togglingLock === s.section_id}
                             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${lockStates[s.section_id]
-                                ? "bg-red-500"
-                                : "bg-gray-300 dark:bg-gray-600"
+                              ? "bg-red-500"
+                              : "bg-gray-300 dark:bg-gray-600"
                               }`}
                           >
                             {togglingLock === s.section_id ? (
@@ -257,8 +256,8 @@ export const SectionAccordion: React.FC<Props> = ({
                             ) : (
                               <span
                                 className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${lockStates[s.section_id]
-                                    ? "translate-x-5"
-                                    : "translate-x-1"
+                                  ? "translate-x-5"
+                                  : "translate-x-1"
                                   }`}
                               />
                             )}
@@ -279,20 +278,20 @@ export const SectionAccordion: React.FC<Props> = ({
                             onClick={() => onEnroll(s.section_id)}
                             className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition"
                           >
-                            📝 เพิ่มนักศึกษา
+                            เพิ่มนักศึกษา
                           </button>
                           <button
                             onClick={() => onViewEnrollments(s.section_id)}
                             className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium text-sm transition"
                           >
-                            👥 ดูรายชื่อ
+                            ดูรายชื่อ
                           </button>
                           <button
                             onClick={() => onDelete(s.section_id)}
                             className="px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg font-medium text-sm transition"
                             title="ลบ Section"
                           >
-                            🗑️
+                            ลบ
                           </button>
                         </div>
                       </div>

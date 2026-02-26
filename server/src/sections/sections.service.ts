@@ -12,6 +12,7 @@ import {
     EnrollDto,
     ContinueToProjectDto,
 } from './dto/section.dto';
+import { Prisma } from '@prisma/client';
 
 /**
  * Sections Service
@@ -108,10 +109,10 @@ export class SectionsService {
             });
 
             return newSection;
-        } catch (err: any) {
+        } catch (err: unknown) {
             // P2002 = Unique constraint violation
             // (section_code + term_id ต้องไม่ซ้ำ)
-            if (err?.code === 'P2002') {
+            if (err instanceof Error && 'code' in err && (err as Record<string, unknown>).code === 'P2002') {
                 throw new ConflictException(
                     'รหัส Section นี้มีอยู่แล้วในเทอมนี้',
                 );
@@ -133,7 +134,7 @@ export class SectionsService {
             throw new NotFoundException('Section not found');
         }
 
-        const updateData: any = {};
+        const updateData: Prisma.SectionUpdateInput = {};
         if (dto.team_locked !== undefined) updateData.team_locked = dto.team_locked;
 
         if (dto.min_team_size !== undefined) updateData.min_team_size = dto.min_team_size;
@@ -209,7 +210,7 @@ export class SectionsService {
                     include: { Term: true },
                 },
             },
-            orderBy: { section_id: 'desc' },
+            orderBy: { enrolledAt: 'desc' },
         });
 
         if (!enrollment) {
@@ -540,11 +541,14 @@ export class SectionsService {
             });
         }
 
-        // 6. อัพเดท Team → section_id ใหม่
+        // 6. อัพเดท Team → section_id + semester ใหม่
         for (const team of teamsToMove) {
             await this.prisma.team.update({
                 where: { team_id: team.team_id },
-                data: { section_id: newSection.section_id },
+                data: {
+                    section_id: newSection.section_id,
+                    semester: `${newTerm.semester}/${newTerm.academicYear}`,
+                },
             });
         }
 

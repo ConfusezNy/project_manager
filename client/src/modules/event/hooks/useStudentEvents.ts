@@ -100,9 +100,9 @@ export function useStudentEvents() {
       setSectionGroups(grouped);
 
       setLoading(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching student events:", err);
-      setError(err.message || "เกิดข้อผิดพลาดในการโหลดข้อมูล");
+      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล");
       setLoading(false);
     }
   }, []);
@@ -148,9 +148,9 @@ export function useStudentEvents() {
       });
       await fetchData();
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error submitting work:", err);
-      return { success: false, error: err.message };
+      return { success: false, error: err instanceof Error ? err.message : "Submit failed" };
     }
   };
 

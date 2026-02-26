@@ -80,7 +80,7 @@ export function useSignupForm() {
         setMessage("สมัครสมาชิกสำเร็จ");
         setForm(initialSignupForm);
 
-        // Redirect to dashboard หลังสมัครสำเร็จ
+        // Redirect to student dashboard (new signups are always STUDENT)
         router.push("/dashboard");
       } catch (err: any) {
         setMessage(err.message || "เกิดข้อผิดพลาด");
