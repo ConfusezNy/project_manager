@@ -1,6 +1,6 @@
 # 🗺️ Project Roadmap - ระบบจัดการข้อมูลโครงงานนักศึกษา
 
-> **Last Updated:** 2026-03-05
+> **Last Updated:** 2026-03-06
 > **Current Phase:** Phase 6 - Final Features & Polish
 
 ---
@@ -13,7 +13,7 @@ Phase 2: Feature Dev         █████████████████
 Phase 3: NestJS Migration    ████████████████████ 100% ✅
 Phase 4: Frontend Integration████████████████████ 100% ✅
 Phase 5: Docker + Cleanup    ████████████████████ 100% ✅
-Phase 6: Final Features      ████████████░░░░░░░░  60% 🔄 ← เราอยู่ตรงนี้
+Phase 6: Final Features      ████████████████░░░░  80% 🔄 ← เราอยู่ตรงนี้
 ```
 
 ---
@@ -93,7 +93,7 @@ Phase 6: Final Features      ████████████░░░░░
 | -------------------- | ------- | -------------------- |
 | Similarity Check     | ✅ Done | §1.2.6 ป้องกันซ้ำ — API + UI |
 | Advanced Search      | ✅ Done | §1.3.2(3) ค้นหาด้วยชื่ออาจารย์ |
-| Notification System  | 🔴 TODO | §1.3.2(5) — ต้องสร้าง backend module |
+| Notification System  | ✅ Done | §1.3.2(5) — backend module + 12 triggers + frontend |
 | Password Reset Email | 🔴 TODO | §1.3.2(1) — ต้องสร้าง API + email service |
 | Report Export (UI)   | 🟡 TODO | §1.3.2(4) — utility มี, ต้อง integrate |
 
@@ -105,7 +105,7 @@ Phase 6: Final Features      ████████████░░░░░
 | --------------------------------- | -------------- |
 | 1.2.1 เว็บจัดการโครงงาน           | ✅ Done        |
 | 1.2.2 ติดตามความคืบหน้ารายสัปดาห์ | ✅ Done (Events + TaskBoard) |
-| 1.2.3 อาจารย์ให้ข้อเสนอแนะ        | ⚠️ Partial (Comment ✅, Notification backend ❌) |
+| 1.2.3 อาจารย์ให้ข้อเสนอแนะ        | ✅ Done (Comment ✅, Notification ✅) |
 | 1.2.4 ประเมินผลและจัดเกรด         | ✅ Done (GradingPage) |
 | 1.2.5 ฐานข้อมูลค้นหา              | ✅ Done (Search + Archive + Advisor filter) |
 | 1.2.6 ป้องกันโครงงานซ้ำ           | ✅ Done (Similarity Check API + UI) |
@@ -130,4 +130,4 @@ Phase 6: Final Features      ████████████░░░░░
 | Phase 3 (NestJS)      | 8 days      | ✅ Done        |
 | Phase 4               | 3 days      | ✅ Done        |
 | Phase 5 (Docker)      | 1 day       | ✅ Done        |
-| Phase 6 (Final)       | 5-7 days    | 🔄 40% (Similarity + Search done, 3 gaps remain) |
+| Phase 6 (Final)       | 5-7 days    | 🔄 80% (Notification ✅, 2 gaps remain) |

@@ -1,7 +1,7 @@
 # 📋 Feature Gap Analysis - รายละเอียดสิ่งที่ต้องทำ
 
-> **Document Version:** 4.0
-> **Last Updated:** 2026-03-05
+> **Document Version:** 5.0
+> **Last Updated:** 2026-03-06
 
 ---
 
@@ -34,7 +34,8 @@
 ## 🎯 วัตถุประสงค์ 1.2.3: อาจารย์ให้ข้อเสนอแนะ — ✅ DONE
 
 - ✅ Comment Module (Standalone: CommentSection, CommentItem, CommentForm)
-- ✅ Notification System (Enhanced dropdown, useNotifications hook, mark-as-read)
+- ✅ Notification System — Backend module (4 files, 3 endpoints) + 12 triggers ใน 5 services
+- ✅ Notification Frontend — Updated dropdown, 10 event types, role-based navigation, auto-open task
 - ✅ Submission Approve/Reject — `/submissions/:id/approve`, `/submissions/:id/reject`
 - ✅ Advisor Dashboard with pending submissions
 
@@ -69,13 +70,13 @@
 
 ## 🔴 สิ่งที่ยังขาด — ต้องทำเพิ่ม
 
-### Gap 1: Notification System Backend — 🔴 Critical (scope §1.3.2.5)
+### ~~Gap 1: Notification System Backend~~ — ✅ DONE (Phase 6a)
 
-- ❌ ไม่มี NestJS Notifications module (`server/src/notifications/`)
-- ⚠️ `Notification` model มีใน Prisma schema แล้ว
-- ⚠️ Frontend `useNotifications` hook ดึงข้อมูลจาก `/teams/pending-invites` เท่านั้น
-- ❌ ต้องสร้าง API: `GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`
-- ❌ ต้องเพิ่ม notification triggers ใน: Tasks, Submissions, Grades, Projects, Teams
+- ✅ สร้าง NestJS Notifications module (`server/src/notifications/`)
+- ✅ API: `GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`
+- ✅ Notification triggers ใน: Tasks (4), Submissions (3), Grades (1), Projects (2), Teams (2) = 12 triggers
+- ✅ Frontend: Updated NotificationDropdown, 10 event type icons, role-based navigation
+- ✅ Auto-open task detail modal จาก notification click (`?task_id=X`)
 
 ### Gap 2: Password Reset via Email — 🔴 Critical (scope §1.3.2.1)
 
@@ -101,13 +102,13 @@
 | **Frontend Integration** | API client  | ✅ Done          |
 | **Type Safety**       | 0 `: any`      | ✅ Done          |
 | **Similarity Check**  | §1.2.6         | ✅ Done          |
+| **Notification System** | §1.3.2(5)      | ✅ Done (Phase 6a) |
 | **Advanced Search**   | §1.3.2(3)      | ✅ Done          |
 
 ### ❌ Remaining Items
 
 | Item                 | Effort  | Priority |
 | -------------------- | ------- | -------- |
-| Notification System  | ~2-3 วัน | 🔴 Must Have (scope §1.3.2.5) |
 | Password Reset Email | ~1-2 วัน | 🔴 Must Have (scope §1.3.2.1) |
 | Report Export (UI)   | ~0.5-1 วัน | 🟡 Should Have (scope §1.3.2.4) |
 
@@ -121,4 +122,4 @@
 
 ---
 
-> **Last Updated:** 2026-03-05
+> **Last Updated:** 2026-03-06

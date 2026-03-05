@@ -1,6 +1,6 @@
 # 📊 Module Development Status
 
-> สถานะการพัฒนาแต่ละ Module (Updated: 2026-03-05)
+> สถานะการพัฒนาแต่ละ Module (Updated: 2026-03-06)
 
 ## 🔗 Related Documents
 
@@ -12,7 +12,7 @@
 ## 📈 Overall Progress (เทียบกับวัตถุประสงค์)
 
 ```
-█████████████████████████████░ 90%
+█████████████████████████████░ 95%
 ```
 
 ---
@@ -23,7 +23,7 @@
 | ---------------------- | ------- | -------------------------------- |
 | **Client-Server**      | ✅ Done | Next.js (Frontend) + NestJS (Backend) |
 | **Modular Frontend**   | ✅ Done | `src/modules/` — 13 modules, 57 components |
-| **NestJS Backend**     | ✅ Done | All 13 modules migrated (73 endpoints) |
+| **NestJS Backend**     | ✅ Done | All 14 modules migrated (76 endpoints) |
 | **Shared Components**  | ✅ Done | `src/shared/components/` + `constants/` |
 | **Barrel Exports**     | ✅ Done | All modules have `index.ts`      |
 | **Type Safety**        | ✅ Done | 0 occurrences of `: any` in server |
@@ -47,7 +47,8 @@
 | Users        | 5         | ✅ Done |
 | Advisors     | 2         | ✅ Done |
 | Admin        | 9         | ✅ Done |
-| **Total**    | **73**    |         |
+| Notifications| 3         | ✅ Done |
+| **Total**    | **76**    |         |
 
 ---
 
@@ -95,7 +96,7 @@
 | Search Page                      | ✅      | ✅       | ProjectSearchDashboard    |
 | Similarity Check                 | ✅      | ✅       | `check-similarity` API + `ProjectFormModal` |
 | Advanced Search (advisor)        | ✅      | ✅       | Archive search รับ `advisor` query |
-| **Notification Backend Module**  | ❌      | ⚠️       | DB model มี, API ยังไม่มี, Frontend ดึง invites เท่านั้น |
+| **Notification Backend Module**  | ✅      | ✅       | 3 endpoints, 12 triggers, 10 event types, auto-open task |
 | **Password Reset via Email**     | ❌      | ❌       | ไม่มี endpoint + ไม่มี email service |
 | **Report Export Integration**    | —       | ❌       | Utility functions มี แต่ไม่ได้ integrate ในหน้า Admin |
 
@@ -114,4 +115,4 @@
 
 ---
 
-> **Last Updated:** 2026-03-05
+> **Last Updated:** 2026-03-06
