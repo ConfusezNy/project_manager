@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { SectionsModule } from './sections/sections.module';
@@ -15,11 +17,18 @@ import { AdminModule } from './admin/admin.module';
 import { TermsModule } from './terms/terms.module';
 import { ProfileModule } from './profile/profile.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
     imports: [
         // .env file loading
         ConfigModule.forRoot({ isGlobal: true }),
+
+        // Serve uploaded files statically
+        ServeStaticModule.forRoot({
+            rootPath: join(process.cwd(), 'uploads'),
+            serveRoot: '/uploads',
+        }),
 
         // Database (ใช้ทุก module)
         PrismaModule,
@@ -41,6 +50,7 @@ import { NotificationsModule } from './notifications/notifications.module';
         TermsModule,
         ProfileModule,
         NotificationsModule,
+        UploadsModule,
     ],
 })
 export class AppModule { }

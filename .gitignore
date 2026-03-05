@@ -1,6 +1,7 @@
 # Server
 server/node_modules/
 server/dist/
+server/uploads/
 
 # Agent config
 .agent/

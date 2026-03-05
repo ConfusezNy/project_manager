@@ -2,26 +2,26 @@
 
 /**
  * ProfileSettings — แก้ไขข้อมูลส่วนตัว
- * ⚠️ สิ่งที่เปลี่ยนจากเดิม:
- * - เดิม: useSession() + update() + raw fetch("/api/profile")
- * - ใหม่: useAuth() + api.patch("/users/profile")
+ * ⚠️ เปลี่ยนจาก Base64 inline → Upload API endpoint
  */
 
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, getToken } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { useEffect, useState, useRef } from "react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function ProfileSettings() {
   const { user, status } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
 
-  // ปรับชื่อให้ตรงกับ Schema
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
     tel_number: "",
-    profilePicture: "" as string | null,
   });
 
   useEffect(() => {
@@ -30,35 +30,55 @@ export default function ProfileSettings() {
         firstname: user.firstname || "",
         lastname: user.lastname || "",
         tel_number: "",
-        profilePicture: null,
       });
+      // แสดงรูปเดิมถ้ามี
+      if (user.profilePicture) {
+        // If it starts with /uploads, it's from our server
+        if (user.profilePicture.startsWith("/uploads")) {
+          setPreviewUrl(`${API_URL}${user.profilePicture}`);
+        } else {
+          // Legacy Base64 or external URL
+          setPreviewUrl(user.profilePicture);
+        }
+      }
     }
   }, [user]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          // ย่อขนาดเหลือแค่ 100px พอครับ สำหรับรูปโปรไฟล์จิ๋ว
-          const MAX_WIDTH = 100;
-          const scaleSize = MAX_WIDTH / img.width;
-          canvas.width = MAX_WIDTH;
-          canvas.height = img.height * scaleSize;
+    if (!file) return;
 
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+    if (file.size > 2 * 1024 * 1024) {
+      alert("รูปโปรไฟล์ต้องมีขนาดไม่เกิน 2 MB");
+      return;
+    }
 
-          // บีบอัดคุณภาพเหลือ 0.5 (50%) เพื่อให้ไฟล์เล็กระดับไม่กี่ KB
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
-          setFormData({ ...formData, profilePicture: compressedBase64 });
-        };
-      };
-      reader.readAsDataURL(file);
+    // Show preview immediately
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    // Upload file
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+      const token = getToken();
+      const res = await fetch(`${API_URL}/uploads/profile`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formDataUpload,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "อัปโหลดรูปไม่สำเร็จ");
+      }
+
+      const data = await res.json();
+      setUploadedFileUrl(data.fileUrl);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "อัปโหลดรูปไม่สำเร็จ");
+      setPreviewUrl(null);
+      setUploadedFileUrl(null);
     }
   };
 
@@ -67,10 +87,15 @@ export default function ProfileSettings() {
     setIsSubmitting(true);
 
     try {
-      await api.patch("/users/profile", formData);
+      const payload: Record<string, string> = { ...formData };
+      // Include profilePicture only if user uploaded a new one
+      if (uploadedFileUrl) {
+        payload.profilePicture = uploadedFileUrl;
+      }
+      await api.patch("/users/profile", payload);
       alert("บันทึกข้อมูลสำเร็จ!");
-    } catch (error: any) {
-      alert(`เกิดข้อผิดพลาด: ${error.message || "ไม่ทราบสาเหตุ"}`);
+    } catch (error: unknown) {
+      alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : "ไม่ทราบสาเหตุ"}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -84,11 +109,12 @@ export default function ProfileSettings() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex items-center space-x-6">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-500/20 bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
-            {formData.profilePicture ? <img src={formData.profilePicture} className="w-full h-full object-cover" /> : formData.firstname?.charAt(0)}
+            {previewUrl ? <img src={previewUrl} className="w-full h-full object-cover" alt="profile" /> : formData.firstname?.charAt(0)}
           </div>
           <div>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleFileChange} />
             <button type="button" onClick={() => fileInputRef.current?.click()} className="px-4 py-2 text-sm border rounded-xl dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">เปลี่ยนรูปโปรไฟล์</button>
+            <p className="text-xs text-gray-400 mt-1">สูงสุด 2 MB (JPG, PNG, GIF, WebP)</p>
           </div>
         </div>
 

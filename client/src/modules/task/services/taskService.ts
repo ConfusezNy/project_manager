@@ -68,4 +68,19 @@ export const taskService = {
   ): Promise<TaskComment> {
     return api.post<TaskComment>(`/tasks/${taskId}/comments`, data);
   },
+
+  // Get task attachments
+  async getAttachments(taskId: number) {
+    return api.get<any[]>(`/tasks/${taskId}/attachments`);
+  },
+
+  // Add attachment to task (after uploading file)
+  async addAttachment(taskId: number, fileUrl: string, filename: string) {
+    return api.post(`/tasks/${taskId}/attachments`, { fileUrl, filename });
+  },
+
+  // Remove attachment from task
+  async removeAttachment(taskId: number, attachmentId: number) {
+    return api.delete(`/tasks/${taskId}/attachments/${attachmentId}`);
+  },
 };

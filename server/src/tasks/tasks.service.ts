@@ -460,4 +460,74 @@ export class TasksService {
 
         return { ...comment, user: comment.Users };
     }
+
+    // =====================================================
+    // GET /tasks/:id/attachments — ดูไฟล์แนบ
+    // =====================================================
+    async getAttachments(id: number, userId: string, userRole: string) {
+        await this.getTaskWithAuthCheck(id, userId, userRole);
+
+        return this.prisma.attachment.findMany({
+            where: { task_id: id },
+            include: {
+                Users: {
+                    select: { users_id: true, firstname: true, lastname: true },
+                },
+            },
+            orderBy: { attachment_id: 'desc' },
+        });
+    }
+
+    // =====================================================
+    // POST /tasks/:id/attachments — เพิ่มไฟล์แนบ
+    // =====================================================
+    async addAttachment(
+        id: number,
+        userId: string,
+        userRole: string,
+        fileUrl: string,
+        filename: string,
+    ) {
+        await this.getTaskWithAuthCheck(id, userId, userRole);
+
+        return this.prisma.attachment.create({
+            data: {
+                task_id: id,
+                uploadedBy_id: userId,
+                fileUrl,
+                filename,
+            },
+            include: {
+                Users: {
+                    select: { users_id: true, firstname: true, lastname: true },
+                },
+            },
+        });
+    }
+
+    // =====================================================
+    // DELETE /tasks/:id/attachments/:attachmentId — ลบไฟล์แนบ
+    // =====================================================
+    async removeAttachment(
+        id: number,
+        attachmentId: number,
+        userId: string,
+        userRole: string,
+    ) {
+        await this.getTaskWithAuthCheck(id, userId, userRole);
+
+        const attachment = await this.prisma.attachment.findFirst({
+            where: { attachment_id: attachmentId, task_id: id },
+        });
+
+        if (!attachment) {
+            throw new NotFoundException('Attachment not found');
+        }
+
+        await this.prisma.attachment.delete({
+            where: { attachment_id: attachmentId },
+        });
+
+        return { message: 'Attachment deleted' };
+    }
 }

@@ -113,4 +113,34 @@ export class TasksController {
     ) {
         return this.tasksService.addComment(id, user.users_id, user.role, dto);
     }
+
+    // GET /tasks/:id/attachments — ดูไฟล์แนบ
+    @Get(':id/attachments')
+    async getAttachments(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload,
+    ) {
+        return this.tasksService.getAttachments(id, user.users_id, user.role);
+    }
+
+    // POST /tasks/:id/attachments — เพิ่มไฟล์แนบ
+    @Post(':id/attachments')
+    @HttpCode(HttpStatus.CREATED)
+    async addAttachment(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload,
+        @Body() dto: { fileUrl: string; filename: string },
+    ) {
+        return this.tasksService.addAttachment(id, user.users_id, user.role, dto.fileUrl, dto.filename);
+    }
+
+    // DELETE /tasks/:id/attachments/:attachmentId — ลบไฟล์แนบ
+    @Delete(':id/attachments/:attachmentId')
+    async removeAttachment(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('attachmentId', ParseIntPipe) attachmentId: number,
+        @CurrentUser() user: JwtPayload,
+    ) {
+        return this.tasksService.removeAttachment(id, attachmentId, user.users_id, user.role);
+    }
 }

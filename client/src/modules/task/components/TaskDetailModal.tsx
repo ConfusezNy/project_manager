@@ -1,8 +1,8 @@
 "use client";
 
-// TaskDetailModal - View task details with comments
-import React, { useState } from "react";
-import { useAuth } from "@/lib/auth-context";
+// TaskDetailModal - View task details with comments and attachments
+import React, { useState, useEffect, useRef } from "react";
+import { useAuth, getToken } from "@/lib/auth-context";
 import {
   X,
   Calendar,
@@ -11,9 +11,16 @@ import {
   Edit3,
   UserPlus,
   UserMinus,
+  Paperclip,
+  Upload,
+  File,
+  Download,
 } from "lucide-react";
 import type { Task, UpdateTaskInput } from "../types/task.types";
 import { CommentSection } from "@/modules/comment";
+import { taskService } from "../services/taskService";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 interface TaskDetailModalProps {
   task: Task;
@@ -59,6 +66,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 }) => {
   const { user: currentUser } = useAuth();
   const [showAssignMenu, setShowAssignMenu] = useState(false);
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load attachments
+  useEffect(() => {
+    taskService.getAttachments(task.task_id).then(setAttachments).catch(() => { });
+  }, [task.task_id]);
 
   const tags = task.tags?.split(",").filter(Boolean) || [];
 
@@ -88,6 +103,43 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const handleDelete = async () => {
     if (confirm("คุณต้องการลบ Task นี้ใช่หรือไม่?")) {
       await onDelete(task.task_id);
+    }
+  };
+
+  const handleFileUpload = async (file: globalThis.File) => {
+    if (file.size > 20 * 1024 * 1024) {
+      alert("ไฟล์ต้องมีขนาดไม่เกิน 20 MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = getToken();
+      const res = await fetch(`${API_URL}/uploads/attachment`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      await taskService.addAttachment(task.task_id, data.fileUrl, data.filename);
+      const updated = await taskService.getAttachments(task.task_id);
+      setAttachments(updated);
+    } catch (err) {
+      alert("อัปโหลดไฟล์ไม่สำเร็จ");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveAttachment = async (attachmentId: number) => {
+    if (!confirm("ลบไฟล์แนบนี้?")) return;
+    try {
+      await taskService.removeAttachment(task.task_id, attachmentId);
+      setAttachments(attachments.filter((a: any) => a.attachment_id !== attachmentId));
+    } catch {
+      alert("ลบไฟล์ไม่สำเร็จ");
     }
   };
 
@@ -261,6 +313,86 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   ยังไม่มีผู้รับผิดชอบ
                 </p>
+              )}
+            </div>
+          </div>
+
+          {/* Attachments */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                <Paperclip size={14} />
+                ไฟล์แนบ ({attachments.length})
+              </h3>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50"
+              >
+                {uploading ? (
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Upload size={12} />
+                )}
+                อัปโหลด
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file);
+                e.target.value = "";
+              }}
+            />
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (file) handleFileUpload(file);
+              }}
+              className="space-y-2"
+            >
+              {attachments.length > 0 ? (
+                attachments.map((att: any) => (
+                  <div
+                    key={att.attachment_id}
+                    className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg group"
+                  >
+                    <File size={16} className="text-gray-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 dark:text-white truncate">
+                        {att.filename}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {att.Users?.firstname} {att.Users?.lastname}
+                      </p>
+                    </div>
+                    <a
+                      href={`${API_URL}${att.fileUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="ดาวน์โหลด"
+                    >
+                      <Download size={14} />
+                    </a>
+                    <button
+                      onClick={() => handleRemoveAttachment(att.attachment_id)}
+                      className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="ลบ"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-sm text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
+                  ลากไฟล์มาวางหรือคลิกปุ่มอัปโหลด
+                </div>
               )}
             </div>
           </div>
