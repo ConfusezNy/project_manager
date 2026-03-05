@@ -14,6 +14,7 @@ import { AdvisorsModule } from './advisors/advisors.module';
 import { AdminModule } from './admin/admin.module';
 import { TermsModule } from './terms/terms.module';
 import { ProfileModule } from './profile/profile.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
     imports: [
@@ -39,6 +40,7 @@ import { ProfileModule } from './profile/profile.module';
         AdminModule,
         TermsModule,
         ProfileModule,
+        NotificationsModule,
     ],
 })
 export class AppModule { }

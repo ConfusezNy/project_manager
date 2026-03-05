@@ -1,6 +1,6 @@
 # 🗺️ Project Roadmap - ระบบจัดการข้อมูลโครงงานนักศึกษา
 
-> **Last Updated:** 2026-02-25
+> **Last Updated:** 2026-03-05
 > **Current Phase:** Phase 6 - Final Features & Polish
 
 ---
@@ -13,7 +13,7 @@ Phase 2: Feature Dev         █████████████████
 Phase 3: NestJS Migration    ████████████████████ 100% ✅
 Phase 4: Frontend Integration████████████████████ 100% ✅
 Phase 5: Docker + Cleanup    ████████████████████ 100% ✅
-Phase 6: Final Features      ██████████████░░░░░░  70% 🔄 ← เราอยู่ตรงนี้
+Phase 6: Final Features      ████████████░░░░░░░░  60% 🔄 ← เราอยู่ตรงนี้
 ```
 
 ---
@@ -39,7 +39,7 @@ Phase 6: Final Features      ██████████████░░░
 | Event System         | ✅ Done | 6 endpoints + Admin/Advisor/Student UI |
 | Submission System    | ✅ Done | 4 endpoints + Submit/Approve UI   |
 | Grading System       | ✅ Done | 4 endpoints + GradingPage         |
-| Notification System  | ✅ Done | API + Enhanced Dropdown + Hook    |
+| Notification System  | ⚠️ Partial | Frontend dropdown มี, Backend module ยังไม่มี |
 | Comment System       | ✅ Done | Standalone module (3 components)  |
 | Search & Archive     | ✅ Done | Search page + Archive toggle/filter |
 | Dashboard — Admin    | ✅ Done | Stats + PieChart + BarChart       |
@@ -91,9 +91,11 @@ Phase 6: Final Features      ██████████████░░░
 
 | Feature              | Status  | อ้างอิง Scope        |
 | -------------------- | ------- | -------------------- |
-| Similarity Check     | 🔴 TODO | §1.2.6 ป้องกันซ้ำ   |
-| Advanced Search      | 🔴 TODO | §1.3.2(3) ค้นหาขั้นสูง |
-| Report Export         | 🔴 TODO | §1.3.1(1) + §1.3.2(4) |
+| Similarity Check     | ✅ Done | §1.2.6 ป้องกันซ้ำ — API + UI |
+| Advanced Search      | ✅ Done | §1.3.2(3) ค้นหาด้วยชื่ออาจารย์ |
+| Notification System  | 🔴 TODO | §1.3.2(5) — ต้องสร้าง backend module |
+| Password Reset Email | 🔴 TODO | §1.3.2(1) — ต้องสร้าง API + email service |
+| Report Export (UI)   | 🟡 TODO | §1.3.2(4) — utility มี, ต้อง integrate |
 
 ---
 
@@ -103,10 +105,10 @@ Phase 6: Final Features      ██████████████░░░
 | --------------------------------- | -------------- |
 | 1.2.1 เว็บจัดการโครงงาน           | ✅ Done        |
 | 1.2.2 ติดตามความคืบหน้ารายสัปดาห์ | ✅ Done (Events + TaskBoard) |
-| 1.2.3 อาจารย์ให้ข้อเสนอแนะ        | ✅ Done (Comment + Notification) |
+| 1.2.3 อาจารย์ให้ข้อเสนอแนะ        | ⚠️ Partial (Comment ✅, Notification backend ❌) |
 | 1.2.4 ประเมินผลและจัดเกรด         | ✅ Done (GradingPage) |
-| 1.2.5 ฐานข้อมูลค้นหา              | ✅ Done (Search + Archive) |
-| 1.2.6 ป้องกันโครงงานซ้ำ           | 🔴 TODO (Similarity Check) |
+| 1.2.5 ฐานข้อมูลค้นหา              | ✅ Done (Search + Archive + Advisor filter) |
+| 1.2.6 ป้องกันโครงงานซ้ำ           | ✅ Done (Similarity Check API + UI) |
 
 ---
 
@@ -128,4 +130,4 @@ Phase 6: Final Features      ██████████████░░░
 | Phase 3 (NestJS)      | 8 days      | ✅ Done        |
 | Phase 4               | 3 days      | ✅ Done        |
 | Phase 5 (Docker)      | 1 day       | ✅ Done        |
-| Phase 6 (Final)       | 3-4 days    | 🔄 70%        |
+| Phase 6 (Final)       | 5-7 days    | 🔄 40% (Similarity + Search done, 3 gaps remain) |

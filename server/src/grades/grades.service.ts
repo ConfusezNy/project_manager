@@ -4,12 +4,16 @@ import {
     ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { BatchGradesDto, UpdateGradeDto } from './dto/grade.dto';
 import { GradeScore } from '@prisma/client';
 
 @Injectable()
 export class GradesService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService,
+    ) { }
 
     // GET /grades?section_id= or ?student_id=
     async findAll(
@@ -110,6 +114,21 @@ export class GradesService {
                     },
                 });
                 results.push(created);
+            }
+        }
+
+        // แจ้งนักศึกษาที่ได้รับเกรด
+        const notifiedStudents = new Set<string>();
+        for (const grade of dto.grades) {
+            if (!notifiedStudents.has(grade.student_id)) {
+                notifiedStudents.add(grade.student_id);
+                await this.notificationsService.create({
+                    userId: grade.student_id,
+                    actorUserId: userId,
+                    eventType: 'GRADE_GIVEN',
+                    title: 'ได้รับเกรดใหม่',
+                    message: `คุณได้รับเกรดแล้ว กรุณาตรวจสอบ`,
+                });
             }
         }
 

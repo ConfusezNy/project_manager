@@ -1,7 +1,7 @@
 # 📋 Feature Gap Analysis - รายละเอียดสิ่งที่ต้องทำ
 
-> **Document Version:** 3.0
-> **Last Updated:** 2026-02-25
+> **Document Version:** 4.0
+> **Last Updated:** 2026-03-05
 
 ---
 
@@ -48,54 +48,45 @@
 
 ---
 
-## 🎯 วัตถุประสงค์ 1.2.5: ฐานข้อมูลค้นหา — ✅ DONE (partial)
-
-### ✅ สิ่งที่มีแล้ว
+## 🎯 วัตถุประสงค์ 1.2.5: ฐานข้อมูลค้นหา — ✅ DONE
 
 - ✅ Search Page (`/Search`) + ProjectSearchDashboard
 - ✅ Filter by Type, Year
 - ✅ Archive toggle (`PATCH /projects/:id/archive`)
 - ✅ Archive search (`GET /projects/archive`) with filters
 - ✅ Archive filters API (`GET /projects/archive/filters`)
-
-### 🔴 สิ่งที่ยังขาด
-
-- [ ] **Advanced Search** — Filter by Advisor name (ค้นหาด้วยชื่ออาจารย์)
-- [ ] **Report Export** — ส่งออกรายงาน Excel/PDF
+- ✅ **Advanced Search** — Filter by Advisor name (`advisor` query param)
 
 ---
 
-## 🎯 วัตถุประสงค์ 1.2.6: ป้องกันโครงงานซ้ำซ้อน — 🔴 TODO
+## 🎯 วัตถุประสงค์ 1.2.6: ป้องกันโครงงานซ้ำซ้อน — ✅ DONE
 
-### 🔴 สิ่งที่ต้องสร้างใหม่ทั้งหมด
+- ✅ `POST /projects/check-similarity` — Keyword extraction + text similarity
+- ✅ `ProjectFormModal.tsx` — เรียกใช้ API ตอนสร้าง/แก้ไข Project
+- ✅ แสดง warning เมื่อพบโครงงานที่คล้ายกัน
 
-#### API ที่ต้องสร้าง
+---
 
-```typescript
-// Similarity Check
-POST   /projects/check-similarity
-Body: { title: string, description?: string }
-Response: {
-  similar_projects: Array<{
-    project_id: number,
-    title: string,
-    similarity_score: number
-  }>
-}
-```
+## 🔴 สิ่งที่ยังขาด — ต้องทำเพิ่ม
 
-#### Logic ที่ต้องสร้าง
+### Gap 1: Notification System Backend — 🔴 Critical (scope §1.3.2.5)
 
-1. **Keyword Extraction** - แยก keywords จากชื่อโครงงาน
-2. **Text Similarity** - เปรียบเทียบความคล้าย
-3. **Threshold Warning** - แจ้งเตือนเมื่อคล้าย > 70%
+- ❌ ไม่มี NestJS Notifications module (`server/src/notifications/`)
+- ⚠️ `Notification` model มีใน Prisma schema แล้ว
+- ⚠️ Frontend `useNotifications` hook ดึงข้อมูลจาก `/teams/pending-invites` เท่านั้น
+- ❌ ต้องสร้าง API: `GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`
+- ❌ ต้องเพิ่ม notification triggers ใน: Tasks, Submissions, Grades, Projects, Teams
 
-#### UI ที่ต้องสร้าง
+### Gap 2: Password Reset via Email — 🔴 Critical (scope §1.3.2.1)
 
-| Component           | หน้าที่                             |
-| ------------------- | ----------------------------------- |
-| SimilarityWarning   | แสดงโครงงานที่คล้ายตอนสร้าง Project |
-| SimilarProjectsList | รายการโครงงานที่เกี่ยวข้อง          |
+- ❌ ไม่มี `POST /auth/forgot-password` หรือ `POST /auth/reset-password`
+- ❌ ไม่มี email service (nodemailer/SMTP)
+- ❌ ไม่มี frontend forgot/reset password page
+
+### Gap 3: Report Export Integration — 🟡 Medium (scope §1.3.2.4)
+
+- ✅ มี utility functions: `exportToExcel()`, `exportToPdf()`
+- ❌ ยังไม่ได้เพิ่มปุ่ม Export ในหน้า Admin (sections, teams, submissions)
 
 ---
 
@@ -109,14 +100,16 @@ Response: {
 | **NestJS Migration**  | 13 modules     | ✅ Done          |
 | **Frontend Integration** | API client  | ✅ Done          |
 | **Type Safety**       | 0 `: any`      | ✅ Done          |
+| **Similarity Check**  | §1.2.6         | ✅ Done          |
+| **Advanced Search**   | §1.3.2(3)      | ✅ Done          |
 
 ### ❌ Remaining Items
 
 | Item                 | Effort  | Priority |
 | -------------------- | ------- | -------- |
-| Similarity Check     | ~1-2 วัน | Must Have (scope §1.2.6) |
-| Advanced Search      | ~0.5 วัน | Should Have (scope §1.3.2) |
-| Report Export         | ~1-2 วัน | Should Have (scope §1.3.1) |
+| Notification System  | ~2-3 วัน | 🔴 Must Have (scope §1.3.2.5) |
+| Password Reset Email | ~1-2 วัน | 🔴 Must Have (scope §1.3.2.1) |
+| Report Export (UI)   | ~0.5-1 วัน | 🟡 Should Have (scope §1.3.2.4) |
 
 ---
 
@@ -128,4 +121,4 @@ Response: {
 
 ---
 
-> **Last Updated:** 2026-02-25
+> **Last Updated:** 2026-03-05

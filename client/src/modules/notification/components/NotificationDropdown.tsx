@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, Users, CheckCheck, FileText, MessageSquare } from "lucide-react";
+import { Bell, Users, CheckCheck, FileText, MessageSquare, Award, FolderCheck, FolderX, Send, CheckCircle, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "../hooks/useNotifications";
 import type { NotificationItem } from "../types/notification.types";
@@ -28,12 +28,25 @@ const formatTime = (dateString: string) => {
 const getEventIcon = (eventType: string) => {
   switch (eventType) {
     case "TEAM_INVITE":
+    case "TEAM_MEMBER_JOINED":
       return <Users size={16} className="text-blue-400" />;
     case "TASK_ASSIGNED":
     case "TASK_UPDATED":
       return <FileText size={16} className="text-purple-400" />;
     case "COMMENT_ADDED":
       return <MessageSquare size={16} className="text-green-400" />;
+    case "SUBMISSION_SUBMITTED":
+      return <Send size={16} className="text-orange-400" />;
+    case "SUBMISSION_APPROVED":
+      return <CheckCircle size={16} className="text-emerald-400" />;
+    case "SUBMISSION_REJECTED":
+      return <XCircle size={16} className="text-red-400" />;
+    case "GRADE_GIVEN":
+      return <Award size={16} className="text-yellow-400" />;
+    case "PROJECT_APPROVED":
+      return <FolderCheck size={16} className="text-emerald-400" />;
+    case "PROJECT_REJECTED":
+      return <FolderX size={16} className="text-red-400" />;
     default:
       return <Bell size={16} className="text-gray-400" />;
   }
@@ -42,12 +55,23 @@ const getEventIcon = (eventType: string) => {
 const getIconBg = (eventType: string) => {
   switch (eventType) {
     case "TEAM_INVITE":
+    case "TEAM_MEMBER_JOINED":
       return "bg-blue-500/20";
     case "TASK_ASSIGNED":
     case "TASK_UPDATED":
       return "bg-purple-500/20";
     case "COMMENT_ADDED":
       return "bg-green-500/20";
+    case "SUBMISSION_SUBMITTED":
+      return "bg-orange-500/20";
+    case "SUBMISSION_APPROVED":
+    case "PROJECT_APPROVED":
+      return "bg-emerald-500/20";
+    case "SUBMISSION_REJECTED":
+    case "PROJECT_REJECTED":
+      return "bg-red-500/20";
+    case "GRADE_GIVEN":
+      return "bg-yellow-500/20";
     default:
       return "bg-gray-200 dark:bg-gray-700";
   }
@@ -163,8 +187,8 @@ export const NotificationDropdown = () => {
                   key={item.notification_id}
                   onClick={() => handleNotificationClick(item)}
                   className={`relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0 cursor-pointer ${!item.isRead
-                      ? "bg-blue-50/50 dark:bg-blue-900/10"
-                      : ""
+                    ? "bg-blue-50/50 dark:bg-blue-900/10"
+                    : ""
                     }`}
                 >
                   <div className="flex items-start gap-3">
@@ -181,8 +205,8 @@ export const NotificationDropdown = () => {
                     <div className="flex-1 min-w-0">
                       <p
                         className={`text-sm font-medium ${!item.isRead
-                            ? "text-gray-900 dark:text-white"
-                            : "text-gray-600 dark:text-gray-400"
+                          ? "text-gray-900 dark:text-white"
+                          : "text-gray-600 dark:text-gray-400"
                           }`}
                       >
                         {item.title}

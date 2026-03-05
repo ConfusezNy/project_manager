@@ -9,7 +9,7 @@ import { Providers } from "./providers";
  * ⚠️ สิ่งที่เปลี่ยนจากเดิม:
  * - ลบ SessionProvider (NextAuth) → ใช้ AuthProvider ใน providers.tsx แทน
  * - ลบ getServerSession() → ไม่ต้องดึง session จาก server แล้ว
- * - layout เป็น server component ได้เลย (ไม่ต้อง "use client")
+ * - layout เป็น server component ได้เลย (ไม่ต้วอง "use client")
  */
 
 const k2d = K2D({

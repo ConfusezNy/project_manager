@@ -6,6 +6,7 @@ import {
     Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
     CreateTeamDto,
     InviteDto,
@@ -34,7 +35,10 @@ import {
 export class TeamsService {
     private readonly logger = new Logger(TeamsService.name);
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService,
+    ) { }
 
     // =====================================================
     // GET /teams — ดึงทีมที่ user เป็นสมาชิก
@@ -177,16 +181,14 @@ export class TeamsService {
             throw new BadRequestException('ผู้ใช้มีทีมในรายวิชานี้แล้ว');
         }
 
-        // สร้าง notification = invite
-        await this.prisma.notification.create({
-            data: {
-                user_id: dto.inviteeUserId,
-                actor_user_id: userId,
-                title: 'เชิญเข้าร่วมทีม',
-                message: 'คุณถูกเชิญให้เข้าร่วมกลุ่มโครงงาน',
-                event_type: 'TEAM_INVITE',
-                team_id: team.team_id,
-            },
+        // สร้าง notification = invite (ใช้ NotificationsService)
+        await this.notificationsService.create({
+            userId: dto.inviteeUserId,
+            actorUserId: userId,
+            title: 'เชิญเข้าร่วมทีม',
+            message: 'คุณถูกเชิญให้เข้าร่วมกลุ่มโครงงาน',
+            eventType: 'TEAM_INVITE',
+            teamId: team.team_id,
         });
 
         return { message: 'Invitation sent' };

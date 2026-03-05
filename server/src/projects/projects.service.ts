@@ -5,6 +5,7 @@ import {
     ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
     CreateProjectDto,
     UpdateProjectDto,
@@ -27,7 +28,10 @@ import {
  */
 @Injectable()
 export class ProjectsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService,
+    ) { }
 
     // =====================================================
     // GET /projects?team_id= — ดึงโครงงานของทีม
@@ -334,6 +338,28 @@ export class ProjectsService {
             });
         }
 
+        // แจ้งสมาชิกทีมว่าโครงงานถูกอนุมัติ/ปฏิเสธ
+        const project = await this.prisma.project.findUnique({
+            where: { project_id: id },
+            include: { Team: true },
+        });
+        if (project?.Team) {
+            const eventType = dto.status === 'APPROVED' ? 'PROJECT_APPROVED' : 'PROJECT_REJECTED';
+            const title = dto.status === 'APPROVED' ? 'โครงงานได้รับการอนุมัติ' : 'โครงงานถูกปฏิเสธ';
+            const message = dto.status === 'APPROVED'
+                ? `โครงงาน "${project.projectname}" ได้รับการอนุมัติแล้ว`
+                : `โครงงาน "${project.projectname}" ถูกปฏิเสธ`;
+
+            await this.notificationsService.createForTeamMembers(
+                project.Team.team_id,
+                userId,
+                eventType,
+                title,
+                message,
+                { projectId: id },
+            );
+        }
+
         return {
             message:
                 dto.status === 'APPROVED'
@@ -508,7 +534,7 @@ export class ProjectsService {
             },
         });
 
-        // 2. Extract keywords จาก input
+        // 2. Extract  keywords จาก input
         const inputKeywords = this.extractKeywords(dto.title + ' ' + (dto.description || ''));
 
         if (inputKeywords.length === 0) {

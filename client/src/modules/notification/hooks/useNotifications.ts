@@ -15,7 +15,7 @@ export function useNotifications() {
     const fetchNotifications = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await api.get<NotificationItem[]>("/teams/pending-invites");
+            const data = await api.get<NotificationItem[]>("/notifications");
             if (data) {
                 setNotifications(data);
             }
@@ -35,7 +35,7 @@ export function useNotifications() {
                 ),
             );
             try {
-                await api.patch(`/teams/notifications/${notificationId}/read`, {});
+                await api.patch(`/notifications/${notificationId}/read`, {});
             } catch (error) {
                 // Revert on failure
                 console.error("Failed to mark as read:", error);
@@ -48,7 +48,7 @@ export function useNotifications() {
     const markAllAsRead = useCallback(async () => {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         try {
-            await api.patch("/teams/notifications/read-all", {});
+            await api.patch("/notifications/read-all", {});
         } catch (error) {
             console.error("Failed to mark all as read:", error);
             await fetchNotifications();

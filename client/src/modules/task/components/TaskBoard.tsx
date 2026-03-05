@@ -1,7 +1,8 @@
 "use client";
 
 // TaskBoard - Main Kanban board component
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   DndContext,
   DragEndEvent,
@@ -56,6 +57,24 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [viewMode, setViewMode] = useState<"board" | "timeline">("board");
+  const searchParams = useSearchParams();
+  const boardRouter = useRouter();
+
+  // Auto-open task detail from ?task_id= query param (e.g. from notification click)
+  useEffect(() => {
+    const taskIdParam = searchParams.get("task_id");
+    if (taskIdParam && !loading && columns.length > 0) {
+      const taskId = parseInt(taskIdParam);
+      const allTasks = columns.flatMap((c) => c.tasks);
+      const found = allTasks.find((t) => t.task_id === taskId);
+      if (found) {
+        setSelectedTask(found);
+        setShowDetailModal(true);
+        // ลบ query param ออกจาก URL เพื่อไม่ให้เปิดซ้ำ
+        boardRouter.replace(window.location.pathname);
+      }
+    }
+  }, [searchParams, loading, columns, setSelectedTask, setShowDetailModal, boardRouter]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -176,22 +195,20 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             <button
               onClick={() => setViewMode("board")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                viewMode === "board"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "board"
                   ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-              }`}
+                }`}
             >
               <LayoutGrid size={16} />
               Board
             </button>
             <button
               onClick={() => setViewMode("timeline")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                viewMode === "timeline"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "timeline"
                   ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-              }`}
+                }`}
             >
               <Calendar size={16} />
               Timeline

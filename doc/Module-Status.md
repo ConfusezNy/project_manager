@@ -1,6 +1,6 @@
 # 📊 Module Development Status
 
-> สถานะการพัฒนาแต่ละ Module (Updated: 2026-02-25)
+> สถานะการพัฒนาแต่ละ Module (Updated: 2026-03-05)
 
 ## 🔗 Related Documents
 
@@ -12,7 +12,7 @@
 ## 📈 Overall Progress (เทียบกับวัตถุประสงค์)
 
 ```
-██████████████████████████████ 95%
+█████████████████████████████░ 90%
 ```
 
 ---
@@ -93,9 +93,11 @@
 | Dashboard — Student              | ✅      | ✅       | Tasks + grades + schedule |
 | Pre-Project → Project            | ✅      | ✅       | ContinueToProject API     |
 | Search Page                      | ✅      | ✅       | ProjectSearchDashboard    |
-| **Similarity Check**             | ❌      | ❌       | ยังไม่ได้ทำ               |
-| **Advanced Search (advisor)**    | ❌      | ❌       | ยังไม่ได้ทำ               |
-| **Report Export (Excel/PDF)**    | ❌      | ❌       | ยังไม่ได้ทำ               |
+| Similarity Check                 | ✅      | ✅       | `check-similarity` API + `ProjectFormModal` |
+| Advanced Search (advisor)        | ✅      | ✅       | Archive search รับ `advisor` query |
+| **Notification Backend Module**  | ❌      | ⚠️       | DB model มี, API ยังไม่มี, Frontend ดึง invites เท่านั้น |
+| **Password Reset via Email**     | ❌      | ❌       | ไม่มี endpoint + ไม่มี email service |
+| **Report Export Integration**    | —       | ❌       | Utility functions มี แต่ไม่ได้ integrate ในหน้า Admin |
 
 ---
 
@@ -108,8 +110,8 @@
 | Phase 3 | ✅ Done    | NestJS Backend Migration |
 | Phase 4 | ✅ Done    | Frontend API Integration |
 | Phase 5 | ✅ Done    | Docker + Legacy Cleanup  |
-| Phase 6 | 🔄 Current | Testing & Final Features |
+| Phase 6 | 🔄 Current | Final Features (Notifications, Password Reset, Export) |
 
 ---
 
-> **Last Updated:** 2026-02-25
+> **Last Updated:** 2026-03-05

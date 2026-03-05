@@ -5,6 +5,7 @@ import {
     ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateTaskDto, UpdateTaskDto, AssignTaskDto, CreateCommentDto } from './dto/task.dto';
 
 /**
@@ -24,7 +25,10 @@ import { CreateTaskDto, UpdateTaskDto, AssignTaskDto, CreateCommentDto } from '.
  */
 @Injectable()
 export class TasksService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService,
+    ) { }
 
     // =====================================================
     // Helper: ดึง task + เช็คสิทธิ์ (สมาชิกทีม หรือ advisor)
@@ -178,6 +182,21 @@ export class TasksService {
                 },
             },
         });
+        // แจ้งเตือน assignees เมื่อสร้าง task พร้อม assign
+        if (validAssigneeIds.length > 0) {
+            for (const assigneeId of validAssigneeIds) {
+                await this.notificationsService.create({
+                    userId: assigneeId,
+                    actorUserId: userId,
+                    eventType: 'TASK_ASSIGNED',
+                    title: 'ได้รับมอบหมายงานใหม่',
+                    message: `คุณถูก assign ให้งาน "${task.title}"`,
+                    taskId: task.task_id,
+                    projectId: dto.project_id,
+                    teamId: project.Team.team_id,
+                });
+            }
+        }
 
         return { ...task, author: task.Users };
     }
@@ -270,6 +289,20 @@ export class TasksService {
             },
         });
 
+        // แจ้งเตือน assignees เมื่อมีการเปลี่ยนสถานะ
+        if (dto.status) {
+            for (const ta of updatedTask.TaskAssignment) {
+                await this.notificationsService.create({
+                    userId: ta.user_id,
+                    actorUserId: userId,
+                    eventType: 'TASK_UPDATED',
+                    title: 'อัปเดตสถานะงาน',
+                    message: `งาน "${updatedTask.title}" เปลี่ยนสถานะเป็น ${dto.status}`,
+                    taskId: id,
+                });
+            }
+        }
+
         return {
             ...updatedTask,
             author: updatedTask.Users,
@@ -328,6 +361,18 @@ export class TasksService {
             data: { task_id: id, user_id: dto.user_id },
         });
 
+        // แจ้งเตือนผู้ถูก assign (ใช้ task จาก getTaskWithAuthCheck ด้านบน)
+        await this.notificationsService.create({
+            userId: dto.user_id,
+            actorUserId: userId,
+            eventType: 'TASK_ASSIGNED',
+            title: 'ได้รับมอบหมายงานใหม่',
+            message: `คุณถูก assign ให้งาน "${task.title}"`,
+            taskId: id,
+            projectId: task.Project?.project_id,
+            teamId: task.Project?.Team?.team_id ?? undefined,
+        });
+
         return { message: 'Assigned successfully' };
     }
 
@@ -384,6 +429,34 @@ export class TasksService {
                 },
             },
         });
+
+        // แจ้งเตือน assignees + task author เมื่อมี comment ใหม่
+        const taskForNotif = await this.prisma.task.findUnique({
+            where: { task_id: id },
+            include: {
+                TaskAssignment: { select: { user_id: true } },
+                Project: { select: { project_id: true, team_id: true } },
+            },
+        });
+        if (taskForNotif) {
+            const recipientIds = new Set<string>();
+            if (taskForNotif.authorUserId) recipientIds.add(taskForNotif.authorUserId);
+            taskForNotif.TaskAssignment.forEach((ta) => recipientIds.add(ta.user_id));
+            recipientIds.delete(userId);
+
+            for (const recipientId of recipientIds) {
+                await this.notificationsService.create({
+                    userId: recipientId,
+                    actorUserId: userId,
+                    eventType: 'COMMENT_ADDED',
+                    title: 'มีความคิดเห็นใหม่',
+                    message: `มี comment ใหม่ในงาน "${taskForNotif.title}"`,
+                    taskId: id,
+                    projectId: taskForNotif.Project?.project_id,
+                    teamId: taskForNotif.Project?.team_id ?? undefined,
+                });
+            }
+        }
 
         return { ...comment, user: comment.Users };
     }

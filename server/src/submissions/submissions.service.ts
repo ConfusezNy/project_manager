@@ -5,6 +5,7 @@ import {
     BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SubmitDto, FeedbackDto, RejectDto } from './dto/submission.dto';
 
 /**
@@ -19,7 +20,10 @@ import { SubmitDto, FeedbackDto, RejectDto } from './dto/submission.dto';
  */
 @Injectable()
 export class SubmissionsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService,
+    ) { }
 
     // =====================================================
     // GET /submissions?event_id=&team_id= — ดึง submissions
@@ -106,7 +110,7 @@ export class SubmissionsService {
             throw new ForbiddenException('You are not a member of this team');
         }
 
-        return this.prisma.submission.update({
+        const updated = await this.prisma.submission.update({
             where: { submission_id: id },
             data: {
                 status: 'SUBMITTED',
@@ -118,6 +122,24 @@ export class SubmissionsService {
                 Team: { select: { team_id: true, name: true } },
             },
         });
+
+        // แจ้ง advisor ว่ามีการส่งงานใหม่
+        const team = await this.prisma.team.findUnique({
+            where: { team_id: updated.Team.team_id },
+            include: { Project: { include: { ProjectAdvisor: true } } },
+        });
+        if (team?.Project) {
+            await this.notificationsService.createForProjectAdvisors(
+                team.Project.project_id,
+                userId,
+                'SUBMISSION_SUBMITTED',
+                'มีการส่งงานใหม่',
+                `กลุ่ม ${updated.Team.name} ส่งงาน "${updated.Event.name}"`,
+                { teamId: updated.Team.team_id },
+            );
+        }
+
+        return updated;
     }
 
     // =====================================================
@@ -132,7 +154,7 @@ export class SubmissionsService {
             throw new NotFoundException('Submission not found');
         }
 
-        return this.prisma.submission.update({
+        const approved = await this.prisma.submission.update({
             where: { submission_id: id },
             data: {
                 status: 'APPROVED',
@@ -148,6 +170,17 @@ export class SubmissionsService {
                 },
             },
         });
+
+        // แจ้งสมาชิกทีมว่างานได้รับการอนุมัติ
+        await this.notificationsService.createForTeamMembers(
+            approved.Team.team_id,
+            userId,
+            'SUBMISSION_APPROVED',
+            'งานได้รับการอนุมัติ',
+            `งาน "${approved.Event.name}" ได้รับการอนุมัติแล้ว`,
+        );
+
+        return approved;
     }
 
     // =====================================================
@@ -162,7 +195,7 @@ export class SubmissionsService {
             throw new NotFoundException('Submission not found');
         }
 
-        return this.prisma.submission.update({
+        const rejected = await this.prisma.submission.update({
             where: { submission_id: id },
             data: {
                 status: 'NEEDS_REVISION',
@@ -175,5 +208,16 @@ export class SubmissionsService {
                 Team: { select: { team_id: true, name: true } },
             },
         });
+
+        // แจ้งสมาชิกทีมว่างานถูกขอแก้ไข
+        await this.notificationsService.createForTeamMembers(
+            rejected.Team.team_id,
+            '', // system action
+            'SUBMISSION_REJECTED',
+            'งานถูกขอแก้ไข',
+            `งาน "${rejected.Event.name}" ต้องแก้ไข: ${dto.feedback || ''}`,
+        );
+
+        return rejected;
     }
 }
