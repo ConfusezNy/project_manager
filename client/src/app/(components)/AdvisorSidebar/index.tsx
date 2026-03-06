@@ -6,9 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import {
   Home,
-  Timer,
   Search,
-  User,
   Settings,
   Users,
   Folder,
@@ -136,13 +134,6 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
             <span className={contentClass}>Dashboard</span>
           </Link>
 
-          <Link href="/Timeline" className={linkBaseClass}>
-            <div className={iconClass}>
-              <Timer size={24} />
-            </div>
-            <span className={contentClass}>Timeline</span>
-          </Link>
-
           <Link href="/Search" className={linkBaseClass}>
             <div className={iconClass}>
               <Search size={24} />
@@ -150,18 +141,11 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
             <span className={contentClass}>Search</span>
           </Link>
 
-          <Link href="/User" className={linkBaseClass}>
-            <div className={iconClass}>
-              <User size={24} />
-            </div>
-            <span className={contentClass}>Profile</span>
-          </Link>
-
           <Link href="/advisor-users" className={linkBaseClass}>
             <div className={iconClass}>
               <Users size={24} />
             </div>
-            <span className={contentClass}>ผู้ใช้งาน</span>
+            <span className={contentClass}>Users</span>
           </Link>
 
           <Link href="/advisorteams" className={linkBaseClass}>
@@ -175,7 +159,7 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
             <div className={iconClass}>
               <Settings size={24} />
             </div>
-            <span className={contentClass}>Setting</span>
+            <span className={contentClass}>Settings</span>
           </Link>
 
           {/* Project Section Header */}

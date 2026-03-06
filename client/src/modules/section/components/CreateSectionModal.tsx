@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { CreateSectionForm, Term } from "../services/sectionService";
+import React, { useState, useRef, useEffect } from "react";
+import { CreateSectionForm, Term, StudentGroup, sectionService } from "../services/sectionService";
 
 interface Props {
   isOpen: boolean;
@@ -22,6 +22,44 @@ export const CreateSectionModal: React.FC<Props> = ({
   terms,
   onSubmit,
 }) => {
+  const [groups, setGroups] = useState<StudentGroup[]>([]);
+  const [showPicker, setShowPicker] = useState(false);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // ปิด dropdown เมื่อคลิกนอก
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleFetchGroups = async () => {
+    if (groups.length > 0) {
+      setShowPicker((v) => !v);
+      return;
+    }
+    setLoadingGroups(true);
+    try {
+      const data = await sectionService.getStudentGroups();
+      setGroups(data);
+      setShowPicker(true);
+    } catch {
+      // ถ้า load ไม่ได้ก็ยังพิมได้อยู่
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  const handleSelectGroup = (g: StudentGroup) => {
+    setForm({ ...form, section_code: g.sectionCode });
+    setShowPicker(false);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -35,21 +73,91 @@ export const CreateSectionModal: React.FC<Props> = ({
         </h2>
 
         <div className="space-y-4">
+          {/* ─── รหัสหมู่เรียน + ปุ่มดึงจากระบบ ─── */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              รหัสหมู่เรียน
+              รหัสหมู่เรียน{" "}
+              <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                (รูปแบบ 66346CPE เท่านั้น)
+              </span>
             </label>
-            <input
-              className="border border-gray-300 dark:border-gray-600 p-3 w-full rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              placeholder="เช่น 66346CPE รูปแบบนี้เท่านั้น"
-              value={form.section_code}
-              onChange={(e) =>
-                setForm({ ...form, section_code: e.target.value })
-              }
-              required
-            />
+
+            <div className="relative flex gap-2" ref={pickerRef}>
+              <input
+                className="border border-gray-300 dark:border-gray-600 p-3 flex-1 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="เช่น 66346CPE"
+                value={form.section_code}
+                onChange={(e) =>
+                  setForm({ ...form, section_code: e.target.value })
+                }
+                required
+              />
+
+              {/* ปุ่มดึงจากระบบ */}
+              <button
+                type="button"
+                onClick={handleFetchGroups}
+                disabled={loadingGroups}
+                title="ดึงรายการกลุ่มนักศึกษาจากระบบ"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/50 transition whitespace-nowrap disabled:opacity-50"
+              >
+                {loadingGroups ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                ดึงจากระบบ
+              </button>
+
+              {/* Dropdown list */}
+              {showPicker && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl z-[100] max-h-60 overflow-y-auto">
+                  {groups.length === 0 ? (
+                    <div className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                      ไม่พบข้อมูลนักศึกษาในระบบ
+                    </div>
+                  ) : (
+                    <>
+                      <div className="p-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 font-medium">
+                        กลุ่มนักศึกษาในระบบ — เลือกเพื่อใส่รหัสอัตโนมัติ
+                      </div>
+                      {groups.map((g) => (
+                        <button
+                          key={g.sectionCode}
+                          type="button"
+                          onClick={() => handleSelectGroup(g)}
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition flex items-center justify-between gap-4"
+                        >
+                          <div>
+                            <span className="font-mono font-bold text-blue-700 dark:text-blue-300 text-sm">
+                              {g.sectionCode}
+                            </span>
+                            <span className="ml-3 text-xs text-gray-500 dark:text-gray-400">
+                              {g.label}
+                            </span>
+                          </div>
+                          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full shrink-0">
+                            {g.studentCount} คน
+                          </span>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              รหัสต้องตรงกับรหัสนักศึกษา และต้องมี CPE ต่อท้าย เช่น <span className="font-mono text-blue-600 dark:text-blue-400">66346CPE</span>
+            </p>
           </div>
 
+          {/* ─── ประเภทรายวิชา ─── */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               ประเภทรายวิชา
@@ -66,6 +174,7 @@ export const CreateSectionModal: React.FC<Props> = ({
             </select>
           </div>
 
+          {/* ─── ประเภทการศึกษา ─── */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               ประเภทการศึกษา
@@ -80,6 +189,7 @@ export const CreateSectionModal: React.FC<Props> = ({
             </select>
           </div>
 
+          {/* ─── ขนาดทีม ─── */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -111,6 +221,7 @@ export const CreateSectionModal: React.FC<Props> = ({
             </div>
           </div>
 
+          {/* ─── ล็อคทีม ─── */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               ล็อคการจัดการทีม
@@ -141,6 +252,7 @@ export const CreateSectionModal: React.FC<Props> = ({
             </div>
           </div>
 
+          {/* ─── เทอม ─── */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               เทอม <span className="text-red-500">*</span>

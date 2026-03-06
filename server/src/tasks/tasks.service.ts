@@ -90,20 +90,35 @@ export class TasksService {
                         },
                     },
                 },
-                _count: { select: { Comment: true } },
+                _count: { select: { Comment: true, Attachment: true } },
+                Attachment: {
+                    take: 1,
+                    orderBy: { attachment_id: 'asc' },
+                    select: { fileUrl: true, filename: true },
+                },
             },
             orderBy: [{ position: 'asc' }, { dueDate: 'asc' }],
         });
 
         // Normalize for frontend
-        return tasks.map((task) => ({
-            ...task,
-            author: task.Users,
-            assignees: task.TaskAssignment.map((ta) => ({
-                user_id: ta.user_id,
-                user: ta.Users,
-            })),
-        }));
+        return tasks.map((task) => {
+            // Find first image attachment for cover
+            const firstAttachment = task.Attachment?.[0];
+            const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+            const coverImage = firstAttachment && imageExts.some(ext => firstAttachment.fileUrl.toLowerCase().endsWith(ext))
+                ? firstAttachment.fileUrl
+                : null;
+
+            return {
+                ...task,
+                author: task.Users,
+                coverImage,
+                assignees: task.TaskAssignment.map((ta) => ({
+                    users_id: ta.user_id,
+                    user: ta.Users,
+                })),
+            };
+        });
     }
 
     // =====================================================
@@ -246,7 +261,7 @@ export class TasksService {
             ...task,
             author: task.Users,
             assignees: task.TaskAssignment.map((ta) => ({
-                user_id: ta.user_id,
+                users_id: ta.user_id,
                 user: ta.Users,
             })),
             comments: task.Comment.map((c) => ({ ...c, user: c.Users })),
@@ -307,7 +322,7 @@ export class TasksService {
             ...updatedTask,
             author: updatedTask.Users,
             assignees: updatedTask.TaskAssignment.map((ta) => ({
-                user_id: ta.user_id,
+                users_id: ta.user_id,
                 user: ta.Users,
             })),
         };

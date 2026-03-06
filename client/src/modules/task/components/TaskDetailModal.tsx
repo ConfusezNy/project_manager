@@ -65,6 +65,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   teamMembers = [],
 }) => {
   const { user: currentUser } = useAuth();
+  const currentUserId = currentUser?.users_id;
   const [showAssignMenu, setShowAssignMenu] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -145,7 +146,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   // Get assignable members (exclude self + already assigned)
   const assignedIds = new Set(task.assignees?.map((a) => a.users_id) || []);
-  const currentUserId = currentUser?.users_id || "";
   const availableMembers = teamMembers.filter(
     (m) => {
       const memberId = m.users_id || m.user?.users_id || "";
@@ -181,13 +181,16 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleDelete}
-              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors"
-              title="ลบ Task"
-            >
-              <Trash2 size={18} />
-            </button>
+            {/* ปุ่มลบ — เฉพาะผู้สร้าง task เท่านั้น */}
+            {currentUserId === task.authorUserId && (
+              <button
+                onClick={handleDelete}
+                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors"
+                title="ลบ Task"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -199,19 +202,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Description */}
-          {task.description && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                รายละเอียด
-              </h3>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {task.description}
-              </p>
-            </div>
-          )}
-
-          {/* Dates */}
+          {/* Dates — ย้ายมาอยู่ด้านบนสุด */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
@@ -225,7 +216,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             <div>
               <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
                 <Calendar size={14} />
-                กำหนดส่ง
+                สิ้นสุด
               </h3>
               <p className="text-gray-900 dark:text-white">
                 {formatDate(task.dueDate)}
@@ -233,96 +224,24 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Tags */}
-          {tags.length > 0 && (
+          {/* Description */}
+          {task.description && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                <Tag size={14} />
-                Tags
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                รายละเอียด
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                  >
-                    {tag.trim()}
-                  </span>
-                ))}
-              </div>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                {task.description}
+              </p>
             </div>
           )}
 
-          {/* Assignees */}
+          {/* Attachments — ย้ายมาอยู่ใต้รายละเอียด + แสดงแบบ thumbnail grid */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                ผู้รับผิดชอบ
-              </h3>
-              <div className="relative">
-                <button
-                  onClick={() => setShowAssignMenu(!showAssignMenu)}
-                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  title="เพิ่มผู้รับผิดชอบ"
-                >
-                  <UserPlus size={16} className="text-gray-500" />
-                </button>
-                {showAssignMenu && availableMembers.length > 0 && (
-                  <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-100 dark:border-gray-600 py-1 z-10">
-                    {availableMembers.map((m) => (
-                      <button
-                        key={m.users_id}
-                        onClick={() => {
-                          onAssign(task.task_id, m.users_id);
-                          setShowAssignMenu(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-600"
-                      >
-                        {m.user?.firstname} {m.user?.lastname}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              {task.assignees && task.assignees.length > 0 ? (
-                task.assignees.map((a) => (
-                  <div
-                    key={a.users_id}
-                    className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
-                        {a.user?.firstname?.[0] || "U"}
-                      </div>
-                      <span className="text-sm text-gray-900 dark:text-white">
-                        {a.user?.firstname} {a.user?.lastname}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => onUnassign(task.task_id, a.users_id)}
-                      className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded"
-                      title="ลบออก"
-                    >
-                      <UserMinus size={14} />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  ยังไม่มีผู้รับผิดชอบ
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Attachments */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
                 <Paperclip size={14} />
-                ไฟล์แนบ ({attachments.length})
+                ไฟล์แนบ {attachments.length > 0 && <span className="ml-1 px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full text-[11px]">{attachments.length}</span>}
               </h3>
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -354,45 +273,210 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 const file = e.dataTransfer.files?.[0];
                 if (file) handleFileUpload(file);
               }}
-              className="space-y-2"
             >
               {attachments.length > 0 ? (
-                attachments.map((att: any) => (
-                  <div
-                    key={att.attachment_id}
-                    className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg group"
-                  >
-                    <File size={16} className="text-gray-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 dark:text-white truncate">
-                        {att.filename}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {att.Users?.firstname} {att.Users?.lastname}
-                      </p>
-                    </div>
-                    <a
-                      href={`${API_URL}${att.fileUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="ดาวน์โหลด"
-                    >
-                      <Download size={14} />
-                    </a>
-                    <button
-                      onClick={() => handleRemoveAttachment(att.attachment_id)}
-                      className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="ลบ"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {attachments.map((att: any) => {
+                    const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+                    const isImage = imageExts.some(ext => att.fileUrl?.toLowerCase().endsWith(ext));
+                    const uploadDate = att.createdAt
+                      ? new Date(att.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+                      : '';
+                    const uploadTime = att.createdAt
+                      ? new Date(att.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+                      : '';
+
+                    return (
+                      <div
+                        key={att.attachment_id}
+                        className="group relative bg-gray-50 dark:bg-gray-700/50 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
+                      >
+                        {/* Thumbnail / Preview */}
+                        <div className="w-full h-28 bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                          {isImage ? (
+                            <img
+                              src={`${API_URL}${att.fileUrl}`}
+                              alt={att.filename}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center gap-1">
+                              <File size={28} className="text-gray-300 dark:text-gray-500" />
+                              <span className="text-[10px] text-gray-400 uppercase font-medium">
+                                {att.filename?.split('.').pop() || 'file'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* File info */}
+                        <div className="p-2.5">
+                          <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate" title={att.filename}>
+                            {att.filename}
+                          </p>
+                          {(uploadDate || uploadTime) && (
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              {uploadDate}{uploadTime ? `, ${uploadTime}` : ''}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Hover overlay actions */}
+                        <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <a
+                            href={`${API_URL}${att.fileUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-500 transition-colors"
+                            title="ดาวน์โหลด"
+                          >
+                            <Download size={13} />
+                          </a>
+                          <button
+                            onClick={() => handleRemoveAttachment(att.attachment_id)}
+                            className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-sm hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 transition-colors"
+                            title="ลบ"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               ) : (
                 <div className="text-center py-4 text-sm text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
                   ลากไฟล์มาวางหรือคลิกปุ่มอัปโหลด
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <Tag size={14} />
+                Tags
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                  >
+                    {tag.trim()}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Assignees — ผู้รับผิดชอบ + เพิ่ม/ลบเฉพาะผู้สร้าง */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                ผู้รับผิดชอบ
+              </h3>
+              {/* แสดงปุ่มเพิ่มเฉพาะผู้สร้าง task */}
+              {currentUserId === task.authorUserId && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowAssignMenu(!showAssignMenu)}
+                    className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    title="เพิ่มผู้รับผิดชอบ"
+                  >
+                    <UserPlus size={16} className="text-gray-500" />
+                  </button>
+                  {showAssignMenu && availableMembers.length > 0 && (
+                    <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-100 dark:border-gray-600 py-1 z-10">
+                      {availableMembers.map((m) => (
+                        <button
+                          key={m.users_id}
+                          onClick={() => {
+                            onAssign(task.task_id, m.users_id);
+                            setShowAssignMenu(false);
+                          }}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-600"
+                        >
+                          {m.user?.firstname} {m.user?.lastname}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              {/* ผู้สร้าง — แสดงในรายชื่อเดียวกัน ไม่แยกสี */}
+              {task.author && (
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    {task.author.profilePicture ? (
+                      <img
+                        src={task.author.profilePicture.startsWith("http") ? task.author.profilePicture : `${API_URL}${task.author.profilePicture}`}
+                        alt=""
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+                        {task.author.firstname?.[0] || "U"}
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        {task.author.firstname} {task.author.lastname}
+                      </span>
+                      <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
+                        ผู้สร้าง
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ผู้รับผิดชอบ */}
+              {task.assignees && task.assignees.length > 0 ? (
+                task.assignees
+                  .filter((a) => a.users_id !== task.authorUserId)
+                  .map((a) => (
+                    <div
+                      key={a.users_id}
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        {a.user?.profilePicture ? (
+                          <img
+                            src={a.user.profilePicture.startsWith("http") ? a.user.profilePicture : `${API_URL}${a.user.profilePicture}`}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+                            {a.user?.firstname?.[0] || "U"}
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-900 dark:text-white">
+                          {a.user?.firstname} {a.user?.lastname}
+                        </span>
+                      </div>
+                      {/* ปุ่มลบเฉพาะผู้สร้าง */}
+                      {currentUserId === task.authorUserId && (
+                        <button
+                          onClick={() => onUnassign(task.task_id, a.users_id)}
+                          className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded"
+                          title="ลบออก"
+                        >
+                          <UserMinus size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))
+              ) : !task.author && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  ยังไม่มีผู้รับผิดชอบ
+                </p>
               )}
             </div>
           </div>

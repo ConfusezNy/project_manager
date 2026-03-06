@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
@@ -16,6 +16,30 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 @Injectable()
 export class ProfileService {
     constructor(private prisma: PrismaService) { }
+
+    /**
+     * GET /profile — ดึงข้อมูลโปรไฟล์ตัวเอง
+     * ใช้ users_id จาก JWT เพื่อดึงข้อมูล เช่น profilePicture ที่ไม่ได้อยู่ใน JWT
+     */
+    async findOne(userId: string) {
+        const user = await this.prisma.users.findUnique({
+            where: { users_id: userId },
+            select: {
+                users_id: true,
+                firstname: true,
+                lastname: true,
+                email: true,
+                tel_number: true,
+                profilePicture: true,
+                expertiseAreas: true,
+                role: true,
+            },
+        });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        return user;
+    }
 
     /**
      * อัพเดทโปรไฟล์
@@ -45,6 +69,7 @@ export class ProfileService {
                 ...(dto.lastname !== undefined && { lastname: dto.lastname }),
                 ...(dto.tel_number !== undefined && { tel_number: dto.tel_number }),
                 ...(dto.profilePicture !== undefined && { profilePicture: dto.profilePicture }),
+                ...(dto.expertiseAreas !== undefined && { expertiseAreas: dto.expertiseAreas }),
             },
         });
 

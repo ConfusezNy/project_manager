@@ -167,6 +167,41 @@ export class EventsService {
     }
 
     // =====================================================
+    // backfillSubmissionsForTeam — Backfill PENDING submissions
+    // เรียกจาก: continueToProject (sections.service) หลังสร้างทีมใหม่
+    //
+    // 📌 ปัญหาที่แก้:
+    //    ตอน Admin สร้าง Event → auto-create submissions เฉพาะทีมที่อยู่ใน section ณ ขณะนั้น
+    //    ทีมที่ถูก clone เข้า section ทีหลัง (เช่น PRE→PROJECT) จะไม่มี submissions
+    //    → แก้: เรียก backfill ทันทีหลังสร้างทีมใหม่
+    //
+    // ✅ ใช้ skipDuplicates = idempotent safe (เรียกซ้ำก็ไม่เกิดปัญหา)
+    // =====================================================
+    async backfillSubmissionsForTeam(teamId: number, sectionId: number, tx?: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0]) {
+        const client = tx ?? this.prisma;
+
+        // ดึง events ทั้งหมดใน section นั้น
+        const events = await client.event.findMany({
+            where: { section_id: sectionId },
+            select: { event_id: true },
+        });
+
+        if (events.length === 0) return { backfilled: 0 };
+
+        // สร้าง PENDING submission สำหรับ event ที่ยังไม่มี
+        await client.submission.createMany({
+            data: events.map((e) => ({
+                event_id: e.event_id,
+                team_id: teamId,
+                status: 'PENDING' as const,
+            })),
+            skipDuplicates: true, // ถ้ามีอยู่แล้วข้ามไป
+        });
+
+        return { backfilled: events.length };
+    }
+
+    // =====================================================
     // DELETE /events/:id — ลบ Event (Admin, cascade submissions)
     // ย้ายจาก: events/[id]/route.ts → DELETE
     //

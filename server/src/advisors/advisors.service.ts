@@ -5,25 +5,39 @@ import { PrismaService } from '../prisma/prisma.service';
 export class AdvisorsService {
     constructor(private prisma: PrismaService) { }
 
-    // GET /advisors/available — อาจารย์ที่รับโปรเจกต์ได้
-    async getAvailable() {
+    // GET /advisors/available?section_id=1 — อาจารย์ที่ยังรับโปรเจกต์ได้
+    // ถ้าส่ง section_id มา → นับเฉพาะ project ใน section นั้น (ตาม business logic)
+    // ถ้าไม่ส่ง → นับทั้งหมด (global)
+    async getAvailable(sectionId?: number) {
         const advisors = await this.prisma.users.findMany({
             where: { role: 'ADVISOR' },
             select: {
                 users_id: true, titles: true,
                 firstname: true, lastname: true,
                 email: true, profilePicture: true,
+                expertiseAreas: true,
             },
         });
 
         const advisorsWithCount = await Promise.all(
             advisors.map(async (advisor) => {
+                // นับเฉพาะ APPROVED project ใน section นี้ (ถ้า sectionId มา) หรือ global
+                const projectWhere: any = {
+                    advisor_id: advisor.users_id,
+                    Project: { status: 'APPROVED' },
+                };
+
+                if (sectionId) {
+                    projectWhere.Project = {
+                        status: 'APPROVED',
+                        Team: { section_id: sectionId },
+                    };
+                }
+
                 const count = await this.prisma.projectAdvisor.count({
-                    where: {
-                        advisor_id: advisor.users_id,
-                        Project: { status: 'APPROVED' },
-                    },
+                    where: projectWhere,
                 });
+
                 return {
                     ...advisor,
                     currentProjects: count,

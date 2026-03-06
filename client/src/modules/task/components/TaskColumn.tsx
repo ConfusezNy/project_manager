@@ -80,7 +80,7 @@ export const TaskColumn: React.FC<TaskColumnProps> = ({
       {/* Tasks List */}
       <div
         ref={setNodeRef}
-        className="flex-1 p-2 space-y-3 overflow-y-auto min-h-[200px] max-h-[calc(100vh-280px)]"
+        className="flex-1 p-2 space-y-3 min-h-[200px]"
       >
         <SortableContext
           items={tasks.map((t) => t.task_id.toString())}

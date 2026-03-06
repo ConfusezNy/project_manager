@@ -155,8 +155,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
   };
 
   const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setShowDetailModal(true);
+    handlers.selectTask(task);
   };
 
   if (loading) {
@@ -196,8 +195,8 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
             <button
               onClick={() => setViewMode("board")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "board"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}
             >
               <LayoutGrid size={16} />
@@ -206,8 +205,8 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
             <button
               onClick={() => setViewMode("timeline")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "timeline"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}
             >
               <Calendar size={16} />
@@ -273,6 +272,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
         <TaskFormModal
           onClose={() => setShowCreateModal(false)}
           onSubmit={handlers.createTask}
+          onRefresh={handlers.refresh}
           teamMembers={teamMembers}
         />
       )}

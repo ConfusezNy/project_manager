@@ -195,6 +195,7 @@ model Users {
   tel_number                                     String?              @db.VarChar(10)
   email                                          String?              @unique @db.VarChar(100)
   profilePicture                                 String?
+  expertiseAreas                                 String?              // ความเชี่ยวชาญ/วิชาที่สอน (เฉพาะ ADVISOR) เช่น "AI, ML, Python"
   role                                           Role                 @default(STUDENT)
   teamId                                         Int?
   Attachment                                     Attachment[]

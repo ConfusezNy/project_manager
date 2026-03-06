@@ -221,6 +221,33 @@ export class SectionsService {
     }
 
     // =====================================================
+    // GET /sections/my-enrolled — sections ทั้งหมดที่ student เคย enroll
+    // ใช้โดย useStudentEvents เพื่อ filter submissions ให้แสดงแค่ sections ของตัวเอง
+    // =====================================================
+    async findMyEnrolled(userId: string) {
+        const enrollments = await this.prisma.section_Enrollment.findMany({
+            where: { users_id: userId },
+            select: {
+                section_id: true,
+                Section: {
+                    select: {
+                        section_id: true,
+                        section_code: true,
+                        course_type: true,
+                    },
+                },
+            },
+            orderBy: { enrolledAt: 'asc' },
+        });
+
+        return enrollments.map((e) => ({
+            section_id: e.section_id,
+            section_code: e.Section.section_code,
+            course_type: e.Section.course_type,
+        }));
+    }
+
+    // =====================================================
     // POST /sections/:id/enroll — ลงทะเบียนนักศึกษา (batch)
     // ย้ายจาก: sections/[id]/enroll/route.ts → POST
     //
@@ -255,7 +282,7 @@ export class SectionsService {
     // ย้ายจาก: sections/[id]/enrollments/route.ts → GET
     // =====================================================
     async findEnrollments(sectionId: number) {
-        return this.prisma.section_Enrollment.findMany({
+        const data = await this.prisma.section_Enrollment.findMany({
             where: { section_id: sectionId },
             include: {
                 Users: {
@@ -268,70 +295,32 @@ export class SectionsService {
             },
             orderBy: { enrolledAt: 'asc' },
         });
+
+        // map Users → user เพื่อให้ตรงกับ frontend interface
+        return data.map((e) => ({
+            enrollment_id: e.section_enroll_id,
+            users_id: e.users_id,
+            section_id: e.section_id,
+            enrolledAt: e.enrolledAt,
+            user: e.Users,
+        }));
     }
 
     // =====================================================
     // GET /sections/:id/teams — ดึงรายการทีมใน section (Admin)
-    // ย้ายจาก: sections/[id]/teams/route.ts → GET
-    //
-    // 📌 Include: Teammember → Users + Project
-    // 📌 Transform data ให้ frontend ใช้ง่าย
+    // ใช้ resolveTeamsForSection เพื่อรองรับ legacy data
     // =====================================================
     async findTeams(sectionId: number) {
         const section = await this.prisma.section.findUnique({
             where: { section_id: sectionId },
-            include: {
-                Term: true,
-                Team: {
-                    include: {
-                        Teammember: {
-                            include: {
-                                Users: {
-                                    select: {
-                                        users_id: true,
-                                        firstname: true,
-                                        lastname: true,
-                                    },
-                                },
-                            },
-                        },
-                        Project: {
-                            select: {
-                                project_id: true,
-                                projectname: true,
-                                status: true,
-                            },
-                        },
-                    },
-                    orderBy: { groupNumber: 'asc' },
-                },
-            },
+            include: { Term: true },
         });
 
         if (!section) {
             throw new NotFoundException('Section not found');
         }
 
-        // Transform data → ให้ frontend ใช้ง่าย
-        const teams = section.Team.map((team) => ({
-            team_id: team.team_id,
-            name: team.name,
-            groupNumber: team.groupNumber,
-            status: team.status,
-            memberCount: team.Teammember.length,
-            members: team.Teammember.map((m) => ({
-                user_id: m.user_id,
-                firstname: m.Users.firstname,
-                lastname: m.Users.lastname,
-            })),
-            project: team.Project
-                ? {
-                    project_id: team.Project.project_id,
-                    projectname: team.Project.projectname,
-                    status: team.Project.status,
-                }
-                : null,
-        }));
+        const teams = await this.resolveTeamsForSection(sectionId);
 
         return {
             section_id: section.section_id,
@@ -344,6 +333,132 @@ export class SectionsService {
             },
             teams,
         };
+    }
+
+    // =====================================================
+    // resolveTeamsForSection — Single utility สำหรับดึงทีมใน section
+    //
+    // 📌 Primary path: query teams โดยตรงจาก section_id (ปกติ)
+    // 📌 Fallback path: หาผ่าน Section_Enrollment → Teammember → Team
+    //    ใช้สำหรับ legacy data ที่ถูก move ออกจาก PRE_PROJECT แล้ว
+    //
+    // ✅ เป็น utility เดียว — ไม่กระจาย fallback logic ใน service อื่น
+    // =====================================================
+    async resolveTeamsForSection(sectionId: number) {
+        const includeOpts = {
+            Teammember: {
+                include: {
+                    Users: { select: { users_id: true, firstname: true, lastname: true } },
+                },
+            },
+            Project: { select: { project_id: true, projectname: true, status: true } },
+        } as const;
+
+        // Primary: ดึงตรงจาก section_id
+        const directTeams = await this.prisma.team.findMany({
+            where: { section_id: sectionId },
+            include: includeOpts,
+            orderBy: { groupNumber: 'asc' },
+        });
+
+        // infer type จาก Prisma result — ไม่ต้องเขียน type ซ้ำ
+        type ResolvedTeam = (typeof directTeams)[number];
+
+        const mapTeam = (team: ResolvedTeam) => ({
+            team_id: team.team_id,
+            name: team.name,
+            groupNumber: team.groupNumber,
+            status: team.status,
+            memberCount: team.Teammember.length,
+            members: team.Teammember.map((m) => ({
+                users_id: m.user_id,
+                firstname: m.Users.firstname,
+                lastname: m.Users.lastname,
+            })),
+            project: team.Project
+                ? { project_id: team.Project.project_id, projectname: team.Project.projectname, status: team.Project.status }
+                : null,
+        });
+
+        if (directTeams.length > 0) {
+            return directTeams.map(mapTeam);
+        }
+
+        // Fallback: Section ไม่มีทีมโดยตรง (legacy data — ทีมถูก move ออกไปแล้ว)
+        // หาผ่าน Section_Enrollment → user_id → Teammember → Team
+        this.logger.warn(`Section ${sectionId} has no direct teams, resolving via enrollment (legacy data)`);
+
+        const enrollments = await this.prisma.section_Enrollment.findMany({
+            where: { section_id: sectionId },
+            select: { users_id: true },
+        });
+
+        if (enrollments.length === 0) return [];
+
+        const userIds = enrollments.map((e) => e.users_id);
+
+        // หา Teammember ของ user เหล่านี้ → ดึง Team + Project
+        const memberships = await this.prisma.teammember.findMany({
+            where: { user_id: { in: userIds } },
+            include: { Team: { include: includeOpts } },
+        });
+
+        // Group by team_id (deduplicate)
+        const teamMap = new Map<number, ResolvedTeam>();
+        for (const m of memberships) {
+            if (!teamMap.has(m.Team.team_id)) {
+                // cast: shape identical, only differs in the query's where clause
+                teamMap.set(m.Team.team_id, m.Team as unknown as ResolvedTeam);
+            }
+        }
+
+        return Array.from(teamMap.values())
+            .sort((a, b) => a.groupNumber.localeCompare(b.groupNumber))
+            .map(mapTeam);
+    }
+
+    // =====================================================
+    // GET /sections/student-groups
+    // Scan student users_id → group by pattern → ใช้เลือก section_code
+    //
+    // users_id format เช่น "640660346001"
+    //   pos 3-4 = entryYear  (เช่น "66")
+    //   pos 5   = studyDigit (เช่น "3" = REG, "5" = LE)
+    //   pos 7-8 = programCode (เช่น "46" = CPE)
+    //
+    // ผลลัพธ์: [ { sectionCode: "66346", label: "66-3-46", count: 45 }, ... ]
+    // =====================================================
+    async getStudentGroups() {
+        const rows = await this.prisma.$queryRaw<
+            { entry_year: string; study_digit: string; program_code: string; cnt: bigint }[]
+        >`
+      SELECT
+        SUBSTRING(users_id, 3, 2) AS entry_year,
+        SUBSTRING(users_id, 5, 1) AS study_digit,
+        SUBSTRING(users_id, 7, 2) AS program_code,
+        COUNT(*)                  AS cnt
+      FROM "Users"
+      WHERE role = 'STUDENT'
+        AND LENGTH(users_id) >= 8
+      GROUP BY SUBSTRING(users_id, 3, 2), SUBSTRING(users_id, 5, 1), SUBSTRING(users_id, 7, 2)
+      ORDER BY SUBSTRING(users_id, 3, 2) DESC, SUBSTRING(users_id, 5, 1) ASC, SUBSTRING(users_id, 7, 2) ASC
+    `;
+
+        const studyTypeLabel = (digit: string) => {
+            if (digit === '3' || digit === '4') return 'REG';
+            if (digit === '5') return 'LE';
+            return digit;
+        };
+
+        return rows.map((r) => ({
+            sectionCode: `${r.entry_year}${r.study_digit}${r.program_code}CPE`,
+            entryYear: r.entry_year,
+            studyDigit: r.study_digit,
+            programCode: r.program_code,
+            studyType: studyTypeLabel(r.study_digit),
+            label: `รุ่น ${r.entry_year} · ${studyTypeLabel(r.study_digit)} · โปรแกรม ${r.program_code}`,
+            studentCount: Number(r.cnt),
+        }));
     }
 
     // =====================================================
@@ -450,17 +565,20 @@ export class SectionsService {
 
     // =====================================================
     // POST /sections/:id/continue-to-project
-    // ต่อวิชาจาก PRE_PROJECT → PROJECT (ย้ายทีมไปเทอมใหม่)
-    // ย้ายจาก: sections/[id]/continue-to-project/route.ts → POST
+    // ต่อวิชาจาก PRE_PROJECT → PROJECT
     //
-    // 📌 Complex multi-step operation:
-    // 1. ดึง section เดิม (ต้องเป็น PRE_PROJECT)
-    // 2. สร้าง section ใหม่ (course_type = PROJECT)
-    // 3. กรอง teams ที่จะย้าย
-    // 4. copy enrollments ของสมาชิก
-    // 5. อัพเดท team.section_id
+    // ✅ Architecture ที่ถูกต้อง: CLONE ไม่ใช่ MOVE
     //
-    // ⚠️ ควรใช้ $transaction แต่โค้ดเดิมไม่ได้ใช้
+    // PRE_PROJECT section ยังคงมีทีมเดิมครบ (ไม่ถูกแตะ)
+    // PROJECT section จะได้ทีมใหม่ที่ clone มา
+    //
+    // สิ่งที่ clone:
+    //   Team           → ใหม่ (groupNumber ต่อท้าย -P)
+    //   Teammember     → copy สมาชิกทั้งหมด
+    //   Project        → clone ชื่อ/รายละเอียด ผูกกับทีมใหม่
+    //   ProjectAdvisor → copy ไปยัง Project ใหม่
+    //
+    // ✅ ใช้ $transaction เพื่อความ atomic
     // =====================================================
     async continueToProject(sectionId: number, dto: ContinueToProjectDto) {
         // 1. ดึง Section เดิมและเทอมใหม่
@@ -470,7 +588,12 @@ export class SectionsService {
                 include: {
                     Section_Enrollment: true,
                     Team: {
-                        include: { Teammember: true },
+                        include: {
+                            Teammember: true,
+                            Project: {
+                                include: { ProjectAdvisor: true },
+                            },
+                        },
                     },
                 },
             }),
@@ -479,85 +602,150 @@ export class SectionsService {
             }),
         ]);
 
-        if (!oldSection) {
-            throw new NotFoundException('Section not found');
-        }
-
+        if (!oldSection) throw new NotFoundException('Section not found');
         if (oldSection.course_type !== 'PRE_PROJECT') {
-            throw new BadRequestException(
-                'Only PRE_PROJECT can continue to PROJECT',
-            );
+            throw new BadRequestException('Only PRE_PROJECT can continue to PROJECT');
         }
+        if (!newTerm) throw new NotFoundException('Term not found');
 
-        if (!newTerm) {
-            throw new NotFoundException('Term not found');
-        }
-
-        // 2. สร้าง Section ใหม่ (PROJECT)
-        const newSection = await this.prisma.section.create({
-            data: {
-                section_code: oldSection.section_code,
-                course_type: 'PROJECT',
-                study_type: oldSection.study_type,
-                term_id: dto.new_term_id,
-                min_team_size: oldSection.min_team_size,
-                max_team_size: oldSection.max_team_size,
-
-                team_locked: oldSection.team_locked,
-            },
-        });
-
-        // 3. กรอง Team ที่จะย้าย (ถ้าระบุ team_ids)
-        const teamsToMove = dto.team_ids
+        // 2. กรอง Team ที่จะ clone
+        const teamsToClone = dto.team_ids
             ? oldSection.Team.filter((t) => dto.team_ids!.includes(t.team_id))
             : oldSection.Team;
 
-        if (teamsToMove.length === 0) {
-            throw new BadRequestException(
-                'ไม่มีทีมที่เลือกอยู่ใน Section นี้',
-            );
+        if (teamsToClone.length === 0) {
+            throw new BadRequestException('ไม่มีทีมที่เลือกอยู่ใน Section นี้');
         }
 
-        // 4. รวบรวม user_id จากสมาชิก
-        const memberUserIds = new Set<string>();
-        for (const team of teamsToMove) {
-            for (const member of team.Teammember) {
-                memberUserIds.add(member.user_id);
-            }
-        }
-
-        // 5. Copy enrollments
-        const enrollmentData = oldSection.Section_Enrollment.filter((e) =>
-            memberUserIds.has(e.users_id),
-        ).map((e) => ({
-            users_id: e.users_id,
-            section_id: newSection.section_id,
-        }));
-
-        if (enrollmentData.length > 0) {
-            await this.prisma.section_Enrollment.createMany({
-                data: enrollmentData,
-                skipDuplicates: true,
-            });
-        }
-
-        // 6. อัพเดท Team → section_id + semester ใหม่
-        for (const team of teamsToMove) {
-            await this.prisma.team.update({
-                where: { team_id: team.team_id },
+        return await this.prisma.$transaction(async (tx) => {
+            // 3. สร้าง Section ใหม่ (PROJECT)
+            const newSection = await tx.section.create({
                 data: {
-                    section_id: newSection.section_id,
-                    semester: `${newTerm.semester}/${newTerm.academicYear}`,
+                    section_code: oldSection.section_code,
+                    course_type: 'PROJECT',
+                    study_type: oldSection.study_type,
+                    term_id: dto.new_term_id,
+                    min_team_size: oldSection.min_team_size,
+                    max_team_size: oldSection.max_team_size,
+                    team_locked: oldSection.team_locked,
                 },
             });
-        }
 
-        return {
-            message: 'ต่อวิชาเรียบร้อย',
-            new_section_id: newSection.section_id,
-            enrollments: enrollmentData.length,
-            teams_moved: teamsToMove.length,
-            teams_total: oldSection.Team.length,
-        };
+            // 4. สร้าง enrollment ใน section ใหม่
+            const memberUserIds = new Set<string>();
+            for (const team of teamsToClone) {
+                for (const member of team.Teammember) {
+                    memberUserIds.add(member.user_id);
+                }
+            }
+
+            const enrollmentData = oldSection.Section_Enrollment
+                .filter((e) => memberUserIds.has(e.users_id))
+                .map((e) => ({ users_id: e.users_id, section_id: newSection.section_id }));
+
+            if (enrollmentData.length > 0) {
+                await tx.section_Enrollment.createMany({ data: enrollmentData, skipDuplicates: true });
+            }
+
+            // 5. Clone แต่ละทีม (ไม่ย้าย ทีมเดิมยังอยู่ใน PRE_PROJECT)
+            let clonedTeams = 0;
+
+            for (const team of teamsToClone) {
+                // 5a. สร้างทีมใหม่ใน PROJECT section
+                const newTeam = await tx.team.create({
+                    data: {
+                        name: team.name,
+                        // groupNumber ต้อง @unique — ต่อท้าย -P เพื่อไม่ซ้ำ
+                        groupNumber: `${team.groupNumber}-P`,
+                        semester: `${newTerm.semester}/${newTerm.academicYear}`,
+                        status: team.status ?? 'รออนุมัติหัวข้อ',
+                        advisorName: team.advisorName,
+                        description: team.description,
+                        topicThai: team.topicThai,
+                        section_id: newSection.section_id,
+                    },
+                });
+
+                // 5b. Clone Teammember
+                if (team.Teammember.length > 0) {
+                    await tx.teammember.createMany({
+                        data: team.Teammember.map((m) => ({
+                            team_id: newTeam.team_id,
+                            user_id: m.user_id,
+                        })),
+                        skipDuplicates: true,
+                    });
+                }
+
+                // 5c. Clone Project (ถ้ามี)
+                if (team.Project) {
+                    const oldProject = team.Project;
+
+                    const newProject = await tx.project.create({
+                        data: {
+                            projectname: oldProject.projectname,
+                            projectnameEng: oldProject.projectnameEng,
+                            description: oldProject.description,
+                            project_type: oldProject.project_type,
+                            status: 'DRAFT',
+                            team_id: newTeam.team_id,
+                        },
+                    });
+
+                    // 5d. Clone ProjectAdvisor
+                    if (oldProject.ProjectAdvisor.length > 0) {
+                        await tx.projectAdvisor.createMany({
+                            data: oldProject.ProjectAdvisor.map((pa) => ({
+                                project_id: newProject.project_id,
+                                advisor_id: pa.advisor_id,
+                            })),
+                            skipDuplicates: true,
+                        });
+                    }
+                }
+
+                clonedTeams++;
+            }
+
+            // 6. Backfill submissions สำหรับ events ที่มีอยู่แล้วใน section ใหม่
+            //    ป้องกันปัญหา: ทีมใหม่ไม่มี submission สำหรับ events ที่สร้างก่อนหน้า
+            //    skipDuplicates = idempotent safe (เรียกซ้ำก็ไม่เกิดปัญหา)
+            const existingEvents = await tx.event.findMany({
+                where: { section_id: newSection.section_id },
+                select: { event_id: true },
+            });
+
+            if (existingEvents.length > 0) {
+                for (const team of teamsToClone) {
+                    // หา newTeam จากที่เพิ่งสร้าง โดย groupNumber
+                    const newTeam = await tx.team.findFirst({
+                        where: { groupNumber: `${team.groupNumber}-P`, section_id: newSection.section_id },
+                        select: { team_id: true },
+                    });
+                    if (!newTeam) continue;
+
+                    await tx.submission.createMany({
+                        data: existingEvents.map((e) => ({
+                            event_id: e.event_id,
+                            team_id: newTeam.team_id,
+                            status: 'PENDING' as const,
+                        })),
+                        skipDuplicates: true,
+                    });
+                }
+            }
+
+            this.logger.log(
+                `continueToProject: cloned ${clonedTeams} teams from section ${sectionId} → section ${newSection.section_id}`,
+            );
+
+            return {
+                message: 'ต่อวิชาเรียบร้อย (clone mode)',
+                new_section_id: newSection.section_id,
+                enrollments: enrollmentData.length,
+                teams_cloned: clonedTeams,
+                teams_total: oldSection.Team.length,
+            };
+        });
     }
 }

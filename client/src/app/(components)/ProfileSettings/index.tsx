@@ -3,6 +3,7 @@
 /**
  * ProfileSettings — แก้ไขข้อมูลส่วนตัว
  * ⚠️ เปลี่ยนจาก Base64 inline → Upload API endpoint
+ * ⚠️ Fetch profile จาก GET /profile (ไม่ใช่จาก JWT ที่ไม่มี profilePicture)
  */
 
 import { useAuth, getToken } from "@/lib/auth-context";
@@ -17,6 +18,7 @@ export default function ProfileSettings() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   const [formData, setFormData] = useState({
     firstname: "",
@@ -24,25 +26,45 @@ export default function ProfileSettings() {
     tel_number: "",
   });
 
+  // Fetch full profile from API (JWT ไม่มี profilePicture)
   useEffect(() => {
-    if (user) {
-      setFormData({
-        firstname: user.firstname || "",
-        lastname: user.lastname || "",
-        tel_number: "",
-      });
-      // แสดงรูปเดิมถ้ามี
-      if (user.profilePicture) {
-        // If it starts with /uploads, it's from our server
-        if (user.profilePicture.startsWith("/uploads")) {
-          setPreviewUrl(`${API_URL}${user.profilePicture}`);
-        } else {
-          // Legacy Base64 or external URL
-          setPreviewUrl(user.profilePicture);
+    if (status !== "authenticated") return;
+
+    const fetchProfile = async () => {
+      try {
+        setLoadingProfile(true);
+        const profile = await api.get("/profile");
+        setFormData({
+          firstname: profile.firstname || "",
+          lastname: profile.lastname || "",
+          tel_number: profile.tel_number || "",
+        });
+        // แสดงรูปโปรไฟล์เดิม
+        if (profile.profilePicture) {
+          if (profile.profilePicture.startsWith("/uploads")) {
+            setPreviewUrl(`${API_URL}${profile.profilePicture}`);
+          } else {
+            // Legacy Base64 or external URL
+            setPreviewUrl(profile.profilePicture);
+          }
         }
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+        // Fallback to JWT data
+        if (user) {
+          setFormData({
+            firstname: user.firstname || "",
+            lastname: user.lastname || "",
+            tel_number: "",
+          });
+        }
+      } finally {
+        setLoadingProfile(false);
       }
-    }
-  }, [user]);
+    };
+
+    fetchProfile();
+  }, [status]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,7 +114,7 @@ export default function ProfileSettings() {
       if (uploadedFileUrl) {
         payload.profilePicture = uploadedFileUrl;
       }
-      await api.patch("/users/profile", payload);
+      await api.patch("/profile", payload);
       alert("บันทึกข้อมูลสำเร็จ!");
     } catch (error: unknown) {
       alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : "ไม่ทราบสาเหตุ"}`);
@@ -101,7 +123,7 @@ export default function ProfileSettings() {
     }
   };
 
-  if (status === "loading") return <div className="p-6">กำลังโหลด...</div>;
+  if (status === "loading" || loadingProfile) return <div className="p-6">กำลังโหลด...</div>;
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all">

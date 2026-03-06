@@ -14,12 +14,14 @@ interface AdvisorData {
   currentProjects: number;
   canSelect: boolean;
   reason?: string;
+  expertiseAreas?: string; // ความเชี่ยวชาญ/วิชาที่สอน CSV
 }
 
 interface AdvisorSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: number;
+  sectionId?: number;
   onAdvisorSelected: () => void;
 }
 
@@ -27,6 +29,7 @@ export default function AdvisorSelectionModal({
   isOpen,
   onClose,
   projectId,
+  sectionId,
   onAdvisorSelected,
 }: AdvisorSelectionModalProps) {
   const [advisors, setAdvisors] = useState<AdvisorData[]>([]);
@@ -44,7 +47,10 @@ export default function AdvisorSelectionModal({
     try {
       setLoading(true);
       setError(null);
-      const data = await api.get<AdvisorData[]>("/advisors/available");
+      const url = sectionId
+        ? `/advisors/available?section_id=${sectionId}`
+        : "/advisors/available";
+      const data = await api.get<AdvisorData[]>(url);
       setAdvisors(data);
     } catch (err) {
       setError("ไม่สามารถโหลดรายชื่ออาจารย์ได้");
@@ -165,6 +171,19 @@ export default function AdvisorSelectionModal({
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       {advisor.email}
                     </p>
+                    {/* Expertise Tags */}
+                    {advisor.expertiseAreas && (
+                      <div className="flex flex-wrap justify-center gap-1.5 mt-3">
+                        {advisor.expertiseAreas.split(',').map((tag, i) => (
+                          <span
+                            key={i}
+                            className="text-xs px-2.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-800"
+                          >
+                            {tag.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Project Count */}

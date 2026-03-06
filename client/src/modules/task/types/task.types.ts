@@ -22,7 +22,9 @@ export interface Task {
   _count?: {
     Comment: number;
     TaskAssignment: number;
+    Attachment: number;
   };
+  coverImage?: string | null;
 }
 
 export interface TaskUser {

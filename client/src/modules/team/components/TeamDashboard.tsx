@@ -243,6 +243,7 @@ export const TeamDashboard: React.FC = () => {
           isOpen={showAdvisorModal}
           onClose={() => setShowAdvisorModal(false)}
           projectId={projectData.project_id}
+          sectionId={teamData?.section?.section_id ?? section?.section_id}
           onAdvisorSelected={handlers.fetchData}
         />
       )}

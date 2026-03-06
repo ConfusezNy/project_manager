@@ -25,18 +25,23 @@ import { SubmitDto, FeedbackDto, RejectDto } from './dto/submission.dto';
 export class SubmissionsController {
     constructor(private readonly submissionsService: SubmissionsService) { }
 
-    // GET /submissions?event_id=&team_id= — ดึง submissions
+    // GET /submissions?event_id=&team_id=&section_ids=1,2 — ดึง submissions
     @Get()
     async findAll(
         @Query('event_id') eventId: string,
         @Query('team_id') teamId: string,
+        @Query('section_ids') sectionIdsStr: string,
         @CurrentUser() user: JwtPayload,
     ) {
+        const sectionIds = sectionIdsStr
+            ? sectionIdsStr.split(',').map((s) => parseInt(s)).filter((n) => !isNaN(n))
+            : undefined;
         return this.submissionsService.findAll(
             eventId ? parseInt(eventId) : null,
             teamId ? parseInt(teamId) : null,
             user.users_id,
             user.role,
+            sectionIds,
         );
     }
 

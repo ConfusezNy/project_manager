@@ -1,18 +1,22 @@
 "use client";
 
-// TaskFormModal - Create/Edit task form
-import React, { useState } from "react";
-import { useAuth } from "@/lib/auth-context";
-import { X, Calendar, Tag, AlertCircle } from "lucide-react";
+// TaskFormModal - Create/Edit task form with file upload
+import React, { useState, useRef } from "react";
+import { useAuth, getToken } from "@/lib/auth-context";
+import { X, Calendar, Tag, AlertCircle, Upload, File, Trash2, Paperclip } from "lucide-react";
 import type {
   CreateTaskInput,
   TaskPriority,
   TaskStatus,
 } from "../types/task.types";
+import { taskService } from "../services/taskService";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 interface TaskFormModalProps {
   onClose: () => void;
-  onSubmit: (data: CreateTaskInput) => Promise<void>;
+  onSubmit: (data: CreateTaskInput) => Promise<number | undefined | void>;
+  onRefresh?: () => Promise<void>;
   teamMembers?: Array<{
     users_id: string;
     user?: {
@@ -22,6 +26,14 @@ interface TaskFormModalProps {
     };
   }>;
   initialData?: Partial<CreateTaskInput>;
+}
+
+interface UploadedFile {
+  file: globalThis.File;
+  fileUrl?: string;
+  filename: string;
+  uploading: boolean;
+  error?: string;
 }
 
 const PRIORITIES: { value: TaskPriority; label: string; color: string }[] = [
@@ -34,6 +46,7 @@ const PRIORITIES: { value: TaskPriority; label: string; color: string }[] = [
 export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   onClose,
   onSubmit,
+  onRefresh,
   teamMembers = [],
   initialData,
 }) => {
@@ -52,11 +65,66 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // File upload state
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Exclude current user from assignable members
   const currentUserId = currentUser?.users_id || "";
   const assignableMembers = teamMembers.filter(
     (m) => (m.users_id || m.user?.users_id || "") !== currentUserId,
   );
+
+  const handleFileAdd = async (file: globalThis.File) => {
+    if (file.size > 20 * 1024 * 1024) {
+      setError("ไฟล์ต้องมีขนาดไม่เกิน 20 MB");
+      return;
+    }
+
+    const entry: UploadedFile = {
+      file,
+      filename: file.name,
+      uploading: true,
+    };
+    setUploadedFiles((prev) => [...prev, entry]);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = getToken();
+      const res = await fetch(`${API_URL}/uploads/attachment`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+
+      setUploadedFiles((prev) =>
+        prev.map((f) =>
+          f.file === file
+            ? { ...f, fileUrl: data.fileUrl, filename: data.filename, uploading: false }
+            : f,
+        ),
+      );
+    } catch {
+      setUploadedFiles((prev) =>
+        prev.map((f) =>
+          f.file === file ? { ...f, uploading: false, error: "อัปโหลดไม่สำเร็จ" } : f,
+        ),
+      );
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +138,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     setError(null);
 
     try {
-      await onSubmit({
+      const taskId = await onSubmit({
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
@@ -80,6 +148,24 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         assigneeIds: selectedAssignees,
         project_id: 0, // Will be set by parent
       });
+
+      // แนบไฟล์ที่อัปโหลดแล้วไปยัง task ที่สร้างใหม่
+      if (taskId && uploadedFiles.length > 0) {
+        for (const uf of uploadedFiles) {
+          if (uf.fileUrl && !uf.error) {
+            try {
+              await taskService.addAttachment(taskId, uf.fileUrl, uf.filename);
+            } catch {
+              // ถ้าแนบไม่สำเร็จให้ข้ามไป ไม่ block การสร้าง task
+            }
+          }
+        }
+      }
+
+      // รีเฟรช board หลังแนบไฟล์เสร็จ — เพื่อให้ coverImage แสดง
+      if (onRefresh) {
+        await onRefresh();
+      }
     } catch (err: any) {
       setError(err.message || "เกิดข้อผิดพลาด");
     } finally {
@@ -134,6 +220,34 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             />
           </div>
 
+          {/* Dates — ย้ายขึ้นมาอยู่หลังชื่อ Task */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <Calendar size={14} className="inline mr-1" />
+                วันเริ่มต้น
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <Calendar size={14} className="inline mr-1" />
+                สิ้นสุด
+              </label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -148,6 +262,79 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             />
           </div>
 
+          {/* File Attachments — ย้ายมาอยู่ใต้รายละเอียด */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <Paperclip size={14} className="inline mr-1" />
+              ไฟล์แนบ
+            </label>
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const files = Array.from(e.dataTransfer.files);
+                files.forEach(handleFileAdd);
+              }}
+              className="space-y-2"
+            >
+              {/* Upload zone */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
+              >
+                <Upload size={20} className="mx-auto text-gray-400 mb-1" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  ลากไฟล์มาวางหรือ <span className="text-blue-600 font-medium">คลิกเพื่อเลือก</span>
+                </p>
+                <p className="text-[11px] text-gray-400 mt-0.5">สูงสุด 20 MB</p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                multiple
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  files.forEach(handleFileAdd);
+                  e.target.value = "";
+                }}
+              />
+
+              {/* Uploaded files list */}
+              {uploadedFiles.map((uf, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                >
+                  <File size={14} className="text-gray-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-900 dark:text-white truncate">
+                      {uf.filename}
+                    </p>
+                    <p className="text-[11px] text-gray-400">
+                      {uf.uploading
+                        ? "กำลังอัปโหลด..."
+                        : uf.error
+                          ? uf.error
+                          : formatSize(uf.file.size)}
+                    </p>
+                  </div>
+                  {uf.uploading ? (
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(idx)}
+                      className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Priority */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -160,8 +347,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   type="button"
                   onClick={() => setPriority(p.value)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${priority === p.value
-                      ? `${p.color} ring-2 ring-offset-2 ring-blue-500`
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    ? `${p.color} ring-2 ring-offset-2 ring-blue-500`
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
                     }`}
                 >
                   {p.label}
@@ -183,34 +370,6 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               placeholder="เช่น UI, Design, Frontend"
               className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-          </div>
-
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <Calendar size={14} className="inline mr-1" />
-                วันเริ่มต้น
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <Calendar size={14} className="inline mr-1" />
-                กำหนดส่ง
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
           </div>
 
           {/* Assignees */}
@@ -241,8 +400,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   <label
                     key={`member-${index}-${member.users_id || "unknown"}`}
                     className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${selectedAssignees.includes(member.users_id)
-                        ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800"
-                        : "border-transparent hover:bg-gray-50 dark:hover:bg-gray-700"
+                      ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800"
+                      : "border-transparent hover:bg-gray-50 dark:hover:bg-gray-700"
                       }`}
                   >
                     <input
@@ -261,7 +420,6 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                     />
                     <div className="flex items-center gap-2 overflow-hidden">
-                      {/* Avatar if available */}
                       <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
                         {(member.user?.firstname?.[0] || "U").toUpperCase()}
                       </div>
@@ -286,7 +444,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || uploadedFiles.some((f) => f.uploading)}
               className="flex-1 px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting

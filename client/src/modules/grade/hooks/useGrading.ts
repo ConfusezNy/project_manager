@@ -73,19 +73,17 @@ export function useGrading() {
   const [searchQuery, setSearchQuery] = useState("");
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>("ALL");
 
-  // ดึง Sections (filter เฉพาะเทอมล่าสุด)
+  // ดึง Sections ทั้งหมดทุก Term (เรียงเทอมล่าสุดก่อน)
   useEffect(() => {
     const fetchSections = async () => {
       try {
         const data = await api.get<SectionOption[]>("/sections");
         if (data && data.length > 0) {
-          // หา term_id ล่าสุด (ค่ามากที่สุด)
-          const latestTermId = Math.max(...data.map((s) => s.term_id));
-          // filter เฉพาะ section ของเทอมล่าสุด
-          const filtered = data.filter((s) => s.term_id === latestTermId);
-          setSections(filtered);
-          if (filtered.length > 0) {
-            setSelectedSection(filtered[0]);
+          // เรียงตาม term_id ใหม่ → เก่า (ไม่ filter ออก เพื่อให้ดูย้อนหลังได้)
+          const sorted = [...data].sort((a, b) => b.term_id - a.term_id);
+          setSections(sorted);
+          if (sorted.length > 0) {
+            setSelectedSection(sorted[0]);
           }
         }
       } catch (err) {

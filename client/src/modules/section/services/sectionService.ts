@@ -32,6 +32,16 @@ export interface Candidate {
   email: string | null;
 }
 
+export interface StudentGroup {
+  sectionCode: string;
+  entryYear: string;
+  studyDigit: string;
+  programCode: string;
+  studyType: string;
+  label: string;
+  studentCount: number;
+}
+
 export interface Enrollment {
   enrollment_id: number;
   users_id: string;
@@ -136,6 +146,12 @@ export const sectionService = {
       `/sections/${sectionId}/candidates`,
     );
     return data?.candidates || [];
+  },
+
+  // Get student groups for section code picker
+  async getStudentGroups(): Promise<StudentGroup[]> {
+    const data = await api.get<StudentGroup[]>('/sections/student-groups');
+    return data || [];
   },
 
   // Enroll students

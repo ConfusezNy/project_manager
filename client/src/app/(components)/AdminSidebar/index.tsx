@@ -64,13 +64,6 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
             <span className={contentClass}>Section</span>
           </Link>
 
-          <Link href="/Timeline" className={linkBaseClass}>
-            <div className={iconClass}>
-              <Timer size={24} />
-            </div>
-            <span className={contentClass}>Timeline</span>
-          </Link>
-
           <Link href="/Search" className={linkBaseClass}>
             <div className={iconClass}>
               <Search size={24} />
@@ -82,42 +75,42 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
             <div className={iconClass}>
               <User size={24} />
             </div>
-            <span className={contentClass}>User</span>
+            <span className={contentClass}>Users</span>
           </Link>
 
           <Link href="/admin-teams" className={linkBaseClass}>
             <div className={iconClass}>
               <Users size={24} />
             </div>
-            <span className={contentClass}>จัดการทีม</span>
+            <span className={contentClass}>Teams</span>
           </Link>
 
           <Link href="/admin-events" className={linkBaseClass}>
             <div className={iconClass}>
               <Calendar size={24} />
             </div>
-            <span className={contentClass}>กำหนดการ</span>
+            <span className={contentClass}>Events</span>
           </Link>
 
           <Link href="/admin-grades" className={linkBaseClass}>
             <div className={iconClass}>
               <Award size={24} />
             </div>
-            <span className={contentClass}>ให้เกรด</span>
+            <span className={contentClass}>Grades</span>
           </Link>
 
           <Link href="/admin-projects" className={linkBaseClass}>
             <div className={iconClass}>
               <Folder size={24} />
             </div>
-            <span className={contentClass}>โครงงานทั้งหมด</span>
+            <span className={contentClass}>Projects</span>
           </Link>
 
           <Link href="/settings" className={linkBaseClass}>
             <div className={iconClass}>
               <Settings size={24} />
             </div>
-            <span className={contentClass}>Setting</span>
+            <span className={contentClass}>Settings</span>
           </Link>
         </nav>
       </div>

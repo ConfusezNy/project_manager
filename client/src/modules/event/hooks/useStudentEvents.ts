@@ -88,14 +88,30 @@ export function useStudentEvents() {
         return;
       }
 
-      // 4. Fetch all submissions for this team (includes events from all sections)
-      const submissionsData = await api.get<SubmissionWithEvent[]>(
-        `/submissions?team_id=${team.team_id}`,
-      );
+      // 4. ดึง sections ที่ student enrolled อยู่ทั้งหมด (PRE_PROJECT + PROJECT)
+      //    เพื่อ filter events ให้แสดงเฉพาะ section ของตัวเอง
+      let sectionIdsParam = "";
+      try {
+        const enrollments = await api.get<{ section_id: number }[]>("/sections/my-enrolled");
+        if (enrollments && enrollments.length > 0) {
+          sectionIdsParam = enrollments.map((e) => e.section_id).join(",");
+        } else if (team.section_id) {
+          sectionIdsParam = String(team.section_id);
+        }
+      } catch {
+        // fallback: ใช้ section ปัจจุบันของ team
+        if (team.section_id) sectionIdsParam = String(team.section_id);
+      }
+
+      // 5. Fetch all submissions for this team (filtered by enrolled sections)
+      const url = sectionIdsParam
+        ? `/submissions?team_id=${team.team_id}&section_ids=${sectionIdsParam}`
+        : `/submissions?team_id=${team.team_id}`;
+      const submissionsData = await api.get<SubmissionWithEvent[]>(url);
 
       setSubmissions(submissionsData || []);
 
-      // 5. Group submissions by Section
+      // 6. Group submissions by Section
       const grouped = groupBySection(submissionsData || [], team.section_id);
       setSectionGroups(grouped);
 

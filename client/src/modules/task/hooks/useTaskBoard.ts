@@ -31,7 +31,7 @@ export interface UseTaskBoardResult {
 
   // Handlers
   handlers: {
-    createTask: (data: CreateTaskInput) => Promise<void>;
+    createTask: (data: CreateTaskInput) => Promise<number | undefined | void>;
     updateTask: (taskId: number, data: UpdateTaskInput) => Promise<void>;
     deleteTask: (taskId: number) => Promise<void>;
     moveTask: (
@@ -42,6 +42,7 @@ export interface UseTaskBoardResult {
     assignUser: (taskId: number, userId: string) => Promise<void>;
     unassignUser: (taskId: number, userId: string) => Promise<void>;
     addComment: (taskId: number, text: string) => Promise<void>;
+    selectTask: (task: Task) => Promise<void>;
     refresh: () => Promise<void>;
   };
 }
@@ -98,13 +99,14 @@ export function useTaskBoard(projectId: number | null): UseTaskBoardResult {
 
   // Handlers
   const createTask = useCallback(
-    async (data: CreateTaskInput) => {
+    async (data: CreateTaskInput): Promise<number | undefined> => {
       if (!projectId) return;
-      await taskService.createTask({ ...data, project_id: projectId });
+      const created = await taskService.createTask({ ...data, project_id: projectId });
       setShowCreateModal(false);
-      await fetchTasks();
+      // ไม่ fetchTasks() ตรงนี้ — ให้ TaskFormModal แนบไฟล์ก่อน แล้วค่อย refresh
+      return created.task_id;
     },
-    [projectId, fetchTasks],
+    [projectId],
   );
 
   const updateTask = useCallback(
@@ -197,12 +199,29 @@ export function useTaskBoard(projectId: number | null): UseTaskBoardResult {
   const addComment = useCallback(
     async (taskId: number, text: string) => {
       await taskService.addComment(taskId, { text });
-      if (selectedTask?.task_id === taskId) {
-        const updated = await taskService.getTask(taskId);
-        setSelectedTask(updated);
+      // Re-fetch task to update comments in the modal
+      const updated = await taskService.getTask(taskId);
+      setSelectedTask(updated);
+    },
+    [],
+  );
+
+  // Select a task & fetch full detail (including comments)
+  const selectTask = useCallback(
+    async (task: Task) => {
+      // Show modal immediately with board-level data
+      setSelectedTask(task);
+      setShowDetailModal(true);
+      // Then fetch full detail with comments
+      try {
+        const fullTask = await taskService.getTask(task.task_id);
+        setSelectedTask(fullTask);
+      } catch (err) {
+        // Keep board-level data if fetch fails
+        console.error('Failed to fetch task detail:', err);
       }
     },
-    [selectedTask],
+    [],
   );
 
   return {
@@ -224,6 +243,7 @@ export function useTaskBoard(projectId: number | null): UseTaskBoardResult {
       assignUser,
       unassignUser,
       addComment,
+      selectTask,
       refresh: fetchTasks,
     },
   };

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AdvisorsService } from './advisors.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -11,8 +11,8 @@ export class AdvisorsController {
     constructor(private readonly advisorsService: AdvisorsService) { }
 
     @Get('available')
-    async getAvailable() {
-        return this.advisorsService.getAvailable();
+    async getAvailable(@Query('section_id') sectionId?: string) {
+        return this.advisorsService.getAvailable(sectionId ? Number(sectionId) : undefined);
     }
 
     @UseGuards(RolesGuard)

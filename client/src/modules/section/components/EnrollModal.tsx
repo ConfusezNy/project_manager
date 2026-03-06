@@ -44,6 +44,12 @@ export const EnrollModal: React.FC<Props> = ({
             <p className="text-sm text-gray-500 dark:text-gray-400">
               นักศึกษาทั้งหมดได้ลงทะเบียนแล้ว
             </p>
+            <button
+              onClick={onClose}
+              className="mt-4 px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-semibold transition"
+            >
+              ปิด
+            </button>
           </div>
         ) : (
           <>

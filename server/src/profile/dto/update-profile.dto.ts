@@ -28,4 +28,8 @@ export class UpdateProfileDto {
     @IsString()
     @IsOptional()
     profilePicture?: string;
+
+    @IsString()
+    @IsOptional()
+    expertiseAreas?: string; // ความเชี่ยวชาญ/วิชาที่สอน เฉพาะ ADVISOR เช่น "AI, ML, Python"
 }

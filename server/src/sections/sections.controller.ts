@@ -61,6 +61,32 @@ export class SectionsController {
     }
 
     // ==========================================
+    // GET /sections/student-groups
+    // ดึงรายการ group นศ. จาก users_id pattern
+    // ใช้เปรียบ section_code ในหน้า สร้างหมู่เรียน
+    // ⚠️ ต้องอยู่ก่อน :id ! ไม่งั้นถูก match เป็น :id
+    // ์ Admin only
+    // ==========================================
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    @Get('student-groups')
+    async getStudentGroups() {
+        return this.sectionsService.getStudentGroups();
+    }
+
+    // ==========================================
+    // GET /sections/my-enrolled — sections ทั้งหมดที่ student enroll อยู่
+    // ใช้โดย useStudentEvents เพื่อ filter submissions
+    // ⚠️ ต้องอยู่ก่อน :id !
+    // ==========================================
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('STUDENT')
+    @Get('my-enrolled')
+    async findMyEnrolled(@CurrentUser('users_id') userId: string) {
+        return this.sectionsService.findMyEnrolled(userId);
+    }
+
+    // ==========================================
     // GET /sections/:id — ดึง section เดียว
     // ==========================================
     @UseGuards(JwtAuthGuard)

@@ -1,30 +1,49 @@
 "use client";
 
-// TaskCard - Single task card for Kanban board
+// TaskCard - Clean Trello-style card for Kanban board
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Calendar, MessageSquare, User } from "lucide-react";
+import { Calendar, MessageSquare, Paperclip, AlertTriangle } from "lucide-react";
 import type { Task } from "../types/task.types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 interface TaskCardProps {
   task: Task;
   onClick?: () => void;
 }
 
-const priorityColors: Record<string, string> = {
-  LOW: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
-  MEDIUM: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  HIGH: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-  URGENT: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
+// Priority → left border color
+const priorityBorderColors: Record<string, string> = {
+  LOW: "border-l-emerald-400",
+  MEDIUM: "border-l-blue-400",
+  HIGH: "border-l-orange-400",
+  URGENT: "border-l-red-500",
 };
 
 const priorityLabels: Record<string, string> = {
-  LOW: "ต่ำ",
-  MEDIUM: "ปานกลาง",
-  HIGH: "สูง",
-  URGENT: "ด่วนมาก",
+  LOW: "Low",
+  MEDIUM: "Medium",
+  HIGH: "High",
+  URGENT: "Urgent",
 };
+
+const priorityDotColors: Record<string, string> = {
+  LOW: "bg-emerald-400",
+  MEDIUM: "bg-blue-400",
+  HIGH: "bg-orange-400",
+  URGENT: "bg-red-500",
+};
+
+// Tag colors (cycle through)
+const tagColors = [
+  "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+  "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
+  "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+  "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
+];
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   const {
@@ -43,20 +62,29 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   };
 
   const tags = task.tags?.split(",").filter(Boolean) || [];
-  const commentCount = task._count?.Comment || 0;
+  const commentCount = task._count?.Comment || task.comments?.length || 0;
   const assigneeCount = task.assignees?.length || 0;
+  const attachmentCount = task._count?.Attachment || 0;
 
-  // Format date
   const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return null;
     const d = new Date(date);
-    return d.toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+    return d.toLocaleDateString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
   const isOverdue =
     task.dueDate &&
     new Date(task.dueDate) < new Date() &&
     task.status !== "DONE";
+
+  const daysUntilDue = task.dueDate
+    ? Math.ceil(
+      (new Date(task.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+    )
+    : null;
+
+  // Check if task has a cover image (first image attachment, if we have data)
+  const coverImage = task.coverImage || null;
 
   return (
     <div
@@ -66,95 +94,135 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       {...listeners}
       onClick={onClick}
       className={`
-        bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-100 dark:border-gray-700
-        cursor-pointer hover:shadow-md transition-all
-        ${isDragging ? "shadow-lg ring-2 ring-blue-500" : ""}
+        group relative bg-white dark:bg-gray-800 rounded-lg shadow-sm
+        border border-gray-100 dark:border-gray-700
+        border-l-[3px] ${priorityBorderColors[task.priority] || priorityBorderColors.MEDIUM}
+        cursor-pointer
+        hover:shadow-md hover:-translate-y-0.5
+        transition-all duration-200 ease-out
+        ${isDragging ? "shadow-xl ring-2 ring-blue-500/50 scale-[1.02]" : ""}
       `}
     >
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {tags.slice(0, 3).map((tag, idx) => (
-            <span
-              key={idx}
-              className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-            >
-              {tag.trim()}
-            </span>
-          ))}
-          {tags.length > 3 && (
-            <span className="px-2 py-0.5 text-xs text-gray-500">
-              +{tags.length - 3}
-            </span>
-          )}
+      {/* Cover Image */}
+      {coverImage && (
+        <div className="w-full overflow-hidden rounded-t-lg">
+          <img
+            src={coverImage.startsWith("http") ? coverImage : `${API_URL}${coverImage}`}
+            alt=""
+            className="w-full max-h-52 object-cover"
+          />
         </div>
       )}
 
-      {/* Title */}
-      <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-        {task.title}
-      </h4>
-
-      {/* Description preview */}
-      {task.description && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
-          {task.description}
-        </p>
-      )}
-
-      {/* Priority & Date */}
-      <div className="flex items-center gap-2 mb-3">
-        <span
-          className={`px-2 py-0.5 text-xs font-medium rounded ${priorityColors[task.priority] || priorityColors.MEDIUM}`}
-        >
-          {priorityLabels[task.priority] || task.priority}
-        </span>
-
-        {task.dueDate && (
-          <span
-            className={`flex items-center gap-1 text-xs ${isOverdue ? "text-red-500" : "text-gray-500 dark:text-gray-400"}`}
-          >
-            <Calendar size={12} />
-            {formatDate(task.dueDate)}
-          </span>
+      <div className="p-3.5">
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {tags.slice(0, 3).map((tag, idx) => (
+              <span
+                key={idx}
+                className={`px-2 py-0.5 text-[11px] font-medium rounded-full ${tagColors[idx % tagColors.length]}`}
+              >
+                {tag.trim()}
+              </span>
+            ))}
+            {tags.length > 3 && (
+              <span className="px-1.5 py-0.5 text-[11px] text-gray-400">
+                +{tags.length - 3}
+              </span>
+            )}
+          </div>
         )}
-      </div>
 
-      {/* Footer: Assignees & Comments */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-        {/* Assignees */}
-        <div className="flex items-center">
-          {task.assignees && task.assignees.length > 0 ? (
+        {/* Title */}
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2 leading-snug">
+          {task.title}
+        </h4>
+
+        {/* Description preview */}
+        {task.description && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2.5 line-clamp-2 leading-relaxed">
+            {task.description}
+          </p>
+        )}
+
+        {/* Date range row */}
+        {(task.startDate || task.dueDate) && (
+          <div className="flex items-center gap-1.5 mb-2.5 text-[11px] text-gray-500 dark:text-gray-400">
+            <Calendar size={10} className="flex-shrink-0" />
+            <span className={isOverdue ? "text-red-500 dark:text-red-400 font-medium" : ""}>
+              {isOverdue && <AlertTriangle size={10} className="inline mr-0.5" />}
+              {formatDate(task.startDate) || "-"} - {formatDate(task.dueDate) || "-"}
+            </span>
+          </div>
+        )}
+
+        {/* Footer: Avatars + Meta */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-gray-700/50">
+          {/* รวม author + assignees เป็น list เดียว สีเดียว */}
+          <div className="flex items-center">
             <div className="flex -space-x-1.5">
-              {task.assignees.slice(0, 3).map((a, idx) => (
-                <div
-                  key={a.users_id}
-                  className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-xs text-white font-bold border-2 border-white dark:border-gray-800"
-                  title={`${a.user?.firstname || ""} ${a.user?.lastname || ""}`}
-                >
-                  {a.user?.firstname?.[0] || "U"}
-                </div>
-              ))}
-              {task.assignees.length > 3 && (
-                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 font-bold border-2 border-white dark:border-gray-800">
-                  +{task.assignees.length - 3}
-                </div>
-              )}
+              {(() => {
+                // รวม author + assignees เป็น list เดียว (ไม่ซ้ำ)
+                const allUsers: Array<{ id: string; firstname?: string | null; lastname?: string | null; profilePicture?: string | null }> = [];
+                if (task.author) {
+                  allUsers.push({ id: task.authorUserId, firstname: task.author.firstname, lastname: task.author.lastname, profilePicture: task.author.profilePicture });
+                }
+                task.assignees?.forEach((a) => {
+                  if (!allUsers.some((u) => u.id === a.users_id)) {
+                    allUsers.push({ id: a.users_id, firstname: a.user?.firstname, lastname: a.user?.lastname, profilePicture: a.user?.profilePicture });
+                  }
+                });
+                const visible = allUsers.slice(0, 4);
+                const extra = allUsers.length - 4;
+                return (
+                  <>
+                    {visible.map((u) => (
+                      u.profilePicture ? (
+                        <img
+                          key={u.id}
+                          src={u.profilePicture.startsWith("http") ? u.profilePicture : `${API_URL}${u.profilePicture}`}
+                          alt=""
+                          className="w-6 h-6 rounded-full object-cover border-2 border-white dark:border-gray-800"
+                          title={`${u.firstname || ""} ${u.lastname || ""}`}
+                        />
+                      ) : (
+                        <div
+                          key={u.id}
+                          className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-[10px] text-white font-bold border-2 border-white dark:border-gray-800"
+                          title={`${u.firstname || ""} ${u.lastname || ""}`}
+                        >
+                          {u.firstname?.[0] || "U"}
+                        </div>
+                      )
+                    ))}
+                    {extra > 0 && (
+                      <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-bold border-2 border-white dark:border-gray-800">
+                        +{extra}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
-          ) : (
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <User size={12} /> ยังไม่มีผู้รับผิดชอบ
-            </span>
-          )}
-        </div>
+          </div>
 
-        {/* Comments */}
-        {commentCount > 0 && (
-          <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-            <MessageSquare size={12} />
-            {commentCount}
-          </span>
-        )}
+          {/* Meta: attachments + comments */}
+          <div className="flex items-center gap-2.5">
+            {attachmentCount > 0 && (
+              <span className="flex items-center gap-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                <Paperclip size={11} />
+                {attachmentCount}
+              </span>
+            )}
+            {commentCount > 0 && (
+              <span className="flex items-center gap-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                <MessageSquare size={11} />
+                {commentCount}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

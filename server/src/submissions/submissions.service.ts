@@ -36,6 +36,7 @@ export class SubmissionsService {
         teamId: number | null,
         userId: string,
         userRole: string,
+        sectionIds?: number[],
     ) {
         const where: Record<string, unknown> = {};
 
@@ -52,6 +53,11 @@ export class SubmissionsService {
             } else {
                 return [];
             }
+        }
+
+        // filter เฉพาะ events ใน section ที่ระบุ (ถ้ามี)
+        if (sectionIds && sectionIds.length > 0) {
+            where.Event = { section_id: { in: sectionIds } };
         }
 
         return this.prisma.submission.findMany({
