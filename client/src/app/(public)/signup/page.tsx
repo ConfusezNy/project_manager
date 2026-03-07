@@ -1,7 +1,7 @@
 "use client";
 
-import { SignupForm } from "@/modules/auth";
+import { OtpVerifyForm } from "@/modules/auth";
 
-export default function SignUp() {
-  return <SignupForm />;
+export default function SignUpPage() {
+  return <OtpVerifyForm />;
 }

@@ -1,9 +1,21 @@
 "use client";
 
+/**
+ * NotificationDropdown
+ * ✅ แก้แล้ว:
+ * 1. ใช้ useNotification() จาก NotificationContext แทน useNotifications() hook — ไม่ double poll
+ * 2. Map actor จาก Users_Notification_actor_user_idToUsers ให้ถูกต้อง
+ * 3. แก้ "/Teams" → "/teams"
+ * 4. เพิ่ม smart routing ครบทุก event_type
+ */
+
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, Users, CheckCheck, FileText, MessageSquare, Award, FolderCheck, FolderX, Send, CheckCircle, XCircle } from "lucide-react";
+import {
+  Bell, Users, CheckCheck, FileText, MessageSquare,
+  Award, FolderCheck, FolderX, Send, CheckCircle, XCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useNotifications } from "../hooks/useNotifications";
+import { useNotification } from "@/lib/notification-context";
 import type { NotificationItem } from "../types/notification.types";
 
 const formatTime = (dateString: string) => {
@@ -77,20 +89,45 @@ const getIconBg = (eventType: string) => {
   }
 };
 
+// ✅ Smart routing จาก event_type — เพิ่มครบทุก type
+const getRouteFromNotification = (item: NotificationItem): string | null => {
+  // ถ้า backend set link ไว้ ใช้อันนั้นก่อนเลย
+  if (item.link) return item.link;
+
+  switch (item.event_type) {
+    case "TEAM_INVITE":
+    case "TEAM_MEMBER_JOINED":
+      return "/teams"; // ✅ lowercase
+    case "TASK_ASSIGNED":
+    case "TASK_UPDATED":
+    case "COMMENT_ADDED":
+      return "/tasks";
+    case "SUBMISSION_SUBMITTED":
+    case "SUBMISSION_APPROVED":
+    case "SUBMISSION_REJECTED":
+      return "/events";
+    case "PROJECT_APPROVED":
+    case "PROJECT_REJECTED":
+      return "/projects";
+    case "GRADE_GIVEN":
+      return "/dashboard";
+    default:
+      return "/dashboard";
+  }
+};
+
 export const NotificationDropdown = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { notifications, loading, unreadCount, markAsRead, markAllAsRead } =
-    useNotifications();
 
-  // Close on click outside
+  // ✅ Bug 1 แก้แล้ว: ใช้ context แทน hook แยก — ไม่ double poll
+  const { notifications, loading, unreadCount, markAsRead, markAllAsRead } =
+    useNotification();
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -98,31 +135,14 @@ export const NotificationDropdown = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleNotificationClick = (notification: NotificationItem) => {
-    // Mark as read
-    if (!notification.isRead) {
-      markAsRead(notification.notification_id);
-    }
+  const handleNotificationClick = (item: NotificationItem) => {
+    if (!item.isRead) markAsRead(item.notification_id);
 
-    // Smart routing based on event_type
-    if (notification.link) {
-      router.push(notification.link);
-    } else if (notification.event_type === "TEAM_INVITE") {
-      router.push("/Teams");
-    } else if (
-      notification.event_type === "TASK_ASSIGNED" ||
-      notification.event_type === "TASK_UPDATED"
-    ) {
-      router.push("/tasks");
-    } else if (notification.event_type === "COMMENT_ADDED") {
-      router.push("/tasks");
-    }
+    // ✅ Bug 3+4 แก้แล้ว: smart routing ครบทุก event_type + lowercase routes
+    const route = getRouteFromNotification(item);
+    if (route) router.push(route);
 
     setIsOpen(false);
-  };
-
-  const handleMarkAllRead = () => {
-    markAllAsRead();
   };
 
   return (
@@ -155,7 +175,7 @@ export const NotificationDropdown = () => {
                     {unreadCount} รายการใหม่
                   </span>
                   <button
-                    onClick={handleMarkAllRead}
+                    onClick={() => markAllAsRead()}
                     className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors"
                     title="อ่านทั้งหมด"
                   >
@@ -167,7 +187,7 @@ export const NotificationDropdown = () => {
           </div>
 
           {/* Notification List */}
-          <div className="max-h-[360px] overflow-y-auto custom-scrollbar">
+          <div className="max-h-[360px] overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
                 <div className="inline-block w-5 h-5 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin mb-2" />
@@ -175,67 +195,61 @@ export const NotificationDropdown = () => {
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
-                <Bell
-                  size={32}
-                  className="mx-auto mb-2 text-gray-300 dark:text-gray-600"
-                />
+                <Bell size={32} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                 <p>ไม่มีการแจ้งเตือนใหม่</p>
               </div>
             ) : (
-              notifications.map((item) => (
-                <div
-                  key={item.notification_id}
-                  onClick={() => handleNotificationClick(item)}
-                  className={`relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0 cursor-pointer ${!item.isRead
-                    ? "bg-blue-50/50 dark:bg-blue-900/10"
-                    : ""
-                    }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* Icon */}
-                    <div className="flex-shrink-0 mt-1">
-                      <div
-                        className={`w-8 h-8 rounded-full ${getIconBg(item.event_type)} flex items-center justify-center`}
-                      >
-                        {getEventIcon(item.event_type)}
+              notifications.map((item) => {
+                // ✅ Bug 2 แก้แล้ว: Map actor จาก field ชื่อยาวของ backend
+                const actor = item.Users_Notification_actor_user_idToUsers;
+
+                return (
+                  <div
+                    key={item.notification_id}
+                    onClick={() => handleNotificationClick(item)}
+                    className={`relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0 cursor-pointer ${!item.isRead ? "bg-blue-50/50 dark:bg-blue-900/10" : ""}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Icon */}
+                      <div className="flex-shrink-0 mt-1">
+                        <div className={`w-8 h-8 rounded-full ${getIconBg(item.event_type)} flex items-center justify-center`}>
+                          {getEventIcon(item.event_type)}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-sm font-medium ${!item.isRead
-                          ? "text-gray-900 dark:text-white"
-                          : "text-gray-600 dark:text-gray-400"
-                          }`}
-                      >
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
-                        {item.message}
-                      </p>
-                      {item.actor && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          จาก: {item.actor.firstname} {item.actor.lastname}
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${!item.isRead ? "text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
+                          {item.title}
                         </p>
-                      )}
-                      {item.team?.section && (
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          รายวิชา: {item.team.section.section_code}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                          {item.message}
                         </p>
-                      )}
-                      <p className="text-[10px] text-gray-400 mt-1">
-                        {formatTime(item.createdAt)}
-                      </p>
-                    </div>
+                        {/* ✅ แสดง actor ชื่อจริง */}
+                        {actor && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            จาก: {actor.firstname} {actor.lastname}
+                          </p>
+                        )}
+                        {/* Section code */}
+                        {item.Team?.Section?.section_code && (
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            รายวิชา: {item.Team.Section.section_code}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          {formatTime(item.createdAt)}
+                        </p>
+                      </div>
 
-                    {/* Unread dot */}
-                    {!item.isRead && (
-                      <span className="flex-shrink-0 h-2 w-2 mt-2 rounded-full bg-blue-500" />
-                    )}
+                      {/* Unread dot */}
+                      {!item.isRead && (
+                        <span className="flex-shrink-0 h-2 w-2 mt-2 rounded-full bg-blue-500" />
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

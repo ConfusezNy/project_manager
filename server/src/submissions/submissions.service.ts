@@ -139,7 +139,7 @@ export class SubmissionsService {
                 'SUBMISSION_SUBMITTED',
                 'มีการส่งงานใหม่',
                 `กลุ่ม ${team.groupNumber} ส่งงาน "${event?.name ?? ''}"`,
-                { teamId: updated.team_id },
+                { teamId: updated.team_id, link: '/events' },
             );
         }
 
@@ -186,6 +186,7 @@ export class SubmissionsService {
                 'SUBMISSION_APPROVED',
                 'งานได้รับการอนุมัติ',
                 `งาน "${event?.name ?? ''}" ได้รับการอนุมัติแล้ว`,
+                { link: '/events' },
             );
         }
 
@@ -226,6 +227,7 @@ export class SubmissionsService {
             'SUBMISSION_REJECTED',
             'งานถูกขอแก้ไข',
             `งาน "${event?.name ?? ''}" ต้องแก้ไข: ${dto.feedback || ''}`,
+            { link: '/events' },
         );
 
         return rejected;

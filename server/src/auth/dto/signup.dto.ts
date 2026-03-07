@@ -21,4 +21,8 @@ export class SignupDto {
     @IsString()
     @IsOptional()
     tel_number?: string;
+
+    @IsString()
+    @IsOptional()
+    expertiseAreas?: string; // สำหรับอาจารย์ — ความเชี่ยวชาญ
 }

@@ -195,6 +195,7 @@ export class TeamsService {
             message: 'คุณถูกเชิญให้เข้าร่วมกลุ่มโครงงาน',
             eventType: 'TEAM_INVITE',
             teamId: team.team_id,
+            link: '/teams', // ✅ เพิ่ม link
         });
 
         return { message: 'Invitation sent' };

@@ -359,7 +359,7 @@ export class ProjectsService {
                 eventType,
                 title,
                 message,
-                { projectId: id },
+                { projectId: id, link: '/projects' },
             );
         }
 

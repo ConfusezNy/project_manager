@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import { User, LogOut, Settings } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 
@@ -36,10 +36,6 @@ const Profile = () => {
     logout();
   };
 
-  const handleViewProfile = () => {
-    router.push("/profile");
-    setIsOpen(false);
-  };
 
   // ดึงตัวอักษรแรกของชื่อกรณีไม่มีรูป
   const getInitial = () => {
@@ -87,14 +83,6 @@ const Profile = () => {
 
           {/* Menu Items */}
           <div className="py-2">
-            <button
-              onClick={handleViewProfile}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors"
-            >
-              <User size={18} className="text-gray-500 dark:text-gray-400" />
-              <span>ดูโปรไฟล์</span>
-            </button>
-
             <button
               onClick={() => {
                 router.push("/settings");
