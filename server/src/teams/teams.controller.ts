@@ -114,15 +114,15 @@ export class TeamsController {
         return this.teamsService.assignName(dto);
     }
 
-    // DELETE /teams/:id/members/:memberId — ลบสมาชิก
+    // DELETE /teams/:id/members/:memberId — ลบสมาชิก (Admin only)
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('STUDENT')
+    @Roles('ADMIN')
     @Delete(':id/members/:memberId')
     async removeMember(
         @Param('id', ParseIntPipe) teamId: number,
         @Param('memberId') memberId: string,
-        @CurrentUser('users_id') userId: string,
+        @CurrentUser() user: JwtPayload,
     ) {
-        return this.teamsService.removeMember(teamId, memberId, userId);
+        return this.teamsService.removeMember(teamId, memberId, user.users_id, user.role);
     }
 }

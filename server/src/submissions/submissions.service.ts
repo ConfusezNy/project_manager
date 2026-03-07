@@ -196,7 +196,7 @@ export class SubmissionsService {
     // =====================================================
     // PATCH /submissions/:id/reject — ปฏิเสธ (Advisor/Admin)
     // =====================================================
-    async reject(id: number, dto: RejectDto) {
+    async reject(id: number, userId: string, dto: RejectDto) {
         const submission = await this.prisma.submission.findUnique({
             where: { submission_id: id },
         });
@@ -223,7 +223,7 @@ export class SubmissionsService {
         // แจ้งสมาชิกทีมว่างานถูกขอแก้ไข
         await this.notificationsService.createForTeamMembers(
             rejected.team_id,
-            '', // system action
+            userId,
             'SUBMISSION_REJECTED',
             'งานถูกขอแก้ไข',
             `งาน "${event?.name ?? ''}" ต้องแก้ไข: ${dto.feedback || ''}`,

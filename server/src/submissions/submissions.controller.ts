@@ -73,8 +73,9 @@ export class SubmissionsController {
     @Patch(':id/reject')
     async reject(
         @Param('id', ParseIntPipe) id: number,
+        @CurrentUser('users_id') userId: string,
         @Body() dto: RejectDto,
     ) {
-        return this.submissionsService.reject(id, dto);
+        return this.submissionsService.reject(id, userId, dto);
     }
 }

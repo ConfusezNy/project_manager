@@ -328,24 +328,27 @@ export class ProjectsService {
             throw new BadRequestException('Can only approve/reject PENDING projects');
         }
 
-        await this.prisma.project.update({
-            where: { project_id: id },
-            data: { status: dto.status as any },
-        });
-
-        // ถ้าปฏิเสธ → ลบ ProjectAdvisor record ด้วย
-        // เพื่อให้โปรเจกต์หายจากลิสต์อาจารย์ และนักศึกษาสามารถขอใหม่ได้
-        if (dto.status === 'REJECTED') {
-            await this.prisma.projectAdvisor.deleteMany({
+        // ✅ ใช้ $transaction ให้ทุก DB operation เป็น atomic
+        const project = await this.prisma.$transaction(async (tx) => {
+            await tx.project.update({
                 where: { project_id: id },
+                data: { status: dto.status as any },
             });
-        }
 
-        // แจ้งสมาชิกทีมว่าโครงงานถูกอนุมัติ/ปฏิเสธ
-        const project = await this.prisma.project.findUnique({
-            where: { project_id: id },
-            include: { Team: true },
+            // ถ้าปฏิเสธ → ลบ ProjectAdvisor record ด้วย
+            if (dto.status === 'REJECTED') {
+                await tx.projectAdvisor.deleteMany({
+                    where: { project_id: id },
+                });
+            }
+
+            return tx.project.findUnique({
+                where: { project_id: id },
+                include: { Team: true },
+            });
         });
+
+        // แจ้งสมาชิกทีมว่าโครงงานถูกอนุมัติ/ปฏิเสธ (หลัง transaction สำเร็จ)
         if (project?.Team) {
             const eventType = dto.status === 'APPROVED' ? 'PROJECT_APPROVED' : 'PROJECT_REJECTED';
             const title = dto.status === 'APPROVED' ? 'โครงงานได้รับการอนุมัติ' : 'โครงงานถูกปฏิเสธ';
@@ -523,8 +526,11 @@ export class ProjectsService {
     // POST /projects/check-similarity — ตรวจสอบโครงงานซ้ำ
     // =====================================================
     async checkSimilarity(dto: { title: string; description?: string }) {
-        // 1. ดึงโครงงานทั้งหมด
+        // 1. ดึงเฉพาะ project ที่ APPROVED หรือ isArchived (ไม่ load ทั้ง DB)
         const allProjects = await this.prisma.project.findMany({
+            where: {
+                OR: [{ status: 'APPROVED' }, { isArchived: true }],
+            },
             select: {
                 project_id: true,
                 projectname: true,
@@ -534,6 +540,7 @@ export class ProjectsService {
                 status: true,
                 createdAt: true,
             },
+            take: 500, // ✅ จำกัดสูงสุด 500 records เพื่อป้องกัน memory spike
         });
 
         // 2. Extract  keywords จาก input

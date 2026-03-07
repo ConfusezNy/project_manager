@@ -248,6 +248,7 @@ model OtpCode {
   otp       String   @db.VarChar(6)
   expiresAt DateTime
   isUsed    Boolean  @default(false)
+  failCount Int      @default(0) // ✅ นับจำนวนครั้งที่ใส่ผิด — lock หลัง 5 ครั้ง
   createdAt DateTime @default(now())
 
   @@index([email])

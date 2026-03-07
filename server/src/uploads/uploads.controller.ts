@@ -107,6 +107,29 @@ export class UploadsController {
         )
         file: Express.Multer.File,
     ) {
+        // ✅ Validate MIME type — ห้ามอัปโหลดไฟล์อันตราย
+        const allowedTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/zip',
+            'application/x-rar-compressed',
+            'application/x-7z-compressed',
+            'text/plain',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ];
+        if (!allowedTypes.includes(file.mimetype)) {
+            throw new BadRequestException(
+                `ไม่รองรับไฟล์ประเภท ${file.mimetype} — รองรับ: PDF, Word, Excel, PowerPoint, รูปภาพ, ZIP, TXT`,
+            );
+        }
         return this.uploadsService.saveFile(file, 'attachments');
     }
 }

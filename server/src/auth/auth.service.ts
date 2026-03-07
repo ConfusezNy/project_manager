@@ -47,7 +47,18 @@ export class AuthService {
     }
 
 
-    // 2. ลบ OTP เก่าของ email นี้ที่ยังไม่ได้ใช้
+    // 2. ตรวจว่าขอ OTP บ่อยเกินไป (rate limit: max 5 requests / 5 min)
+    const recentCount = await this.prisma.otpCode.count({
+      where: {
+        email,
+        createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+      },
+    });
+    if (recentCount >= 5) {
+      throw new BadRequestException('ขอ OTP บ่อยเกินไป กรุณารอ 5 นาทีแล้วลองใหม่');
+    }
+
+    // 3. ลบ OTP เก่าของ email นี้ที่ยังไม่ได้ใช้
     await this.prisma.otpCode.deleteMany({
       where: { email, isUsed: false },
     });
@@ -142,6 +153,11 @@ export class AuthService {
       throw new UnauthorizedException('ไม่พบรหัส OTP กรุณาขอรหัสใหม่');
     }
 
+    // ✅ เช็คว่าถูก lock หรือไม่ (failCount >= 5)
+    if (record.failCount >= 5) {
+      throw new UnauthorizedException('รหัส OTP ถูก lock เนื่องจากใส่ผิดหลายครั้ง กรุณาขอรหัสใหม่');
+    }
+
     // 2. เช็คหมดอายุ
     if (record.expiresAt < new Date()) {
       throw new UnauthorizedException('รหัส OTP หมดอายุแล้ว กรุณาขอรหัสใหม่');
@@ -149,7 +165,16 @@ export class AuthService {
 
     // 3. เช็ค OTP ตรง
     if (record.otp !== otp) {
-      throw new UnauthorizedException('รหัส OTP ไม่ถูกต้อง');
+      // ✅ เพิ่ม failCount เมื่อ OTP ผิด
+      await this.prisma.otpCode.update({
+        where: { id: record.id },
+        data: { failCount: { increment: 1 } },
+      });
+      const remaining = 4 - record.failCount; // record.failCount ยังไม่บวก
+      if (remaining <= 0) {
+        throw new UnauthorizedException('รหัส OTP ไม่ถูกต้อง และถูก lock แล้ว กรุณาขอรหัสใหม่');
+      }
+      throw new UnauthorizedException(`รหัส OTP ไม่ถูกต้อง (เหลือ ${remaining} ครั้ง)`);
     }
 
     // 4. Mark ว่าใช้แล้ว

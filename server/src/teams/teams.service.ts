@@ -217,6 +217,11 @@ export class TeamsService {
             throw new NotFoundException('Invitation not found');
         }
 
+        // ✅ ตรวจสอบว่าเป็น TEAM_INVITE จริงก่อน join
+        if (notification.event_type !== 'TEAM_INVITE') {
+            throw new BadRequestException('Invalid invitation type');
+        }
+
         if (!notification.Team) {
             throw new NotFoundException('Team not found');
         }
@@ -393,12 +398,18 @@ export class TeamsService {
         teamId: number,
         memberUserId: string,
         currentUserId: string,
+        currentUserRole: string,
     ) {
+        // ✅ เฉพาะ Admin เท่านั้นที่ลบสมาชิกจากทีมได้
+        if (currentUserRole !== 'ADMIN') {
+            throw new ForbiddenException('Only Admin can remove team members');
+        }
+
         // เช็คว่า user เป็นสมาชิก
         const membership = await this.prisma.teammember.findFirst({
             where: { team_id: teamId, user_id: currentUserId },
         });
-        if (!membership) {
+        if (!membership && currentUserRole !== 'ADMIN') {
             throw new ForbiddenException('You are not a member of this team');
         }
 
