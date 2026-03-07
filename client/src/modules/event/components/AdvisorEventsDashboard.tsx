@@ -1,220 +1,174 @@
 "use client";
 
-// AdvisorEventsDashboard - View and manage submissions for each project
-import React, { useState, useEffect } from "react";
-import { useAuth } from "@/lib/auth-context";
-import { api } from "@/lib/api";
+import React, { useState } from "react";
 import {
-  FileText,
-  CheckCircle2,
-  XCircle,
-  Users,
-  Clock,
-  Calendar,
-  MessageSquare,
-  ChevronRight,
-  AlertCircle,
   Loader2,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  FileText,
+  Users,
+  CheckCircle,
+  XCircle,
+  X,
+  MessageSquare,
+  ExternalLink,
+  Lock,
 } from "lucide-react";
-import Button from "@/shared/components/Button";
+import { useAdvisorEvents } from "@/modules/event/hooks/useAdvisorEvents";
+import type { SubmissionWithEvent } from "@/modules/event/hooks/useStudentEvents";
 
-// Types
-interface TeamMember {
-  user: {
-    users_id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const formatThaiDate = (dateStr?: string) => {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear() + 543}`;
+};
+
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const styles: Record<string, string> = {
+    APPROVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    SUBMITTED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    NEEDS_REVISION: "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
+    PENDING: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400",
   };
-}
+  const labels: Record<string, string> = {
+    APPROVED: "อนุมัติแล้ว",
+    SUBMITTED: "รอตรวจ",
+    NEEDS_REVISION: "ต้องแก้ไข",
+    PENDING: "ยังไม่ส่ง",
+  };
+  return (
+    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${styles[status] || styles.PENDING}`}>
+      {labels[status] || status}
+    </span>
+  );
+};
 
-interface Section {
-  section_id: number;
-  section_code: string;
-}
+// ─── Advisor Doc Row ───────────────────────────────────────────────────────────
+// Style เหมือน DocRow ของ StudentEventsPage แต่เพิ่ม approve/reject
 
-interface Team {
-  team_id: number;
-  name: string;
-  groupNumber: string;
-  semester: string;
-  section: Section;
-  members: TeamMember[];
-}
+const AdvisorDocRow = ({
+  sub,
+  index,
+  onApprove,
+  onReject,
+}: {
+  sub: SubmissionWithEvent;
+  index: number;
+  onApprove: () => void;
+  onReject: () => void;
+}) => {
+  const isApproved = sub.status === "APPROVED";
+  const isSubmitted = sub.status === "SUBMITTED";
+  const isRevision = sub.status === "NEEDS_REVISION";
 
-interface AdvisorProject {
-  project_id: number;
-  projectname: string;
-  projectnameEng?: string;
-  status: string;
-  team: Team;
-}
+  return (
+    <div className={`flex items-center gap-4 px-6 py-5 border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors
+      ${isSubmitted ? "hover:bg-blue-50/40 dark:hover:bg-blue-900/10" : "hover:bg-gray-50/50 dark:hover:bg-gray-700/20"}`}
+    >
+      {/* Step number / check */}
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0
+        ${isApproved
+          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+          : "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
+        }`}
+      >
+        {isApproved ? <CheckCircle2 className="w-6 h-6" /> : index + 1}
+      </div>
 
-interface Event {
-  event_id: number;
-  name: string;
-  type: string;
-  dueDate: string;
-  order: number;
-}
+      {/* Event info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className={`text-base font-semibold ${isApproved ? "text-gray-400 line-through" : "text-gray-800 dark:text-gray-100"}`}>
+            {sub.Event?.name || "—"}
+          </p>
+          {isRevision && <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />}
+          {isSubmitted && (
+            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-full font-medium">
+              รอตรวจ
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 mt-0.5 text-sm text-gray-400 dark:text-gray-500 flex-wrap">
+          <span className="flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" />
+            ครบกำหนด: {formatThaiDate(sub.Event?.dueDate)}
+          </span>
+          {sub.submittedAt && (
+            <span>• ส่งเมื่อ: {formatThaiDate(sub.submittedAt)}</span>
+          )}
+        </div>
+        {isRevision && sub.feedback && (
+          <p className="text-sm text-rose-500 mt-1 italic">"{sub.feedback}"</p>
+        )}
+      </div>
 
-interface Submission {
-  submission_id: number;
-  event_id: number;
-  team_id: number;
-  status: "PENDING" | "SUBMITTED" | "NEEDS_REVISION" | "APPROVED";
-  submittedAt?: string;
-  file?: string;
-  feedback?: string;
-  Event: Event;
-}
+      {/* Status + file + actions */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <StatusBadge status={sub.status} />
 
-// Mock Data for now (will be replaced with API)
-const MOCK_SUBMISSIONS: Submission[] = [
-  {
-    submission_id: 1,
-    event_id: 1,
-    team_id: 1,
-    status: "APPROVED",
-    submittedAt: "2024-08-14T10:00:00Z",
-    Event: {
-      event_id: 1,
-      name: "สอบหัวข้อโครงงาน",
-      type: "DOCUMENT",
-      dueDate: "2024-08-15",
-      order: 1,
-    },
-  },
-  {
-    submission_id: 2,
-    event_id: 2,
-    team_id: 1,
-    status: "SUBMITTED",
-    submittedAt: "2024-09-09T15:00:00Z",
-    Event: {
-      event_id: 2,
-      name: "รายงานความก้าวหน้า #1",
-      type: "PROGRESS_REPORT",
-      dueDate: "2024-09-10",
-      order: 2,
-    },
-  },
-  {
-    submission_id: 3,
-    event_id: 3,
-    team_id: 1,
-    status: "PENDING",
-    Event: {
-      event_id: 3,
-      name: "รายงานความก้าวหน้า #2",
-      type: "PROGRESS_REPORT",
-      dueDate: "2024-10-15",
-      order: 3,
-    },
-  },
-];
+        {sub.file && (
+          <a
+            href={sub.file}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            title="ดูไฟล์"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        )}
+
+        {isSubmitted && (
+          <>
+            <button
+              onClick={onApprove}
+              className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition"
+              title="อนุมัติ"
+            >
+              <CheckCircle className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onReject}
+              className="p-2 bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition"
+              title="ส่งคืนแก้ไข"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export const AdvisorEventsDashboard: React.FC = () => {
-  const { user, status } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [projects, setProjects] = useState<AdvisorProject[]>([]);
-  const [selectedProject, setSelectedProject] = useState<AdvisorProject | null>(
-    null,
-  );
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [selectedSubmission, setSelectedSubmission] =
-    useState<Submission | null>(null);
-  const [feedbackText, setFeedbackText] = useState("");
+  const { projectGroups, loading, error, refresh } = useAdvisorEvents();
+
+  // Project tab selection
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+
+  // Reject modal
+  const [rejectTarget, setRejectTarget] = useState<number | null>(null);
+  const [rejectFeedback, setRejectFeedback] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Fetch projects
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (status !== "authenticated") return;
-      try {
-        const data = await api.get<any[]>("/advisors/my-projects");
-        if (Array.isArray(data)) {
-          setProjects(data);
-          if (data.length > 0) setSelectedProject(data[0]);
-        }
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjects();
-  }, [status]);
-
-  // Fetch submissions when project is selected
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      if (!selectedProject) return;
-      try {
-        const data = await api.get<Submission[]>(
-          `/submissions?team_id=${selectedProject.team.team_id}`,
-        );
-        setSubmissions(data && data.length > 0 ? data : MOCK_SUBMISSIONS);
-      } catch {
-        setSubmissions(MOCK_SUBMISSIONS);
-      }
-    };
-    fetchSubmissions();
-  }, [selectedProject]);
-
-  const handleApprove = async (submission: Submission) => {
-    setActionLoading(true);
-    try {
-      await api.post(`/submissions/${submission.submission_id}/approve`, {});
-      setSubmissions((prev) =>
-        prev.map((s) =>
-          s.submission_id === submission.submission_id
-            ? { ...s, status: "APPROVED" }
-            : s,
-        ),
-      );
-      setSelectedSubmission(null);
-    } catch (error) {
-      console.error("Error approving:", error);
-    } finally {
-      setActionLoading(false);
-    }
+  // Toast
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const showToast = (type: "success" | "error", msg: string) => {
+    setToast({ type, message: msg });
+    setTimeout(() => setToast(null), 4000);
   };
 
-  const handleReject = async (submission: Submission) => {
-    setActionLoading(true);
-    try {
-      await api.post(`/submissions/${submission.submission_id}/reject`, {
-        feedback: feedbackText,
-      });
-      setSubmissions((prev) =>
-        prev.map((s) =>
-          s.submission_id === submission.submission_id
-            ? { ...s, status: "NEEDS_REVISION", feedback: feedbackText }
-            : s,
-        ),
-      );
-      setSelectedSubmission(null);
-      setFeedbackText("");
-    } catch (error) {
-      console.error("Error rejecting:", error);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear() + 543}`;
-  };
-
-  const getProgress = () => {
-    if (submissions.length === 0) return 0;
-    const approved = submissions.filter((s) => s.status === "APPROVED").length;
-    return Math.round((approved / submissions.length) * 100);
-  };
-
-  if (status === "loading" || loading) {
+  // ── Loading ──
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -222,355 +176,210 @@ export const AdvisorEventsDashboard: React.FC = () => {
     );
   }
 
+  // ── Error / No projects ──
+  if (error || projectGroups.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-6">
+        <div className="text-center max-w-md">
+          <Lock size={64} className="mx-auto text-gray-300 dark:text-gray-600 mb-6" />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            {error || "ยังไม่มีโครงงานที่ดูแล"}
+          </h2>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Resolve selected project ──
+  const group = projectGroups.find((g) => g.project_id === selectedProjectId) ?? projectGroups[0];
+
+  // Filter เฉพาะ requireFile (บทที่/เอกสาร) — เหมือน StudentEventsPage
+  const docSubmissions = group.submissions.filter((s) => s.Event?.requireFile === true);
+  const approvedCount = docSubmissions.filter((s) => s.status === "APPROVED").length;
+  const progress = docSubmissions.length > 0 ? Math.round((approvedCount / docSubmissions.length) * 100) : 0;
+
+  // งานถัดไปที่รอตรวจ
+  const nextPending = docSubmissions.find((s) => s.status === "SUBMITTED");
+
+  // ── Actions ──
+  const handleApprove = async (submissionId: number) => {
+    const { api } = await import("@/lib/api");
+    setActionLoading(true);
+    try {
+      await api.patch(`/submissions/${submissionId}/approve`, {});
+      await refresh();
+      showToast("success", "อนุมัติสำเร็จ!");
+    } catch {
+      showToast("error", "เกิดข้อผิดพลาด");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectTarget) return;
+    const { api } = await import("@/lib/api");
+    setActionLoading(true);
+    try {
+      await api.patch(`/submissions/${rejectTarget}/reject`, { feedback: rejectFeedback });
+      await refresh();
+      setRejectTarget(null);
+      setRejectFeedback("");
+      showToast("success", "ส่งคืนเรียบร้อย");
+    } catch {
+      showToast("error", "เกิดข้อผิดพลาด");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
-    <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8">
+
+      {/* ── Header ── */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          ตรวจสอบเอกสาร
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">ตรวจสอบเอกสาร</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-base">
           ตรวจและอนุมัติเอกสารของโครงงานที่ดูแล
         </p>
       </div>
 
-      {projects.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Project List */}
-          <div className="lg:col-span-1 space-y-3">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              โครงงานที่ดูแล ({projects.length})
-            </h2>
-            <div className="space-y-3">
-              {projects.map((project) => (
-                <ProjectListItem
-                  key={project.project_id}
-                  project={project}
-                  isSelected={
-                    selectedProject?.project_id === project.project_id
-                  }
-                  onSelect={() => setSelectedProject(project)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Right: Submissions List */}
-          <div className="lg:col-span-2 space-y-6">
-            {selectedProject ? (
-              <>
-                {/* Project Info Card */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                        {selectedProject.projectname}
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        กลุ่ม {selectedProject.team.groupNumber} •{" "}
-                        {selectedProject.team.section.section_code}
-                      </p>
-                    </div>
-                    <ProgressBadge progress={getProgress()} />
-                  </div>
-                </div>
-
-                {/* Submissions List */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <FileText size={20} className="text-blue-500" />
-                    รายการเอกสาร ({submissions.length})
-                  </h3>
-
-                  <div className="space-y-3">
-                    {submissions
-                      .sort((a, b) => a.Event.order - b.Event.order)
-                      .map((submission) => (
-                        <SubmissionItem
-                          key={submission.submission_id}
-                          submission={submission}
-                          onClick={() => setSelectedSubmission(submission)}
-                          formatDate={formatDate}
-                        />
-                      ))}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-12 text-center">
-                <p className="text-gray-500 dark:text-gray-400">
-                  เลือกโครงงานเพื่อดูเอกสาร
-                </p>
-              </div>
-            )}
-          </div>
+      {/* ── Project Tabs (ถ้ามีหลาย project) ── */}
+      {projectGroups.length > 1 && (
+        <div className="flex gap-2 flex-wrap mb-6">
+          {projectGroups.map((g) => (
+            <button
+              key={g.project_id}
+              onClick={() => setSelectedProjectId(g.project_id)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${group.project_id === g.project_id
+                  ? "bg-blue-600 text-white shadow"
+                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                }`}
+            >
+              กลุ่ม {g.groupNumber}
+              <span className="ml-1.5 text-xs opacity-70">{g.section?.section_code}</span>
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Submission Detail Modal */}
-      {selectedSubmission && (
-        <SubmissionModal
-          submission={selectedSubmission}
-          onClose={() => setSelectedSubmission(null)}
-          onApprove={() => handleApprove(selectedSubmission)}
-          onReject={() => handleReject(selectedSubmission)}
-          feedbackText={feedbackText}
-          setFeedbackText={setFeedbackText}
-          actionLoading={actionLoading}
-          formatDate={formatDate}
-        />
-      )}
-    </div>
-  );
-};
+      {/* ── Summary Row ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
-// Sub-components
-const EmptyState = () => (
-  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-12 text-center">
-    <FileText
-      size={64}
-      className="mx-auto text-gray-300 dark:text-gray-600 mb-4"
-    />
-    <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-      ยังไม่มีโครงงาน
-    </h3>
-    <p className="text-gray-500 dark:text-gray-500">
-      คุณยังไม่มีโครงงานที่ต้องดูแล
-    </p>
-  </div>
-);
-
-const ProjectListItem: React.FC<{
-  project: AdvisorProject;
-  isSelected: boolean;
-  onSelect: () => void;
-}> = ({ project, isSelected, onSelect }) => (
-  <button
-    onClick={onSelect}
-    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${isSelected
-      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300"
-      }`}
-  >
-    <h3 className="font-semibold text-gray-900 dark:text-white text-base line-clamp-2 mb-2">
-      {project.projectname}
-    </h3>
-    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-      <Users size={14} />
-      <span>กลุ่ม {project.team.groupNumber}</span>
-      <span>•</span>
-      <span>{project.team.section.section_code}</span>
-    </div>
-  </button>
-);
-
-const ProgressBadge: React.FC<{ progress: number }> = ({ progress }) => {
-  const color =
-    progress >= 80
-      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-      : progress >= 50
-        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-
-  return (
-    <span className={`px-3 py-1 rounded-full text-sm font-bold ${color}`}>
-      {progress}%
-    </span>
-  );
-};
-
-const SubmissionItem: React.FC<{
-  submission: Submission;
-  onClick: () => void;
-  formatDate: (d: string) => string;
-}> = ({ submission, onClick, formatDate }) => {
-  const statusConfig: Record<
-    string,
-    { label: string; color: string; icon: React.ReactNode }
-  > = {
-    APPROVED: {
-      label: "อนุมัติแล้ว",
-      color:
-        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      icon: <CheckCircle2 size={16} />,
-    },
-    SUBMITTED: {
-      label: "รอตรวจ",
-      color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-      icon: <Clock size={16} />,
-    },
-    NEEDS_REVISION: {
-      label: "ต้องแก้ไข",
-      color: "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
-      icon: <AlertCircle size={16} />,
-    },
-    PENDING: {
-      label: "ยังไม่ส่ง",
-      color: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
-      icon: <Clock size={16} />,
-    },
-  };
-
-  const config = statusConfig[submission.status];
-
-  return (
-    <button
-      onClick={onClick}
-      className="w-full text-left p-4 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all flex items-center justify-between group"
-    >
-      <div className="flex items-center gap-4">
-        <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${submission.status === "APPROVED"
-            ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
-            : "bg-gray-200 dark:bg-gray-600 text-gray-500"
-            }`}
-        >
-          {submission.status === "APPROVED" ? (
-            <CheckCircle2 size={20} />
-          ) : (
-            submission.Event.order
-          )}
-        </div>
-        <div>
-          <p className="font-medium text-gray-900 dark:text-white">
-            {submission.Event.name}
-          </p>
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-            <Calendar size={12} />
-            <span>กำหนด: {formatDate(submission.Event.dueDate)}</span>
-            {submission.submittedAt && (
-              <>
-                <span>•</span>
-                <span>ส่งเมื่อ: {formatDate(submission.submittedAt)}</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <span
-          className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
-        >
-          {config.icon} {config.label}
-        </span>
-        <ChevronRight
-          size={20}
-          className="text-gray-400 group-hover:translate-x-1 transition-transform"
-        />
-      </div>
-    </button>
-  );
-};
-
-const SubmissionModal: React.FC<{
-  submission: Submission;
-  onClose: () => void;
-  onApprove: () => void;
-  onReject: () => void;
-  feedbackText: string;
-  setFeedbackText: (v: string) => void;
-  actionLoading: boolean;
-  formatDate: (d: string) => string;
-}> = ({
-  submission,
-  onClose,
-  onApprove,
-  onReject,
-  feedbackText,
-  setFeedbackText,
-  actionLoading,
-  formatDate,
-}) => (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            {submission.Event.name}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            กำหนด: {formatDate(submission.Event.dueDate)}
-          </p>
-        </div>
-
-        <div className="p-6 space-y-4">
-          {submission.file ? (
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 flex items-center gap-3">
-              <FileText className="text-blue-600" />
-              <div>
-                <p className="font-medium text-blue-900 dark:text-blue-200">
-                  ไฟล์ที่ส่ง
-                </p>
-                <p className="text-sm text-blue-600 dark:text-blue-400">
-                  {submission.file}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center text-gray-500">
-              ยังไม่มีไฟล์ที่ส่ง
-            </div>
-          )}
-
-          {submission.status === "SUBMITTED" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <MessageSquare size={16} className="inline mr-2" />
-                ข้อเสนอแนะ (สำหรับกรณีขอแก้ไข)
-              </label>
-              <textarea
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                placeholder="กรอกข้อเสนอแนะสำหรับนักศึกษา..."
-                className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-                rows={3}
+        {/* Progress Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 flex flex-col justify-between">
+          <p className="text-sm font-medium text-gray-400 dark:text-gray-500 mb-3">ความคืบหน้า</p>
+          <div>
+            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+              {progress}<span className="text-xl text-gray-400">%</span>
+            </p>
+            <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full mt-3 overflow-hidden">
+              <div
+                className="h-2.5 rounded-full bg-emerald-500 transition-all duration-700"
+                style={{ width: `${progress}%` }}
               />
             </div>
-          )}
-
-          {submission.feedback && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-100 dark:border-rose-800">
-              <p className="text-xs font-medium text-rose-500 mb-1">
-                Feedback ล่าสุด:
-              </p>
-              <p className="text-sm text-rose-700 dark:text-rose-300">
-                {submission.feedback}
-              </p>
-            </div>
-          )}
+            <p className="text-sm text-gray-400 mt-2">{approvedCount} / {docSubmissions.length} อนุมัติแล้ว</p>
+          </div>
         </div>
 
-        <div className="p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 font-medium"
-          >
-            ปิด
-          </button>
-          {submission.status === "SUBMITTED" && (
-            <>
-              <Button
-                variant="secondary"
-                onClick={onReject}
-                disabled={actionLoading}
-                className="flex-1 !bg-rose-50 dark:!bg-rose-900/20 !text-rose-600 flex items-center justify-center gap-2"
-              >
-                <XCircle size={18} /> ขอแก้ไข
-              </Button>
-              <Button
-                variant="primary"
-                onClick={onApprove}
-                disabled={actionLoading}
-                className="flex-1 flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 size={18} /> อนุมัติ
-              </Button>
-            </>
-          )}
+        {/* Next pending card (gradient) — เหมือน student */}
+        <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-10">
+            <Users className="w-28 h-28" />
+          </div>
+          <div className="relative z-10">
+            <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-medium border border-white/10">
+              {group.section?.section_code} • กลุ่ม {group.groupNumber}
+            </span>
+            <h2 className="text-2xl font-bold mt-3 mb-1 leading-tight">
+              {nextPending ? nextPending.Event?.name : group.projectname}
+            </h2>
+            {nextPending ? (
+              <p className="text-blue-100 flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4" />
+                ครบกำหนด: {formatThaiDate(nextPending.Event?.dueDate)}
+              </p>
+            ) : (
+              <p className="text-blue-100 text-sm">ตรวจงานครบทุกรายการแล้ว 🎉</p>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* ── Document List ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+          <FileText className="w-5 h-5 text-blue-500" />
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">รายการเอกสาร</h2>
+          <span className="ml-auto text-sm text-gray-400">{docSubmissions.length} รายการ</span>
+        </div>
+
+        {docSubmissions.length === 0 ? (
+          <div className="py-16 text-center text-gray-400 dark:text-gray-500">
+            <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p className="text-base">ยังไม่มีรายการเอกสาร</p>
+          </div>
+        ) : (
+          docSubmissions.map((sub, i) => (
+            <AdvisorDocRow
+              key={sub.submission_id}
+              sub={sub}
+              index={i}
+              onApprove={() => handleApprove(sub.submission_id)}
+              onReject={() => { setRejectTarget(sub.submission_id); setRejectFeedback(""); }}
+            />
+          ))
+        )}
+      </div>
+
+      {/* ── Reject Modal ── */}
+      {rejectTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-rose-500" />
+              ส่งคืนแก้ไข
+            </h3>
+            <textarea
+              value={rejectFeedback}
+              onChange={(e) => setRejectFeedback(e.target.value)}
+              placeholder="ระบุสิ่งที่ต้องแก้ไข..."
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none h-32 text-sm"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => { setRejectTarget(null); setRejectFeedback(""); }}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleRejectConfirm}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium flex items-center justify-center gap-2"
+              >
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "ส่งคืน"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium
+          ${toast.type === "success" ? "bg-emerald-500" : "bg-red-500"}`}
+        >
+          {toast.type === "success"
+            ? <CheckCircle className="w-5 h-5 shrink-0" />
+            : <XCircle className="w-5 h-5 shrink-0" />}
+          {toast.message}
+        </div>
+      )}
     </div>
   );
+};
 
 export default AdvisorEventsDashboard;

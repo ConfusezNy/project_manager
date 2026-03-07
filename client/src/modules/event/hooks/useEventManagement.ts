@@ -22,12 +22,11 @@ export interface Section {
 export interface Event {
   event_id: number;
   name: string;
-  type: string;
   description?: string;
-  order: number;
   dueDate: string;
   section_id: number;
   createdAt: string;
+  requireFile: boolean;
   stats?: {
     totalTeams: number;
     submitted: number;
@@ -48,18 +47,16 @@ export interface Submission {
   approvedAt?: string;
   Team?: {
     team_id: number;
-    name: string;
     groupNumber: string;
   };
 }
 
 export interface CreateEventData {
   name: string;
-  type: string;
   description?: string;
-  order: number;
   dueDate: string;
   section_id: number;
+  requireFile?: boolean;
   createSubmissionsForAllTeams?: boolean;
 }
 
@@ -102,7 +99,12 @@ export function useEventManagement() {
       const data = await api.get(
         `/events?section_id=${selectedSection.section_id}`,
       );
-      setEvents(data);
+      // Sort by dueDate ascending (ใกล้สุดก่อน)
+      const sorted = [...data].sort(
+        (a: Event, b: Event) =>
+          new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
+      );
+      setEvents(sorted);
     } catch (err) {
       console.error("Error fetching events:", err);
       setError("ไม่สามารถดึงข้อมูล Event ได้");

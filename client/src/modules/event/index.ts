@@ -15,8 +15,7 @@ export { CreateEventModal } from "./components/CreateEventModal";
 export { EventDetailDrawer } from "./components/EventDetailDrawer";
 export {
   StatusBadge,
-  EventTypeBadge,
-  EVENT_TYPES,
+  RequireFileBadge,
 } from "./components/StatusBadge";
 
 // Hooks
@@ -30,14 +29,12 @@ export { eventService } from "./services/eventService";
 export type {
   Event,
   Submission,
-  EventType,
   SubmissionStatus,
   CreateEventInput,
   UpdateEventInput,
 } from "./types/event.types";
 
 export {
-  EVENT_TYPE_LABELS,
   SUBMISSION_STATUS_LABELS,
   SUBMISSION_STATUS_COLORS,
 } from "./types/event.types";

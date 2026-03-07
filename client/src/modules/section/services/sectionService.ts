@@ -140,12 +140,20 @@ export const sectionService = {
     return api.get<Enrollment[]>(`/sections/${sectionId}/enrollments`);
   },
 
-  // Get candidates for enrollment
+  // Get candidates for enrollment (pattern-matched by section code)
   async getCandidates(sectionId: number): Promise<Candidate[]> {
     const data = await api.get<{ candidates: Candidate[] }>(
       `/sections/${sectionId}/candidates`,
     );
     return data?.candidates || [];
+  },
+
+  // Search students by name/ID for enrollment (supports repeating students)
+  async searchStudents(sectionId: number, q: string): Promise<Candidate[]> {
+    if (!q || q.trim().length < 2) return [];
+    return api.get<Candidate[]>(
+      `/sections/${sectionId}/search-students?q=${encodeURIComponent(q.trim())}`,
+    );
   },
 
   // Get student groups for section code picker

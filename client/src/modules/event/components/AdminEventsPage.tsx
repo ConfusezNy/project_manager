@@ -21,7 +21,6 @@ export const AdminEventsPage: React.FC = () => {
     setSelectedSection,
     setIsCreateModalOpen,
     setViewingEvent,
-    setEditingEvent,
     createEvent,
     deleteEvent,
     approveSubmission,
@@ -70,9 +69,8 @@ export const AdminEventsPage: React.FC = () => {
             <button
               onClick={() => {
                 const rows = events.map((evt) => ({
-                  order: evt.order,
                   name: evt.name,
-                  type: evt.type,
+                  requireFile: evt.requireFile ? "ต้องอัพโหลด" : "ไม่ต้องอัพโหลด",
                   dueDate: new Date(evt.dueDate).toLocaleDateString("th-TH"),
                   totalTeams: evt.stats?.totalTeams || 0,
                   submitted: evt.stats?.submitted || 0,
@@ -83,9 +81,8 @@ export const AdminEventsPage: React.FC = () => {
                 exportToCSV(
                   rows,
                   [
-                    { key: "order", label: "ลำดับ" },
                     { key: "name", label: "ชื่อกำหนดการ" },
-                    { key: "type", label: "ประเภท" },
+                    { key: "requireFile", label: "ต้องอัพโหลด" },
                     { key: "dueDate", label: "กำหนดส่ง" },
                     { key: "totalTeams", label: "ทีมทั้งหมด" },
                     { key: "submitted", label: "ส่งแล้ว" },
@@ -169,7 +166,6 @@ export const AdminEventsPage: React.FC = () => {
         <EventTable
           events={events}
           onView={setViewingEvent}
-          onEdit={setEditingEvent}
           onDelete={deleteEvent}
           onApprove={approveSubmission}
           onReject={handleRejectClick}
@@ -184,7 +180,6 @@ export const AdminEventsPage: React.FC = () => {
         onSubmit={createEvent}
         sectionId={selectedSection?.section_id || 0}
         teamCount={teamCount}
-        nextOrder={nextOrder}
       />
 
       {/* Detail Drawer */}

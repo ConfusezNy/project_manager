@@ -4,6 +4,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
+import { useNotification } from "@/lib/notification-context";
 import {
   Home,
   Search,
@@ -28,6 +29,7 @@ interface ProjectData {
 
 const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   const { status } = useAuth();
+  const { unreadCount } = useNotification();
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(false);
   const [isProjectExpanded, setIsProjectExpanded] = useState(true);
@@ -98,7 +100,7 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   `;
 
   const iconClass =
-    "min-w-[24px] min-h-[24px] flex justify-center items-center";
+    "min-w-[24px] min-h-[24px] flex justify-center items-center relative";
 
   const smallIconClass =
     "min-w-[18px] min-h-[18px] flex justify-center items-center";
@@ -114,8 +116,18 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
           <Link href="/dashboard" className={linkBaseClass}>
             <div className={iconClass}>
               <Home size={24} />
+              {!isSidebarOpen && unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-[3px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </div>
             <span className={contentClass}>Dashboard</span>
+            {isSidebarOpen && unreadCount > 0 && (
+              <span className="ml-auto flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </Link>
 
           <Link href="/Search" className={linkBaseClass}>

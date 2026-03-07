@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import type { Event, Submission, SubmissionStatus } from "../types/event.types";
 import {
-  EVENT_TYPE_LABELS,
   SUBMISSION_STATUS_LABELS,
   SUBMISSION_STATUS_COLORS,
 } from "../types/event.types";
@@ -71,17 +70,19 @@ export const EventCard: React.FC<EventCardProps> = ({
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">
             {event.name}
           </h3>
-          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-            {EVENT_TYPE_LABELS[event.type]}
-          </span>
+          {event.requireFile && (
+            <span className="inline-flex items-center mt-1 gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+              <FileText size={10} />
+              ต้องอัพโหลดไฟล์
+            </span>
+          )}
         </div>
       </div>
 
       {/* Deadline */}
       <div
-        className={`flex items-center gap-2 text-sm mb-3 ${
-          isOverdue ? "text-red-500" : "text-gray-500 dark:text-gray-400"
-        }`}
+        className={`flex items-center gap-2 text-sm mb-3 ${isOverdue ? "text-red-500" : "text-gray-500 dark:text-gray-400"
+          }`}
       >
         <Calendar size={14} />
         <span>กำหนดส่ง: {formatDate(event.dueDate)}</span>
@@ -99,7 +100,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         </span>
 
         {/* Action Button */}
-        {isStudent && (status === "PENDING" || status === "NEEDS_REVISION") && (
+        {isStudent && event.requireFile && (status === "PENDING" || status === "NEEDS_REVISION") && (
           <button
             onClick={(e) => {
               e.stopPropagation();

@@ -44,7 +44,7 @@ model Grade {
 model Notification {
   notification_id                         Int      @id @default(autoincrement())
   user_id                                 String   @db.VarChar(13)
-  actor_user_id                           String   @db.VarChar(13)
+  actor_user_id                           String?  @db.VarChar(13)
   title                                   String
   message                                 String
   link                                    String?
@@ -54,7 +54,7 @@ model Notification {
   team_id                                 Int?
   task_id                                 Int?
   project_id                              Int?
-  Users_Notification_actor_user_idToUsers Users    @relation("Notification_actor_user_idToUsers", fields: [actor_user_id], references: [users_id])
+  Users_Notification_actor_user_idToUsers Users?   @relation("Notification_actor_user_idToUsers", fields: [actor_user_id], references: [users_id])
   Project                                 Project? @relation(fields: [project_id], references: [project_id])
   Task                                    Task?    @relation(fields: [task_id], references: [task_id])
   Team                                    Team?    @relation(fields: [team_id], references: [team_id])
@@ -153,7 +153,6 @@ model Team {
   createdAt    DateTime       @default(now())
   description  String?
   groupNumber  String         @unique
-  name         String
   semester     String
   status       String         @default("รออนุมัติหัวข้อ")
   topicThai    String?
@@ -252,12 +251,11 @@ enum ProjectStatus {
 model Event {
   event_id    Int          @id @default(autoincrement())
   name        String       @db.VarChar(100)
-  type        EventType
   description String?
-  order       Int
   dueDate     DateTime
   section_id  Int
   createdAt   DateTime     @default(now())
+  requireFile Boolean      @default(false)
 
   Section     Section      @relation(fields: [section_id], references: [section_id])
   Submission  Submission[]
@@ -282,17 +280,7 @@ model Submission {
   @@unique([event_id, team_id])
 }
 
-enum EventType {
-  PROGRESS_REPORT
-  DOCUMENT
-  POSTER
-  EXAM
-  FINAL_SUBMISSION
-  SEMINAR
-  PRESENTATION
-  MEETING
-  PROPOSAL
-}
+
 
 enum SubmissionStatus {
   PENDING

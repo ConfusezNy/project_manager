@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { api } from "@/lib/api";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+function getImageSrc(url?: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  return `${API_URL}${url}`;
+}
+
+
 interface AdvisorData {
   users_id: string; // API returns string
   titles?: string;
@@ -150,7 +159,7 @@ export default function AdvisorSelectionModal({
                     <div className="relative w-24 h-24 rounded-full overflow-hidden bg-slate-800">
                       {advisor.profilePicture ? (
                         <Image
-                          src={advisor.profilePicture}
+                          src={getImageSrc(advisor.profilePicture)!}
                           alt={`${advisor.firstname} ${advisor.lastname}`}
                           fill
                           className="object-cover"

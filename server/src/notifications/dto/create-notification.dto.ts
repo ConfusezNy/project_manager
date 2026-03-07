@@ -4,8 +4,9 @@ export class CreateNotificationDto {
     @IsString()
     userId: string;
 
+    @IsOptional()
     @IsString()
-    actorUserId: string;
+    actorUserId?: string;
 
     @IsString()
     eventType: string;

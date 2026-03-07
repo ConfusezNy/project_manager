@@ -366,7 +366,6 @@ export class SectionsService {
 
         const mapTeam = (team: ResolvedTeam) => ({
             team_id: team.team_id,
-            name: team.name,
             groupNumber: team.groupNumber,
             status: team.status,
             memberCount: team.Teammember.length,
@@ -654,7 +653,6 @@ export class SectionsService {
                 // 5a. สร้างทีมใหม่ใน PROJECT section
                 const newTeam = await tx.team.create({
                     data: {
-                        name: team.name,
                         // groupNumber ต้อง @unique — ต่อท้าย -P เพื่อไม่ซ้ำ
                         groupNumber: `${team.groupNumber}-P`,
                         semester: `${newTerm.semester}/${newTerm.academicYear}`,
@@ -746,6 +744,47 @@ export class SectionsService {
                 teams_cloned: clonedTeams,
                 teams_total: oldSection.Team.length,
             };
+        });
+    }
+
+    // =====================================================
+    // GET /sections/:id/search-students?q=
+    // ค้นหา student โดยชื่อ/รหัส ที่ยังไม่ได้อยู่ใน section นี้
+    // รองรับนักศึกษาซ้ำชั้นที่ไม่ match section_code pattern
+    // =====================================================
+    async searchStudents(sectionId: number, query: string) {
+        if (!query || query.trim().length < 2) {
+            return [];
+        }
+
+        const q = query.trim();
+
+        // ดึง user_id ที่ enroll แล้ว
+        const enrolled = await this.prisma.section_Enrollment.findMany({
+            where: { section_id: sectionId },
+            select: { users_id: true },
+        });
+        const enrolledIds = enrolled.map((e) => e.users_id);
+
+        return this.prisma.users.findMany({
+            where: {
+                role: 'STUDENT',
+                users_id: { notIn: enrolledIds.length > 0 ? enrolledIds : undefined },
+                OR: [
+                    { users_id: { contains: q, mode: 'insensitive' } },
+                    { firstname: { contains: q, mode: 'insensitive' } },
+                    { lastname: { contains: q, mode: 'insensitive' } },
+                    { email: { contains: q, mode: 'insensitive' } },
+                ],
+            },
+            select: {
+                users_id: true,
+                firstname: true,
+                lastname: true,
+                email: true,
+            },
+            take: 30,
+            orderBy: { users_id: 'asc' },
         });
     }
 }

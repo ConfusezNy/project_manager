@@ -188,33 +188,44 @@ export function useAdminDashboard() {
       allDeadlines.sort((a, b) => a.daysLeft - b.daysLeft);
       setUpcomingDeadlines(allDeadlines.slice(0, 5));
 
-      // Mock recent activities (can be replaced with real API later)
-      setRecentActivities([
-        {
-          id: 1,
-          type: "submission",
-          description: "Team Alpha ส่งรายงาน Progress 1",
-          time: "2 ชม.ที่แล้ว",
-        },
-        {
-          id: 2,
-          type: "approval",
-          description: "อ.สมชาย อนุมัติรายงาน Team Beta",
-          time: "3 ชม.ที่แล้ว",
-        },
-        {
-          id: 3,
-          type: "team_created",
-          description: "สร้างทีมใหม่: Team Gamma",
-          time: "เมื่อวาน",
-        },
-        {
-          id: 4,
-          type: "user_signup",
-          description: "ผู้ใช้ใหม่: นายสมหมาย ใจดี",
-          time: "2 วันที่แล้ว",
-        },
-      ]);
+      // Recent activities: ดึง submissions ล่าสุดจาก API (Admin เห็นทั้งหมด)
+      try {
+        const recentSubs = await api.get<any[]>("/submissions");
+        const sorted = (recentSubs || [])
+          .filter((s) => s.status === "SUBMITTED" || s.status === "APPROVED" || s.status === "NEEDS_REVISION")
+          .sort((a, b) => new Date(b.submittedAt || b.createdAt).getTime() - new Date(a.submittedAt || a.createdAt).getTime())
+          .slice(0, 5);
+
+        const activities: RecentActivity[] = sorted.map((sub, i) => {
+          const teamLabel = sub.Team?.groupNumber ? `กลุ่ม ${sub.Team.groupNumber}` : `ทีม ${sub.team_id}`;
+          const eventLabel = sub.Event?.name || "งาน";
+          let description = "";
+          let type: RecentActivity["type"] = "submission";
+
+          if (sub.status === "APPROVED") {
+            type = "approval";
+            description = `ผ่านแล้ว: ${teamLabel} — ${eventLabel}`;
+          } else if (sub.status === "SUBMITTED") {
+            type = "submission";
+            description = `${teamLabel} ส่ง ${eventLabel}`;
+          } else {
+            type = "submission";
+            description = `ส่งคืนแก้ไข: ${teamLabel} — ${eventLabel}`;
+          }
+
+          const timeAgo = sub.submittedAt || sub.createdAt;
+          const diffMs = Date.now() - new Date(timeAgo).getTime();
+          const diffH = Math.floor(diffMs / 3600000);
+          const diffD = Math.floor(diffMs / 86400000);
+          const timeLabel = diffD > 0 ? `${diffD} วันที่แล้ว` : diffH > 0 ? `${diffH} ชม.ที่แล้ว` : "เมื่อกี้";
+
+          return { id: sub.submission_id ?? i, type, description, time: timeLabel };
+        });
+        setRecentActivities(activities);
+      } catch {
+        setRecentActivities([]);
+      }
+
 
       setLoading(false);
     } catch (err: any) {

@@ -14,35 +14,36 @@ import {
 interface TaskStatusChartProps {
   todoCount: number;
   inProgressCount: number;
+  inReviewCount?: number;
   doneCount: number;
 }
 
 const STATUS_COLORS = {
-  done: "#22c55e", // green
-  inProgress: "#3b82f6", // blue
-  todo: "#f59e0b", // orange
+  done: "#22c55e",
+  inProgress: "#3b82f6",
+  inReview: "#8b5cf6",
+  todo: "#f59e0b",
 };
 
 const STATUS_LABELS = {
   done: "เสร็จสิ้น",
   inProgress: "กำลังดำเนินการ",
+  inReview: "รอ Review",
   todo: "ต้องทำ",
 };
 
 export const TaskStatusChart: React.FC<TaskStatusChartProps> = ({
   todoCount,
   inProgressCount,
+  inReviewCount = 0,
   doneCount,
 }) => {
-  const total = todoCount + inProgressCount + doneCount;
+  const total = todoCount + inProgressCount + inReviewCount + doneCount;
 
   const data = [
     { name: STATUS_LABELS.done, value: doneCount, color: STATUS_COLORS.done },
-    {
-      name: STATUS_LABELS.inProgress,
-      value: inProgressCount,
-      color: STATUS_COLORS.inProgress,
-    },
+    { name: STATUS_LABELS.inProgress, value: inProgressCount, color: STATUS_COLORS.inProgress },
+    { name: STATUS_LABELS.inReview, value: inReviewCount, color: STATUS_COLORS.inReview },
     { name: STATUS_LABELS.todo, value: todoCount, color: STATUS_COLORS.todo },
   ].filter((item) => item.value > 0);
 

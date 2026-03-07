@@ -10,7 +10,6 @@ import { SubmitDto, FeedbackDto, RejectDto } from './dto/submission.dto';
 
 /**
  * Submissions Service
- * ย้ายมาจาก: 4 route files ใน client/src/app/api/submissions/
  *
  * 📌 4 endpoints:
  * - findAll(query, user)         → GET /submissions
@@ -27,9 +26,6 @@ export class SubmissionsService {
 
     // =====================================================
     // GET /submissions?event_id=&team_id= — ดึง submissions
-    // ย้ายจาก: submissions/route.ts → GET
-    //
-    // 📌 Student ดูได้เฉพาะของทีมตัวเอง
     // =====================================================
     async findAll(
         eventId: number | null,
@@ -67,9 +63,8 @@ export class SubmissionsService {
                     select: {
                         event_id: true,
                         name: true,
-                        type: true,
+                        requireFile: true,
                         dueDate: true,
-                        order: true,
                         description: true,
                         Section: {
                             select: {
@@ -83,21 +78,20 @@ export class SubmissionsService {
                         },
                     },
                 },
-                Team: { select: { team_id: true, name: true, groupNumber: true } },
+                Team: { select: { team_id: true, groupNumber: true } },
                 ApprovedByUser: {
                     select: { users_id: true, firstname: true, lastname: true },
                 },
             },
             orderBy: [
                 { Event: { Section: { section_code: 'asc' } } },
-                { Event: { order: 'asc' } },
+                { Event: { dueDate: 'asc' } },
             ],
         });
     }
 
     // =====================================================
     // PATCH /submissions/:id/submit — ส่งงาน (Student/Admin)
-    // ย้ายจาก: submissions/[id]/submit/route.ts → PATCH
     // =====================================================
     async submit(id: number, userId: string, userRole: string, dto: SubmitDto) {
         const submission = await this.prisma.submission.findUnique({
@@ -123,25 +117,29 @@ export class SubmissionsService {
                 submittedAt: new Date(),
                 file: dto.file || null,
             },
-            include: {
-                Event: { select: { event_id: true, name: true, type: true } },
-                Team: { select: { team_id: true, name: true } },
-            },
         });
 
         // แจ้ง advisor ว่ามีการส่งงานใหม่
         const team = await this.prisma.team.findUnique({
-            where: { team_id: updated.Team.team_id },
-            include: { Project: { include: { ProjectAdvisor: true } } },
+            where: { team_id: updated.team_id },
+            include: {
+                Project: { include: { ProjectAdvisor: true } },
+                _count: false,
+            },
         });
+        const event = await this.prisma.event.findUnique({
+            where: { event_id: updated.event_id },
+            select: { name: true },
+        });
+
         if (team?.Project) {
             await this.notificationsService.createForProjectAdvisors(
                 team.Project.project_id,
                 userId,
                 'SUBMISSION_SUBMITTED',
                 'มีการส่งงานใหม่',
-                `กลุ่ม ${updated.Team.name} ส่งงาน "${updated.Event.name}"`,
-                { teamId: updated.Team.team_id },
+                `กลุ่ม ${team.groupNumber} ส่งงาน "${event?.name ?? ''}"`,
+                { teamId: updated.team_id },
             );
         }
 
@@ -150,7 +148,6 @@ export class SubmissionsService {
 
     // =====================================================
     // PATCH /submissions/:id/approve — อนุมัติ (Advisor/Admin)
-    // ย้ายจาก: submissions/[id]/approve/route.ts → PATCH
     // =====================================================
     async approve(id: number, userId: string, dto: FeedbackDto) {
         const submission = await this.prisma.submission.findUnique({
@@ -169,29 +166,34 @@ export class SubmissionsService {
                 feedback: dto.feedback || null,
             },
             include: {
-                Event: { select: { event_id: true, name: true, type: true } },
-                Team: { select: { team_id: true, name: true } },
                 ApprovedByUser: {
                     select: { users_id: true, firstname: true, lastname: true },
                 },
             },
         });
 
+        // ดึง event/team แยกสำหรับ notification
+        const [team, event] = await Promise.all([
+            this.prisma.team.findUnique({ where: { team_id: approved.team_id }, select: { team_id: true, groupNumber: true } }),
+            this.prisma.event.findUnique({ where: { event_id: approved.event_id }, select: { name: true } }),
+        ]);
+
         // แจ้งสมาชิกทีมว่างานได้รับการอนุมัติ
-        await this.notificationsService.createForTeamMembers(
-            approved.Team.team_id,
-            userId,
-            'SUBMISSION_APPROVED',
-            'งานได้รับการอนุมัติ',
-            `งาน "${approved.Event.name}" ได้รับการอนุมัติแล้ว`,
-        );
+        if (team) {
+            await this.notificationsService.createForTeamMembers(
+                team.team_id,
+                userId,
+                'SUBMISSION_APPROVED',
+                'งานได้รับการอนุมัติ',
+                `งาน "${event?.name ?? ''}" ได้รับการอนุมัติแล้ว`,
+            );
+        }
 
         return approved;
     }
 
     // =====================================================
     // PATCH /submissions/:id/reject — ปฏิเสธ (Advisor/Admin)
-    // ย้ายจาก: submissions/[id]/reject/route.ts → PATCH
     // =====================================================
     async reject(id: number, dto: RejectDto) {
         const submission = await this.prisma.submission.findUnique({
@@ -209,19 +211,21 @@ export class SubmissionsService {
                 approvedAt: null,
                 approvedBy: null,
             },
-            include: {
-                Event: { select: { event_id: true, name: true, type: true } },
-                Team: { select: { team_id: true, name: true } },
-            },
+        });
+
+        // ดึง event/team แยกสำหรับ notification
+        const event = await this.prisma.event.findUnique({
+            where: { event_id: rejected.event_id },
+            select: { name: true },
         });
 
         // แจ้งสมาชิกทีมว่างานถูกขอแก้ไข
         await this.notificationsService.createForTeamMembers(
-            rejected.Team.team_id,
+            rejected.team_id,
             '', // system action
             'SUBMISSION_REJECTED',
             'งานถูกขอแก้ไข',
-            `งาน "${rejected.Event.name}" ต้องแก้ไข: ${dto.feedback || ''}`,
+            `งาน "${event?.name ?? ''}" ต้องแก้ไข: ${dto.feedback || ''}`,
         );
 
         return rejected;

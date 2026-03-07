@@ -6,6 +6,7 @@ import {
     Delete,
     Param,
     Body,
+    Query,
     UseGuards,
     ParseIntPipe,
     HttpCode,
@@ -166,6 +167,22 @@ export class SectionsController {
     @Get(':id/teams')
     async findTeams(@Param('id', ParseIntPipe) id: number) {
         return this.sectionsService.findTeams(id);
+    }
+
+    // ==========================================
+    // GET /sections/:id/search-students?q=
+    // ค้นหา student โดยชื่อ/รหัสนักศึกษา ที่ยังไม่ enroll
+    // รองรับนักศึกษาซ้ำชั้น (ไม่ match pattern)
+    // 🛡️ Admin only
+    // ==========================================
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    @Get(':id/search-students')
+    async searchStudents(
+        @Param('id', ParseIntPipe) id: number,
+        @Query('q') q: string,
+    ) {
+        return this.sectionsService.searchStudents(id, q || '');
     }
 
     // ==========================================

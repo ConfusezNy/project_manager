@@ -23,10 +23,9 @@ export class AdminTeamsService {
             where.Project = { status: query.status as 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' };
         }
 
-        // Search by team name, groupNumber, or project name
+        // Search by team groupNumber or project name
         if (query.search) {
             where.OR = [
-                { name: { contains: query.search, mode: 'insensitive' } },
                 { groupNumber: { contains: query.search, mode: 'insensitive' } },
                 { Project: { projectname: { contains: query.search, mode: 'insensitive' } } },
             ];
@@ -53,7 +52,6 @@ export class AdminTeamsService {
         // Map to frontend-expected shape
         const mapped = teams.map((team) => ({
             team_id: team.team_id,
-            name: team.name,
             groupNumber: team.groupNumber,
             status: team.status,
             semester: team.semester,
@@ -132,7 +130,6 @@ export class AdminTeamsService {
         }
 
         const updateData: Prisma.TeamUpdateInput = {};
-        if (dto.name !== undefined) updateData.name = dto.name;
         if (dto.groupNumber !== undefined) updateData.groupNumber = dto.groupNumber;
 
         const updated = await this.prisma.team.update({
@@ -384,12 +381,12 @@ export class AdminTeamsService {
             where.status = query.status;
         }
 
-        // Search by project name TH/EN or team name
+        // Search by project name TH/EN or team groupNumber
         if (query.search) {
             where.OR = [
                 { projectname: { contains: query.search, mode: 'insensitive' } },
                 { projectnameEng: { contains: query.search, mode: 'insensitive' } },
-                { Team: { name: { contains: query.search, mode: 'insensitive' } } },
+                { Team: { groupNumber: { contains: query.search, mode: 'insensitive' } } },
             ];
         }
 
@@ -431,7 +428,6 @@ export class AdminTeamsService {
             team: p.Team
                 ? {
                     team_id: p.Team.team_id,
-                    name: p.Team.name,
                     groupNumber: p.Team.groupNumber,
                     memberCount: p.Team.Teammember.length,
                     members: p.Team.Teammember.map((m) => ({

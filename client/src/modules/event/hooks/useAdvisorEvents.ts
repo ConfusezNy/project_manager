@@ -72,8 +72,10 @@ export function useAdvisorEvents(projectId?: number) {
                         );
 
                         const submissionList = subs || [];
-                        const approved = submissionList.filter((s) => s.status === "APPROVED").length;
-                        const total = submissionList.length;
+                        // คำนวณ progress เฉพาะเอกสาร/บทที่ (requireFile === true)
+                        const docSubs = submissionList.filter((s) => s.Event?.requireFile === true);
+                        const approved = docSubs.filter((s) => s.status === "APPROVED").length;
+                        const total = docSubs.length;
 
                         groups.push({
                             project_id: project.project_id,
@@ -109,15 +111,15 @@ export function useAdvisorEvents(projectId?: number) {
         }
     }, [status, fetchData]);
 
-    // Summary stats across all projects
+    // Summary stats across all projects (เฉพาะ requireFile เท่านั้น — คำนวณแล้วใน group)
     const totalApproved = projectGroups.reduce((sum, g) => sum + g.approvedCount, 0);
     const totalItems = projectGroups.reduce((sum, g) => sum + g.total, 0);
     const overallProgress = totalItems > 0 ? Math.round((totalApproved / totalItems) * 100) : 0;
 
-    // หางานที่รอ review (SUBMITTED) เพื่อแสดงใน next-action card
+    // หางานที่รอ review (SUBMITTED) เฉพาะ requireFile
     const pendingSubmission = projectGroups
         .flatMap((g) => g.submissions)
-        .find((s) => s.status === "SUBMITTED");
+        .find((s) => s.status === "SUBMITTED" && s.Event?.requireFile === true);
     const pendingEvent = pendingSubmission?.Event;
     const pendingProject = pendingSubmission
         ? projectGroups.find((g) => g.team_id === pendingSubmission.team_id)

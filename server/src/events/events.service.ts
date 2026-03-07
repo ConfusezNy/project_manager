@@ -4,11 +4,9 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
-import { EventType } from '@prisma/client';
 
 /**
  * Events Service
- * ย้ายมาจาก: 2 route files ใน client/src/app/api/events/
  *
  * 📌 6 endpoints:
  * - findBySection(sectionId)     → GET /events?section_id=
@@ -24,7 +22,6 @@ export class EventsService {
 
     // =====================================================
     // GET /events?section_id= — ดึง Events ของ Section
-    // ย้ายจาก: events/route.ts → GET
     // =====================================================
     async findBySection(sectionId: number) {
         const section = await this.prisma.section.findUnique({
@@ -36,11 +33,11 @@ export class EventsService {
 
         const events = await this.prisma.event.findMany({
             where: { section_id: sectionId },
-            orderBy: { order: 'asc' },
+            orderBy: { dueDate: 'asc' },
             include: {
                 Submission: {
                     include: {
-                        Team: { select: { team_id: true, name: true, groupNumber: true } },
+                        Team: { select: { team_id: true, groupNumber: true } },
                     },
                 },
                 _count: { select: { Submission: true } },
@@ -66,9 +63,6 @@ export class EventsService {
 
     // =====================================================
     // POST /events — สร้าง Event (Admin)
-    // ย้ายจาก: events/route.ts → POST
-    //
-    // 📌 createSubmissionsForAllTeams → auto-create PENDING submissions
     // =====================================================
     async create(dto: CreateEventDto) {
         const section = await this.prisma.section.findUnique({
@@ -82,21 +76,24 @@ export class EventsService {
         const event = await this.prisma.event.create({
             data: {
                 name: dto.name,
-                type: dto.type as EventType,
                 description: dto.description || null,
-                order: dto.order,
                 dueDate: new Date(dto.dueDate),
                 section_id: dto.section_id,
+                requireFile: dto.requireFile ?? false,
             },
         });
 
         // Auto-create submissions for all teams in section
+        // ถ้า requireFile=false → auto-set SUBMITTED (ไม่ต้องอัพโหลดเอกสาร แค่รายละเอียด+วันที่ก็พอ)
         if (dto.createSubmissionsForAllTeams && section.Team.length > 0) {
+            const autoStatus = event.requireFile ? 'PENDING' : 'SUBMITTED';
+            const autoSubmittedAt = event.requireFile ? null : new Date();
             await this.prisma.submission.createMany({
                 data: section.Team.map((team) => ({
                     event_id: event.event_id,
                     team_id: team.team_id,
-                    status: 'PENDING',
+                    status: autoStatus,
+                    submittedAt: autoSubmittedAt,
                 })),
             });
         }
@@ -106,7 +103,7 @@ export class EventsService {
             include: {
                 Submission: {
                     include: {
-                        Team: { select: { team_id: true, name: true, groupNumber: true } },
+                        Team: { select: { team_id: true, groupNumber: true } },
                     },
                 },
             },
@@ -115,7 +112,6 @@ export class EventsService {
 
     // =====================================================
     // GET /events/:id — ดึง Event เดียว
-    // ย้ายจาก: events/[id]/route.ts → GET
     // =====================================================
     async findOne(id: number) {
         const event = await this.prisma.event.findUnique({
@@ -124,7 +120,7 @@ export class EventsService {
                 Section: true,
                 Submission: {
                     include: {
-                        Team: { select: { team_id: true, name: true, groupNumber: true } },
+                        Team: { select: { team_id: true, groupNumber: true } },
                         ApprovedByUser: {
                             select: { users_id: true, firstname: true, lastname: true },
                         },
@@ -142,15 +138,13 @@ export class EventsService {
 
     // =====================================================
     // PUT /events/:id — แก้ไข Event (Admin)
-    // ย้ายจาก: events/[id]/route.ts → PUT
     // =====================================================
     async update(id: number, dto: UpdateEventDto) {
-        const data: Record<string, any> = {};
+        const data: Record<string, unknown> = {};
         if (dto.name) data.name = dto.name;
-        if (dto.type) data.type = dto.type;
         if (dto.description !== undefined) data.description = dto.description;
-        if (dto.order !== undefined) data.order = dto.order;
         if (dto.dueDate) data.dueDate = new Date(dto.dueDate);
+        if (dto.requireFile !== undefined) data.requireFile = dto.requireFile;
 
         return this.prisma.event.update({
             where: { event_id: id },
@@ -160,42 +154,34 @@ export class EventsService {
 
     // =====================================================
     // PATCH /events/:id — Partial update (Admin)
-    // ย้ายจาก: events/[id]/route.ts → PATCH (same logic as PUT)
     // =====================================================
     async partialUpdate(id: number, dto: UpdateEventDto) {
         return this.update(id, dto);
     }
 
     // =====================================================
-    // backfillSubmissionsForTeam — Backfill PENDING submissions
-    // เรียกจาก: continueToProject (sections.service) หลังสร้างทีมใหม่
-    //
-    // 📌 ปัญหาที่แก้:
-    //    ตอน Admin สร้าง Event → auto-create submissions เฉพาะทีมที่อยู่ใน section ณ ขณะนั้น
-    //    ทีมที่ถูก clone เข้า section ทีหลัง (เช่น PRE→PROJECT) จะไม่มี submissions
-    //    → แก้: เรียก backfill ทันทีหลังสร้างทีมใหม่
-    //
-    // ✅ ใช้ skipDuplicates = idempotent safe (เรียกซ้ำก็ไม่เกิดปัญหา)
+    // backfillSubmissionsForTeam — Backfill submissions
     // =====================================================
     async backfillSubmissionsForTeam(teamId: number, sectionId: number, tx?: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0]) {
         const client = tx ?? this.prisma;
 
-        // ดึง events ทั้งหมดใน section นั้น
+        // ดึง event พร้อม requireFile เพื่อตัดสินใจ status อัตโนมัติ
         const events = await client.event.findMany({
             where: { section_id: sectionId },
-            select: { event_id: true },
+            select: { event_id: true, requireFile: true },
         });
 
         if (events.length === 0) return { backfilled: 0 };
 
-        // สร้าง PENDING submission สำหรับ event ที่ยังไม่มี
         await client.submission.createMany({
             data: events.map((e) => ({
                 event_id: e.event_id,
                 team_id: teamId,
-                status: 'PENDING' as const,
+                // requireFile=false → auto-submit ทันที ไม่ต้องให้นักเรียนกดส่ง
+                status: (e.requireFile ? 'PENDING' : 'SUBMITTED') as 'PENDING' | 'SUBMITTED',
+                submittedAt: e.requireFile ? null : new Date(),
             })),
-            skipDuplicates: true, // ถ้ามีอยู่แล้วข้ามไป
+            skipDuplicates: true,
         });
 
         return { backfilled: events.length };
@@ -203,9 +189,6 @@ export class EventsService {
 
     // =====================================================
     // DELETE /events/:id — ลบ Event (Admin, cascade submissions)
-    // ย้ายจาก: events/[id]/route.ts → DELETE
-    //
-    // ⚠️ โค้ดเดิมไม่ใช้ $transaction → แก้แล้ว
     // =====================================================
     async remove(id: number) {
         await this.prisma.$transaction(async (tx) => {
@@ -214,5 +197,25 @@ export class EventsService {
         });
 
         return { message: 'Event deleted successfully' };
+    }
+
+    // =====================================================
+    // fixNoFileSubmissions — แก้ PENDING submissions ที่เป็น
+    // events ไม่ต้องไฟล์ (requireFile=false) ให้เป็น SUBMITTED
+    // เรียกได้ 1 ครั้งหลัง deploy เพื่อ fix existing data
+    // =====================================================
+    async fixNoFileSubmissions() {
+        const result = await this.prisma.submission.updateMany({
+            where: {
+                status: 'PENDING',
+                Event: { requireFile: false },
+            },
+            data: {
+                status: 'SUBMITTED',
+                submittedAt: new Date(),
+            },
+        });
+
+        return { fixed: result.count, message: `Updated ${result.count} submissions to SUBMITTED` };
     }
 }

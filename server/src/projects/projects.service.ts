@@ -62,6 +62,9 @@ export class ProjectsService {
                                 lastname: true,
                                 titles: true,
                                 email: true,
+                                profilePicture: true,
+                                expertiseAreas: true,
+                                tel_number: true,
                             },
                         },
                     },
@@ -381,7 +384,7 @@ export class ProjectsService {
             where.OR = [
                 { projectname: { contains: query.q, mode: 'insensitive' } },
                 { projectnameEng: { contains: query.q, mode: 'insensitive' } },
-                { Team: { name: { contains: query.q, mode: 'insensitive' } } },
+                { Team: { groupNumber: { contains: query.q, mode: 'insensitive' } } },
                 {
                     ProjectAdvisor: {
                         some: {
@@ -470,7 +473,6 @@ export class ProjectsService {
             })),
             team: p.Team
                 ? {
-                    name: p.Team.name,
                     groupNumber: p.Team.groupNumber,
                     section: p.Team.Section?.section_code,
                     semester: p.Team.Section?.Term?.semester,

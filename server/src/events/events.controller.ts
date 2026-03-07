@@ -71,6 +71,15 @@ export class EventsController {
         return this.eventsService.partialUpdate(id, dto);
     }
 
+    // PATCH /events/fix-no-file-submissions — แก้ PENDING submissions ของ events ที่ requireFile=false
+    // เรียกได้ 1 ครั้งหลัง deploy เพื่อ fix existing data (Admin only)
+    @UseGuards(RolesGuard)
+    @Roles('ADMIN')
+    @Patch('fix-no-file-submissions')
+    async fixNoFileSubmissions() {
+        return this.eventsService.fixNoFileSubmissions();
+    }
+
     // DELETE /events/:id — ลบ Event (Admin, cascade)
     @UseGuards(RolesGuard)
     @Roles('ADMIN')

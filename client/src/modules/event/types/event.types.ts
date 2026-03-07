@@ -1,13 +1,5 @@
 // Event Module Types
 
-export type EventType =
-  | "PROGRESS_REPORT"
-  | "DOCUMENT"
-  | "POSTER"
-  | "EXAM"
-  | "FINAL_SUBMISSION"
-  | "SEMINAR";
-
 export type SubmissionStatus =
   | "PENDING"
   | "SUBMITTED"
@@ -17,13 +9,11 @@ export type SubmissionStatus =
 export interface Event {
   event_id: number;
   name: string;
-  type: EventType;
   description?: string | null;
-  order: number;
   dueDate: string;
-  weight?: number; // Percentage weight for scoring
   section_id: number;
   createdAt: string;
+  requireFile: boolean;
   Section?: {
     section_id: number;
     section_code: string;
@@ -54,12 +44,11 @@ export interface Submission {
   Event?: {
     event_id: number;
     name: string;
-    type: EventType;
     dueDate: string;
+    requireFile: boolean;
   };
   Team?: {
     team_id: number;
-    name: string;
     groupNumber: string;
   };
   ApprovedByUser?: {
@@ -71,30 +60,19 @@ export interface Submission {
 
 export interface CreateEventInput {
   name: string;
-  type: EventType;
   description?: string;
-  order: number;
   dueDate: string;
   section_id: number;
+  requireFile?: boolean;
   createSubmissionsForAllTeams?: boolean;
 }
 
 export interface UpdateEventInput {
   name?: string;
-  type?: EventType;
   description?: string;
-  order?: number;
   dueDate?: string;
+  requireFile?: boolean;
 }
-
-export const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  PROGRESS_REPORT: "รายงานความก้าวหน้า",
-  DOCUMENT: "เอกสาร",
-  POSTER: "โปสเตอร์",
-  EXAM: "การสอบ",
-  FINAL_SUBMISSION: "ส่งฉบับสมบูรณ์",
-  SEMINAR: "สัมมนา",
-};
 
 export const SUBMISSION_STATUS_LABELS: Record<SubmissionStatus, string> = {
   PENDING: "รอส่ง",

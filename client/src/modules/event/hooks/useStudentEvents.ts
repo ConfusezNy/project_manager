@@ -20,9 +20,8 @@ export interface SectionInfo {
 export interface EventWithSection {
   event_id: number;
   name: string;
-  type: string;
+  requireFile: boolean;
   dueDate?: string;
-  order?: number;
   description?: string;
   Section?: SectionInfo;
 }
@@ -40,7 +39,6 @@ export interface SubmissionWithEvent {
   Event?: EventWithSection;
   Team?: {
     team_id: number;
-    name: string;
     groupNumber: string;
   };
 }

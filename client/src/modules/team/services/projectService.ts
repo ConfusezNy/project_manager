@@ -31,6 +31,9 @@ export interface ProjectAdvisor {
     firstname: string;
     lastname: string;
     email: string;
+    profilePicture?: string;
+    expertiseAreas?: string;
+    tel_number?: string;
   };
 }
 
@@ -51,13 +54,18 @@ export const projectService = {
         status: data.status,
         advisors: (data.ProjectAdvisor || data.advisors || []).map((pa: any) => ({
           advisor_id: pa.advisor_id,
-          advisor: pa.Users || pa.advisor || {
-            users_id: pa.advisor_id,
-            firstname: pa.Users?.firstname,
-            lastname: pa.Users?.lastname,
-            titles: pa.Users?.titles,
-            email: pa.Users?.email,
-          },
+          advisor: pa.Users
+            ? {
+              users_id: pa.Users.users_id,
+              firstname: pa.Users.firstname,
+              lastname: pa.Users.lastname,
+              titles: pa.Users.titles,
+              email: pa.Users.email,
+              profilePicture: pa.Users.profilePicture,
+              expertiseAreas: pa.Users.expertiseAreas,
+              tel_number: pa.Users.tel_number,
+            }
+            : pa.advisor || null,
         })),
       };
     } catch {

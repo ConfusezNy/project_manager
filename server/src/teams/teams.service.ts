@@ -105,7 +105,6 @@ export class TeamsService {
         const team = await this.prisma.team.create({
             data: {
                 section_id: dto.sectionId,
-                name: 'Temporary Team',
                 groupNumber: `TEMP-${Date.now()}`,
                 semester:
                     section.Term?.semester && section.Term?.academicYear
@@ -133,6 +132,13 @@ export class TeamsService {
                 Team: {
                     include: {
                         Section: { include: { Term: true } },
+                        Project: {
+                            select: {
+                                project_id: true,
+                                projectname: true,
+                                status: true,
+                            },
+                        },
                         Teammember: {
                             include: {
                                 Users: {
@@ -372,7 +378,7 @@ export class TeamsService {
     async assignName(dto: AssignNameDto) {
         return this.prisma.team.update({
             where: { team_id: dto.teamId },
-            data: { name: dto.teamname },
+            data: { groupNumber: dto.teamname },
         });
     }
 

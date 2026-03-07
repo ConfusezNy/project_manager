@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, CheckCircle2 } from "lucide-react";
-import { EVENT_TYPES } from "./StatusBadge";
+import { X, CheckCircle2, Paperclip } from "lucide-react";
 import type { CreateEventData } from "../hooks/useEventManagement";
 
 interface CreateEventModalProps {
@@ -13,7 +12,6 @@ interface CreateEventModalProps {
   ) => Promise<{ success: boolean; error?: string }>;
   sectionId: number;
   teamCount: number;
-  nextOrder: number;
 }
 
 export const CreateEventModal: React.FC<CreateEventModalProps> = ({
@@ -22,13 +20,11 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   onSubmit,
   sectionId,
   teamCount,
-  nextOrder,
 }) => {
   const [name, setName] = useState("");
-  const [type, setType] = useState("DOCUMENT");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [order, setOrder] = useState(nextOrder);
+  const [requireFile, setRequireFile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,23 +47,21 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     setSubmitting(true);
     const result = await onSubmit({
       name: name.trim(),
-      type,
       description: description.trim() || undefined,
-      order,
       dueDate: new Date(dueDate).toISOString(),
       section_id: sectionId,
+      requireFile,
       createSubmissionsForAllTeams: true,
     });
 
     setSubmitting(false);
 
     if (result.success) {
-      // Reset form
       setName("");
-      setType("DOCUMENT");
       setDescription("");
       setDueDate("");
-      setOrder(nextOrder);
+      setRequireFile(false);
+      onClose();
     } else {
       setError(result.error || "เกิดข้อผิดพลาด");
     }
@@ -91,6 +85,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               </div>
             )}
 
+            {/* ชื่อกำหนดการ */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 ชื่อกำหนดการ <span className="text-red-500">*</span>
@@ -99,42 +94,12 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="เช่น รายงานความก้าวหน้าบทที่ 1"
+                placeholder="เช่น รายงานความก้าวหน้าครั้งที่ 1"
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  ประเภท
-                </label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none"
-                >
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  ลำดับ
-                </label>
-                <input
-                  type="number"
-                  value={order}
-                  onChange={(e) => setOrder(parseInt(e.target.value) || 1)}
-                  min={1}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none"
-                />
-              </div>
-            </div>
-
+            {/* Deadline */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 กำหนดส่ง (Deadline) <span className="text-red-500">*</span>
@@ -147,6 +112,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               />
             </div>
 
+            {/* คำอธิบาย */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 คำอธิบาย (ไม่จำเป็น)
@@ -160,6 +126,40 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               />
             </div>
 
+            {/* Toggle: ต้องอัพโหลดไฟล์ */}
+            <div
+              onClick={() => setRequireFile(!requireFile)}
+              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${requireFile
+                  ? "bg-blue-50 border-blue-300"
+                  : "bg-slate-50 border-slate-200 hover:border-slate-300"
+                }`}
+            >
+              <div
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${requireFile
+                    ? "bg-blue-600 border-blue-600"
+                    : "border-slate-400 bg-white"
+                  }`}
+              >
+                {requireFile && (
+                  <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <Paperclip className="w-4 h-4 text-blue-500" />
+                  ต้องการให้นักศึกษาอัพโหลดไฟล์
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {requireFile
+                    ? "นักศึกษาจะเห็นปุ่มส่งงาน + บังคับอัพโหลด"
+                    : "เป็นแค่ deadline แจ้งเตือน ไม่ต้องส่งไฟล์"}
+                </p>
+              </div>
+            </div>
+
+            {/* Info */}
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex gap-3 items-start">
               <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
               <div className="text-xs text-blue-800">

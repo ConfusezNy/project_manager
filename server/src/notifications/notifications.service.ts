@@ -31,7 +31,7 @@ export class NotificationsService {
                 Team: {
                     select: {
                         team_id: true,
-                        name: true,
+                        groupNumber: true,
                         Section: { select: { section_code: true } },
                     },
                 },
@@ -74,14 +74,25 @@ export class NotificationsService {
     async create(dto: CreateNotificationDto) {
         try {
             // ไม่แจ้งเตือนตัวเอง
-            if (dto.userId === dto.actorUserId) {
+            if (dto.actorUserId && dto.userId === dto.actorUserId) {
                 return null;
+            }
+
+            // ตรวจสอบว่า actorUserId (ถ้ามี) มีอยู่จริงใน DB
+            let safeActorId: string | undefined = dto.actorUserId || undefined;
+            if (safeActorId) {
+                const actorExists = await this.prisma.users.findUnique({
+                    where: { users_id: safeActorId },
+                    select: { users_id: true },
+                });
+                if (!actorExists) safeActorId = undefined;
             }
 
             return await this.prisma.notification.create({
                 data: {
                     user_id: dto.userId,
-                    actor_user_id: dto.actorUserId,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    actor_user_id: (safeActorId ?? null) as any, // nullable after migration 20260306203723
                     event_type: dto.eventType,
                     title: dto.title,
                     message: dto.message,

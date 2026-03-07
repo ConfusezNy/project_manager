@@ -33,28 +33,35 @@ const StatCard = ({
     label,
     value,
     color,
+    highlight,
+    href,
 }: {
     icon: any;
     label: string;
     value: number | string;
     color: string;
-}) => (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center gap-4">
-            <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}
-            >
+    highlight?: boolean;
+    href?: string;
+}) => {
+    const inner = (
+        <div className={`rounded-xl p-5 shadow-sm border flex items-center gap-4 transition-all ${highlight
+                ? "bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/30 hover:bg-blue-700"
+                : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700"
+            }`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${highlight ? "bg-white/20" : color}`}>
                 <Icon className="w-6 h-6 text-white" />
             </div>
             <div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className={`text-2xl font-bold ${highlight ? "text-white" : "text-gray-900 dark:text-white"}`}>
                     {value}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+                <p className={`text-sm ${highlight ? "text-blue-100" : "text-gray-500 dark:text-gray-400"}`}>{label}</p>
             </div>
         </div>
-    </div>
-);
+    );
+    if (href) return <a href={href}>{inner}</a>;
+    return inner;
+};
 
 // Progress Donut Chart
 const ProgressDonut = ({
@@ -220,7 +227,15 @@ export const AdminDashboard: React.FC = () => {
             )}
 
             {/* Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                <StatCard
+                    icon={FileCheck}
+                    label="รอตรวจ"
+                    value={stats.pendingSubmissions}
+                    color="bg-blue-500"
+                    highlight={stats.pendingSubmissions > 0}
+                    href="/admin-events"
+                />
                 <StatCard
                     icon={FolderKanban}
                     label="Section"

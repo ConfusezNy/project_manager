@@ -28,7 +28,7 @@ export class UsersService {
                     },
                     Teammember: {
                         include: {
-                            Team: { select: { team_id: true, name: true, groupNumber: true } },
+                            Team: { select: { team_id: true, groupNumber: true } },
                         },
                     },
                 },
@@ -58,7 +58,7 @@ export class UsersService {
                     },
                     Teammember: {
                         include: {
-                            Team: { select: { team_id: true, name: true, groupNumber: true } },
+                            Team: { select: { team_id: true, groupNumber: true } },
                         },
                     },
                 },
@@ -81,7 +81,7 @@ export class UsersService {
                 },
                 Teammember: {
                     include: {
-                        Team: { select: { team_id: true, name: true, groupNumber: true } },
+                        Team: { select: { team_id: true, groupNumber: true } },
                     },
                 },
             },
@@ -178,7 +178,6 @@ export class UsersService {
             })) || [],
             teams: (u.Teammember as Array<Record<string, unknown>>)?.map((t) => ({
                 team_id: (t.Team as Record<string, unknown>).team_id,
-                name: (t.Team as Record<string, unknown>).name,
                 groupNumber: (t.Team as Record<string, unknown>).groupNumber,
             })) || [],
         };

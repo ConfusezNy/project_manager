@@ -5,7 +5,6 @@ import React from "react";
 import {
   Home,
   Book,
-  Timer,
   Search,
   User,
   Settings,
@@ -14,13 +13,34 @@ import {
   Calendar,
   Award,
 } from "lucide-react";
+import { useNotification } from "@/lib/notification-context";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+// Badge component
+const NBadge = ({ count, compact }: { count: number; compact?: boolean }) => {
+  if (count <= 0) return null;
+  const label = count > 99 ? "99+" : count;
+  if (compact) {
+    return (
+      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-[3px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+        {label}
+      </span>
+    );
+  }
+  return (
+    <span className="ml-auto flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+      {label}
+    </span>
+  );
+};
+
 const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
+  const { unreadCount } = useNotification();
+
   const sidebarClassNames = `
     fixed inset-y-0 left-0 z-50 h-screen bg-white shadow-xl dark:bg-black 
     transition-[width] duration-300 ease-in-out overflow-hidden
@@ -35,7 +55,7 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
     "group flex items-center w-full py-4 px-6 transition-colors duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 cursor-pointer overflow-hidden";
 
   const contentClass = `
-    text-lg font-bold
+    text-lg font-bold flex-1
     whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out
     ${isSidebarOpen
       ? "max-w-[200px] opacity-100 ml-4 translate-x-0"
@@ -43,18 +63,21 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
     }
   `;
 
-  const iconClass =
-    "min-w-[24px] min-h-[24px] flex justify-center items-center";
+  const iconClass = "min-w-[24px] min-h-[24px] flex justify-center items-center relative";
 
   return (
     <div className={sidebarClassNames}>
       <div className="h-full flex flex-col overflow-y-auto overflow-x-hidden">
         <nav className="flex flex-col gap-2 mt-0">
+
+          {/* Dashboard — badge แสดงจำนวน unread notification */}
           <Link href="/admin-dashboard" className={linkBaseClass}>
             <div className={iconClass}>
               <Home size={24} />
+              {!isSidebarOpen && <NBadge count={unreadCount} compact />}
             </div>
             <span className={contentClass}>Dashboard</span>
+            {isSidebarOpen && <NBadge count={unreadCount} />}
           </Link>
 
           <Link href="/sections" className={linkBaseClass}>
@@ -85,11 +108,14 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
             <span className={contentClass}>Teams</span>
           </Link>
 
+          {/* Events — badge แสดงจำนวน unread */}
           <Link href="/admin-events" className={linkBaseClass}>
             <div className={iconClass}>
               <Calendar size={24} />
+              {!isSidebarOpen && <NBadge count={unreadCount} compact />}
             </div>
             <span className={contentClass}>Events</span>
+            {isSidebarOpen && <NBadge count={unreadCount} />}
           </Link>
 
           <Link href="/admin-grades" className={linkBaseClass}>
@@ -119,4 +145,3 @@ const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
 };
 
 export default AdminSidebar;
-
