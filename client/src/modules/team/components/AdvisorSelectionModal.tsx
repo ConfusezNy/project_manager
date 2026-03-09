@@ -31,6 +31,7 @@ interface AdvisorSelectionModalProps {
   onClose: () => void;
   projectId: number;
   sectionId?: number;
+  currentAdvisors?: { advisor_id: string }[];
   onAdvisorSelected: () => void;
 }
 
@@ -39,6 +40,7 @@ export default function AdvisorSelectionModal({
   onClose,
   projectId,
   sectionId,
+  currentAdvisors = [],
   onAdvisorSelected,
 }: AdvisorSelectionModalProps) {
   const [advisors, setAdvisors] = useState<AdvisorData[]>([]);
@@ -60,7 +62,11 @@ export default function AdvisorSelectionModal({
         ? `/advisors/available?section_id=${sectionId}`
         : "/advisors/available";
       const data = await api.get<AdvisorData[]>(url);
-      setAdvisors(data);
+      
+      const existingIds = new Set(currentAdvisors.map(a => String(a.advisor_id)));
+      const filteredAdvisors = data.filter(a => !existingIds.has(String(a.users_id)));
+      
+      setAdvisors(filteredAdvisors);
     } catch (err) {
       setError("ไม่สามารถโหลดรายชื่ออาจารย์ได้");
       console.error(err);

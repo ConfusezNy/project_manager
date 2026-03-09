@@ -20,12 +20,14 @@ export interface ProjectData {
   projectnameEng?: string;
   project_type?: string;
   description?: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
   advisors?: ProjectAdvisor[];
 }
 
 export interface ProjectAdvisor {
   advisor_id: string;
+  advisor_role?: string;
+  status?: string;
   advisor?: {
     titles?: string;
     firstname: string;
@@ -54,6 +56,8 @@ export const projectService = {
         status: data.status,
         advisors: (data.ProjectAdvisor || data.advisors || []).map((pa: any) => ({
           advisor_id: pa.advisor_id,
+          advisor_role: pa.advisor_role,
+          status: pa.status,
           advisor: pa.Users
             ? {
               users_id: pa.Users.users_id,

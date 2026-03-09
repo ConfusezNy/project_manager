@@ -24,6 +24,7 @@ export interface NotificationItem {
     createdAt: string;
     isRead: boolean;
     event_type: string;
+    link?: string | null;  // ✅ เพิ่ม link field
     Team?: { team_id: number; name: string; Section?: { section_code: string } };
     Task?: { task_id: number; title: string };
     Project?: { project_id: number; projectname: string };

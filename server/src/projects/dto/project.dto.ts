@@ -46,6 +46,10 @@ export class UpdateProjectDto {
 export class AddAdvisorDto {
     @IsString()
     advisor_id: string;
+
+    @IsOptional()
+    @IsIn(['PRIMARY', 'CO_ADVISOR'])
+    advisor_role?: 'PRIMARY' | 'CO_ADVISOR';
 }
 
 /** PUT /projects/:id/status — อนุมัติ/ปฏิเสธ */

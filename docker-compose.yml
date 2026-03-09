@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15-bullseye
     container_name: projectmanagement_db
     environment:
       POSTGRES_USER: postgres
@@ -15,40 +15,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  server:
-    build: ./server
-    container_name: projectmanagement_server
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "4000:4000"
-    environment:
-      DATABASE_URL: "postgresql://postgres:165050@postgres:5432/projectmanagement"
-      JWT_SECRET: "p7TevVUKL215n9yzT7rSAWRlwGQgIaVvBKsmsW5+Ynud+gHg2Ruww/wDqNM="
-      PORT: "4000"
-      CLIENT_URL: "http://localhost:3000"
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-      - /app/dist
-    command: sh -c "npx prisma migrate deploy && npm run start:dev"
-
-  client:
-    build: ./client
-    container_name: projectmanagement_client
-    depends_on:
-      - server
-    ports:
-      - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: "http://server:4000"
-    volumes:
-      - ./client:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
 
 volumes:
   postgres_data:

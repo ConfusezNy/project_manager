@@ -98,25 +98,45 @@ export function useTeamData(): UseTeamDataReturn {
     setLoading(true);
     try {
       // 1. Check if user has team
-      const team = await teamService.getMyTeam();
+      let team = null;
+      try {
+        team = await teamService.getMyTeam();
+      } catch (err) {
+        console.error("[useTeamData] getMyTeam error:", err);
+      }
+
       if (team) {
         setTeamData(team);
         setSection(team.section);
 
         // Fetch project if team exists
-        const project = await projectService.getProjectByTeamId(team.team_id);
-        setProjectData(project);
-        setLoading(false);
-        return;
+        try {
+          const project = await projectService.getProjectByTeamId(team.team_id);
+          setProjectData(project);
+        } catch (err) {
+          console.error("[useTeamData] getProjectByTeamId error:", err);
+        }
+      } else {
+        // 2. If no team, get enrolled section
+        setTeamData(null);
+        try {
+          const sec = await teamService.getMySection();
+          setSection(sec);
+        } catch (err) {
+          console.error("[useTeamData] getMySection error:", err);
+        }
       }
 
-      // 2. If no team, get enrolled section
-      const sec = await teamService.getMySection();
-      setSection(sec);
-
-      // 3. Get pending invites
-      const invites = await teamService.getPendingInvites();
-      setPendingInvites(invites);
+      // ✅ Always load pending invites — แม้ getMyTeam จะ fail ก็ต้องแสดงคำเชิญ
+      try {
+        const invites = await teamService.getPendingInvites();
+        setPendingInvites(invites);
+      } catch (err) {
+        console.error("[useTeamData] getPendingInvites error:", err);
+        setPendingInvites([]);
+      }
+    } catch (err) {
+      console.error("[useTeamData] fetchData error:", err);
     } finally {
       setLoading(false);
     }

@@ -68,6 +68,13 @@ export function useSectionData() {
   const [termForm, setTermForm] = useState<CreateTermForm>(initialTermForm);
   const [termError, setTermError] = useState("");
 
+  // Global Filter state
+  const [filterQuery, setFilterQuery] = useState("");
+  const [filterAcademicYear, setFilterAcademicYear] = useState("");
+  const [filterLockStatus, setFilterLockStatus] = useState<
+    "all" | "locked" | "unlocked"
+  >("all");
+
   // Fetch data
   const fetchSections = useCallback(async () => {
     setLoading(true);
@@ -260,6 +267,28 @@ export function useSectionData() {
     [],
   );
 
+  // Delete term handler
+  const handleDeleteTerm = useCallback(
+    async (termId: number) => {
+      try {
+        await sectionService.deleteTerm(termId);
+        fetchTerms();
+      } catch (err: any) {
+        alert(err.message || 'เกิดข้อผิดพลาดในการลบเทอม');
+      }
+    },
+    [fetchTerms],
+  );
+
+  // Open create section modal with pre-filled term
+  const openCreateModalWithTerm = useCallback(
+    (termId: number) => {
+      setCreateForm((prev) => ({ ...prev, term_id: String(termId) }));
+      setShowCreateModal(true);
+    },
+    [],
+  );
+
   return {
     // Data
     sections,
@@ -288,6 +317,14 @@ export function useSectionData() {
     setTermForm,
     termError,
 
+    // Filter
+    filterQuery,
+    setFilterQuery,
+    filterAcademicYear,
+    setFilterAcademicYear,
+    filterLockStatus,
+    setFilterLockStatus,
+
     // Modals
     showCreateModal,
     setShowCreateModal,
@@ -306,6 +343,8 @@ export function useSectionData() {
       fetchTerms,
       handleCreateSection,
       handleCreateTerm,
+      handleDeleteTerm,
+      openCreateModalWithTerm,
       fetchEnrollments,
       openEnrollModal,
       handleEnroll,

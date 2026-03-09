@@ -28,7 +28,7 @@ interface ProjectData {
 }
 
 const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
-  const { status } = useAuth();
+  const { user, status } = useAuth();
   const { unreadCount } = useNotification();
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,9 +47,16 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
         // Get advisor's projects
         const data = await api.get<any[]>("/advisors/my-projects");
         if (Array.isArray(data)) {
-          // แสดงเฉพาะโปรเจกต์ที่อนุมัติแล้วใน sidebar
+          // แสดงเฉพาะโปรเจกต์ที่อาจารย์คนนี้อนุมัติแล้วใน sidebar
           const projectList = data
-            .filter((p: any) => p.status === "APPROVED")
+            .filter((p: any) => {
+              const myAdvisorRecord = p.advisors?.find(
+                (a: any) => String(a.advisor?.users_id) === String(user?.users_id)
+              );
+              // Fallback to global status if individual status is somehow missing
+              const myStatus = myAdvisorRecord?.status || p.status;
+              return myStatus === "APPROVED";
+            })
             .map((p: any) => ({
               project_id: p.project_id,
               projectname: p.projectname || "โครงงาน",

@@ -105,8 +105,8 @@ async function request<T>(url: string, options: FetchOptions = {}): Promise<T> {
 
     const errorBody = await response.json().catch(() => ({}));
     throw new Error(
-      errorBody.error ||
       errorBody.message ||
+      errorBody.error ||
       `Request failed with status ${response.status}`,
     );
   }

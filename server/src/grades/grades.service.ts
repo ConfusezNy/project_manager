@@ -2,6 +2,7 @@ import {
     Injectable,
     NotFoundException,
     ForbiddenException,
+    Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -10,6 +11,8 @@ import { GradeScore } from '@prisma/client';
 
 @Injectable()
 export class GradesService {
+    private readonly logger = new Logger(GradesService.name);
+
     constructor(
         private prisma: PrismaService,
         private notificationsService: NotificationsService,
@@ -92,6 +95,18 @@ export class GradesService {
             const pid = typeof grade.project_id === 'number'
                 ? grade.project_id
                 : parseInt(String(grade.project_id));
+
+            // ✅ บัค #11 — เช็คว่า student เป็นสมาชิกของ project จริง
+            const isMember = await this.prisma.teammember.findFirst({
+                where: {
+                    user_id: grade.student_id,
+                    Team: { Project: { project_id: pid } },
+                },
+            });
+            if (!isMember) {
+                this.logger.warn(`Grade skipped: student ${grade.student_id} is not a member of project ${pid}`);
+                continue; // ข้ามนักศึกษาที่ไม่ใช่ member แทนที่จะ save ผิด
+            }
 
             const existing = await this.prisma.grade.findFirst({
                 where: { student_id: grade.student_id, project_id: pid, term_id: termId },

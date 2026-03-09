@@ -78,6 +78,7 @@ export const AdvisorTeamsDashboard: React.FC = () => {
                 <ProjectListItem
                   key={project.project_id}
                   project={project}
+                  currentUserId={user?.users_id}
                   isSelected={
                     selectedProject?.project_id === project.project_id
                   }
@@ -93,6 +94,7 @@ export const AdvisorTeamsDashboard: React.FC = () => {
               <>
                 <ProjectDetailCard
                   project={selectedProject}
+                  currentUserId={user?.users_id}
                   actionLoading={actionLoading}
                   onApprove={handlers.handleApprove}
                   onReject={handlers.handleReject}
@@ -116,37 +118,53 @@ export const AdvisorTeamsDashboard: React.FC = () => {
 // Sub-components
 const ProjectListItem: React.FC<{
   project: AdvisorProject;
+  currentUserId?: string;
   isSelected: boolean;
   onSelect: () => void;
-}> = ({ project, isSelected, onSelect }) => (
-  <button
-    onClick={onSelect}
-    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${isSelected
-        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-700"
-      }`}
-  >
-    <div className="flex items-start justify-between gap-3 mb-3">
-      <h3 className="font-semibold text-gray-900 dark:text-white text-base line-clamp-2">
-        {project.projectname}
-      </h3>
-      <StatusBadge status={project.status} />
-    </div>
-    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-      <Users size={14} />
-      <span>กลุ่ม {project.team.groupNumber}</span>
-      <span>•</span>
-      <span>{project.team.section.section_code}</span>
-    </div>
-    {project.project_type && (
-      <div className="mt-2">
-        <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded">
-          {project.project_type}
-        </span>
+}> = ({ project, currentUserId, isSelected, onSelect }) => {
+  const myAdvisorRecord = project.advisors.find(
+    (a) => String(a.advisor.users_id) === String(currentUserId)
+  );
+  // Show individual status if it exists, else fallback to global status
+  const displayStatus = myAdvisorRecord?.status || project.status;
+  const roleName = myAdvisorRecord?.advisor_role === "PRIMARY" ? "ที่ปรึกษาหลัก" : myAdvisorRecord?.advisor_role === "CO_ADVISOR" ? "ที่ปรึกษาร่วม" : "";
+
+  return (
+    <button
+      onClick={onSelect}
+      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${isSelected
+          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-700"
+        }`}
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <h3 className="font-semibold text-gray-900 dark:text-white text-base line-clamp-2">
+          {project.projectname}
+        </h3>
+        <StatusBadge status={displayStatus} />
       </div>
-    )}
-  </button>
-);
+      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <Users size={14} />
+        <span>กลุ่ม {project.team.groupNumber}</span>
+        <span>•</span>
+        <span>{project.team.section.section_code}</span>
+        {roleName && (
+          <>
+            <span>•</span>
+            <span className="font-semibold text-blue-600 dark:text-blue-400">{roleName}</span>
+          </>
+        )}
+      </div>
+      {project.project_type && (
+        <div className="mt-2">
+          <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded">
+            {project.project_type}
+          </span>
+        </div>
+      )}
+    </button>
+  );
+};
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const styles =
@@ -174,87 +192,105 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 
 const ProjectDetailCard: React.FC<{
   project: AdvisorProject;
+  currentUserId?: string;
   actionLoading: boolean;
   onApprove: () => void;
   onReject: () => void;
-}> = ({ project, actionLoading, onApprove, onReject }) => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-    <div className="flex justify-between items-start mb-6">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-        <FileText size={24} className="text-amber-500" />
-        รายละเอียดโครงงาน
-      </h2>
-      <StatusBadge status={project.status} />
-    </div>
+}> = ({ project, currentUserId, actionLoading, onApprove, onReject }) => {
+  const myAdvisorRecord = project.advisors.find(
+    (a) => String(a.advisor.users_id) === String(currentUserId)
+  );
+  // Using individual status to decide whether to show approve/reject buttons
+  const isMyStatusPending = myAdvisorRecord?.status === "PENDING";
+  const displayStatus = myAdvisorRecord?.status || project.status;
+  const roleName = myAdvisorRecord?.advisor_role === "PRIMARY" ? "ที่ปรึกษาหลัก" : myAdvisorRecord?.advisor_role === "CO_ADVISOR" ? "ที่ปรึกษาร่วม" : "";
 
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs text-gray-400 uppercase font-black tracking-widest">
-          ชื่อโครงงาน (ไทย)
-        </p>
-        <p className="text-lg font-bold mt-1 text-gray-900 dark:text-white leading-tight">
-          {project.projectname}
-        </p>
+  return (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <FileText size={24} className="text-amber-500" />
+            รายละเอียดโครงงาน
+          </h2>
+          {roleName && (
+            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
+              • คำขอเป็น: {roleName}
+            </p>
+          )}
+        </div>
+        <StatusBadge status={displayStatus} />
       </div>
 
-      {project.projectnameEng && (
+      <div className="space-y-6">
         <div>
           <p className="text-xs text-gray-400 uppercase font-black tracking-widest">
-            Project Name (English)
+            ชื่อโครงงาน (ไทย)
           </p>
-          <p className="text-base font-semibold mt-1 text-gray-700 dark:text-gray-300 leading-tight">
-            {project.projectnameEng}
+          <p className="text-lg font-bold mt-1 text-gray-900 dark:text-white leading-tight">
+            {project.projectname}
           </p>
         </div>
-      )}
 
-      {project.project_type && (
-        <div>
-          <p className="text-xs text-gray-400 uppercase font-black tracking-widest">
-            ประเภท
-          </p>
-          <span className="inline-block mt-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-semibold rounded-full border border-blue-200 dark:border-blue-800">
-            {project.project_type}
-          </span>
-        </div>
-      )}
+        {project.projectnameEng && (
+          <div>
+            <p className="text-xs text-gray-400 uppercase font-black tracking-widest">
+              Project Name (English)
+            </p>
+            <p className="text-base font-semibold mt-1 text-gray-700 dark:text-gray-300 leading-tight">
+              {project.projectnameEng}
+            </p>
+          </div>
+        )}
 
-      {project.description && (
-        <div className="pt-4 border-t border-gray-100 dark:border-gray-700/50">
-          <p className="text-xs text-gray-400 uppercase font-black tracking-widest">
-            รายละเอียด
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 leading-relaxed whitespace-pre-wrap">
-            {project.description}
-          </p>
+        {project.project_type && (
+          <div>
+            <p className="text-xs text-gray-400 uppercase font-black tracking-widest">
+              ประเภท
+            </p>
+            <span className="inline-block mt-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-semibold rounded-full border border-blue-200 dark:border-blue-800">
+              {project.project_type}
+            </span>
+          </div>
+        )}
+
+        {project.description && (
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-700/50">
+            <p className="text-xs text-gray-400 uppercase font-black tracking-widest">
+              รายละเอียด
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 leading-relaxed whitespace-pre-wrap">
+              {project.description}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {isMyStatusPending && (
+        <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50">
+          <Button
+            variant="primary"
+            onClick={onApprove}
+            disabled={actionLoading}
+            className="flex-1 !py-3 flex items-center justify-center gap-2"
+          >
+            <CheckCircle size={20} />
+            {actionLoading ? "กำลังดำเนินการ..." : "อนุมัติคำขอ"}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={onReject}
+            disabled={actionLoading}
+            className="flex-1 !py-3 flex items-center justify-center gap-2 !bg-red-50 dark:!bg-red-900/20 !text-red-600 dark:!text-red-400"
+          >
+            <XCircle size={20} />
+            ปฏิเสธคำขอ
+          </Button>
         </div>
       )}
     </div>
-
-    {project.status === "PENDING" && (
-      <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50">
-        <Button
-          variant="primary"
-          onClick={onApprove}
-          disabled={actionLoading}
-          className="flex-1 !py-3 flex items-center justify-center gap-2"
-        >
-          <CheckCircle size={20} />
-          {actionLoading ? "กำลังดำเนินการ..." : "อนุมัติโครงงาน"}
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={onReject}
-          disabled={actionLoading}
-          className="flex-1 !py-3 flex items-center justify-center gap-2 !bg-red-50 dark:!bg-red-900/20 !text-red-600 dark:!text-red-400"
-        >
-          <XCircle size={20} />
-          ปฏิเสธ
-        </Button>
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 const TeamMembersCard: React.FC<{ project: AdvisorProject }> = ({
   project,

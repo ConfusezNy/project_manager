@@ -1,11 +1,12 @@
 "use client";
 
 // SectionDashboard - Main container for sections page
-import React from "react";
+import React, { useMemo } from "react";
 import { useSectionData } from "../hooks/useSectionData";
 
 // Sub-components
 import { SectionAccordion } from "./SectionAccordion";
+import { SectionFilterBar } from "./SectionFilterBar";
 import { CreateTermModal } from "./CreateTermModal";
 import { CreateSectionModal } from "./CreateSectionModal";
 import { EnrollmentsModal } from "./EnrollmentsModal";
@@ -37,6 +38,14 @@ export const SectionDashboard: React.FC = () => {
     termForm,
     setTermForm,
     termError,
+    // Filter
+    filterQuery,
+    setFilterQuery,
+    filterAcademicYear,
+    setFilterAcademicYear,
+    filterLockStatus,
+    setFilterLockStatus,
+    // Modals
     showCreateModal,
     setShowCreateModal,
     showTermModal,
@@ -50,45 +59,60 @@ export const SectionDashboard: React.FC = () => {
     handlers,
   } = useSectionData();
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  // Unique academic years from terms for the year filter dropdown
+  const availableYears = useMemo(() => {
+    const years = new Set(terms.map((t) => String(t.academicYear)));
+    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+  }, [terms]);
+
+  if (loading) return <div className="p-6 text-gray-500">Loading...</div>;
   if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   return (
     <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             จัดการหมู่เรียน
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Section Management
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+            {terms.length} เทอม · {sections.length} หมู่เรียน
           </p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowTermModal(true)}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold shadow-sm transition"
-          >
-            + สร้างเทอม
-          </button>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm transition"
-          >
-            + สร้างหมู่เรียน
-          </button>
-        </div>
+        <button
+          onClick={() => setShowTermModal(true)}
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold shadow-sm transition"
+        >
+          + สร้างเทอม
+        </button>
       </div>
 
-      {/* Sections Accordion */}
+      {/* Global Filter Bar */}
+      <SectionFilterBar
+        query={filterQuery}
+        setQuery={setFilterQuery}
+        academicYear={filterAcademicYear}
+        setAcademicYear={setFilterAcademicYear}
+        lockStatus={filterLockStatus}
+        setLockStatus={setFilterLockStatus}
+        availableYears={availableYears}
+      />
+
+      {/* Term-First Accordion */}
       <SectionAccordion
         sections={sections}
+        terms={terms}
+        filterQuery={filterQuery}
+        filterAcademicYear={filterAcademicYear}
+        filterLockStatus={filterLockStatus}
         onEnroll={handlers.openEnrollModal}
         onViewEnrollments={handlers.fetchEnrollments}
         onContinue={handlers.openContinueModal}
         onDelete={handlers.handleDeleteSection}
         onToggleLock={handlers.handleToggleLock}
+        onDeleteTerm={handlers.handleDeleteTerm}
+        onCreateSectionInTerm={handlers.openCreateModalWithTerm}
       />
 
       {/* Modals */}
@@ -103,7 +127,10 @@ export const SectionDashboard: React.FC = () => {
 
       <CreateSectionModal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => {
+          setShowCreateModal(false);
+          setCreateForm((prev) => ({ ...prev, term_id: "" }));
+        }}
         form={createForm}
         setForm={setCreateForm}
         error={createError}

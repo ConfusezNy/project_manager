@@ -4,6 +4,8 @@
 // Components
 export { SectionDashboard } from "./components/SectionDashboard";
 export { SectionCard } from "./components/SectionCard";
+export { SectionAccordion } from "./components/SectionAccordion";
+export { SectionFilterBar } from "./components/SectionFilterBar";
 export { CreateTermModal } from "./components/CreateTermModal";
 export { CreateSectionModal } from "./components/CreateSectionModal";
 export { EnrollmentsModal } from "./components/EnrollmentsModal";

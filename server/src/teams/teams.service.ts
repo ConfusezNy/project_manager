@@ -6,6 +6,7 @@ import {
     Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
     CreateTeamDto,
@@ -163,6 +164,9 @@ export class TeamsService {
     async invite(userId: string, dto: InviteDto) {
         const team = await this.prisma.team.findUnique({
             where: { team_id: dto.teamId },
+            include: {
+                Section: { select: { section_code: true } },
+            },
         });
         if (!team) {
             throw new NotFoundException('Team not found');
@@ -187,15 +191,25 @@ export class TeamsService {
             throw new BadRequestException('ผู้ใช้มีทีมในรายวิชานี้แล้ว');
         }
 
-        // สร้าง notification = invite (ใช้ NotificationsService)
+        // ✅ ดึงชื่อผู้ชวนมาใส่ใน notification
+        const inviter = await this.prisma.users.findUnique({
+            where: { users_id: userId },
+            select: { firstname: true, lastname: true },
+        });
+        const inviterName = inviter
+            ? `${inviter.firstname} ${inviter.lastname}`
+            : 'เพื่อนของคุณ';
+        const sectionCode = team.Section?.section_code || '';
+
+        // สร้าง notification = invite
         await this.notificationsService.create({
             userId: dto.inviteeUserId,
             actorUserId: userId,
             title: 'เชิญเข้าร่วมทีม',
-            message: 'คุณถูกเชิญให้เข้าร่วมกลุ่มโครงงาน',
+            message: `${inviterName} เชิญคุณเข้าร่วมกลุ่มโครงงาน${sectionCode ? ` วิชา ${sectionCode}` : ''} กดเพื่อยืนยัน/ปฏิเสธ`,
             eventType: 'TEAM_INVITE',
             teamId: team.team_id,
-            link: '/teams', // ✅ เพิ่ม link
+            link: '/Teams',
         });
 
         return { message: 'Invitation sent' };
@@ -205,12 +219,19 @@ export class TeamsService {
     // POST /teams/join — ตอบรับคำเชิญ
     // ย้ายจาก: teams/join/route.ts → POST
     //
-    // 📌 Flow: ดึง notification → เช็ค team → เช็ค duplicate → เพิ่มสมาชิก → mark read
+    // 📌 Flow: ดึง notification → เช็ค team → เช็ค duplicate → เช็ค locked/max → เพิ่มสมาชิก → mark read
     // =====================================================
     async join(userId: string, dto: JoinDto) {
         const notification = await this.prisma.notification.findUnique({
             where: { notification_id: dto.notificationId },
-            include: { Team: true },
+            include: {
+                Team: {
+                    include: {
+                        Section: true,
+                        Teammember: true,
+                    },
+                },
+            },
         });
 
         if (!notification || notification.user_id !== userId) {
@@ -235,6 +256,18 @@ export class TeamsService {
         });
         if (exists) {
             throw new BadRequestException('คุณมีทีมในรายวิชานี้แล้ว');
+        }
+
+        // ✅ บัค #9 — เช็ค team_locked (Admin ล็อคการเปลี่ยนทีมแล้ว)
+        if (notification.Team.Section?.team_locked) {
+            throw new BadRequestException('ไม่สามารถเข้าร่วมทีมได้ เนื่องจากอาจารย์ล็อคการเปลี่ยนทีมแล้ว');
+        }
+
+        // ✅ บัค #9 — เช็ค max_team_size (ทีมเต็มแล้ว)
+        const currentSize = notification.Team.Teammember.length;
+        const maxSize = notification.Team.Section?.max_team_size ?? 999;
+        if (currentSize >= maxSize) {
+            throw new BadRequestException(`ทีมนี้มีสมาชิกเต็มแล้ว (${currentSize}/${maxSize} คน)`);
         }
 
         // เพิ่มสมาชิก + mark notification read
@@ -283,32 +316,47 @@ export class TeamsService {
             );
         }
 
-        // ✅ ใช้ $transaction (โค้ดเดิมไม่ได้ใช้!)
-        if (team.Teammember.length === 1) {
-            // สมาชิกคนสุดท้าย → ลบทุกอย่าง
-            await this.prisma.$transaction(async (tx) => {
-                if (team.Project) {
-                    await tx.projectAdvisor.deleteMany({
-                        where: { project_id: team.Project.project_id },
-                    });
-                    await tx.project.delete({
-                        where: { project_id: team.Project.project_id },
-                    });
-                }
-                await tx.teammember.delete({
-                    where: { teammember_id: membership.teammember_id },
-                });
-                await tx.team.delete({
-                    where: { team_id: team.team_id },
-                });
+        // ✅ Helper: ลบทีมและทุกอย่างที่เกี่ยวข้องใน transaction
+        const deleteTeamCascade = async (tx: Prisma.TransactionClient) => {
+            if (team.Project) {
+                const projectId = team.Project.project_id;
+                await tx.taskAssignment.deleteMany({ where: { Task: { project_id: projectId } } });
+                await tx.comment.deleteMany({ where: { Task: { project_id: projectId } } });
+                await tx.attachment.deleteMany({ where: { Task: { project_id: projectId } } });
+                await tx.task.deleteMany({ where: { project_id: projectId } });
+                await tx.projectAdvisor.deleteMany({ where: { project_id: projectId } });
+                await tx.grade.deleteMany({ where: { project_id: projectId } });
+                await tx.project.delete({ where: { project_id: projectId } });
+            }
+            await tx.submission.deleteMany({ where: { team_id: team.team_id } });
+            await tx.notification.deleteMany({ where: { team_id: team.team_id } });
+            // ✅ disconnect implicit Users[] ก่อนลบ (ไม่งั้น FK fail)
+            await tx.team.update({
+                where: { team_id: team.team_id },
+                data: { Users: { set: [] } },
             });
+            await tx.teammember.deleteMany({ where: { team_id: team.team_id } });
+            await tx.team.delete({ where: { team_id: team.team_id } });
+        };
 
+        if (team.Teammember.length === 1) {
+            // ✅ สมาชิกคนสุดท้าย — ลบทีมทันที
+            await this.prisma.$transaction((tx) => deleteTeamCascade(tx));
             return { message: 'ออกจากกลุ่มและลบกลุ่มสำเร็จ (คุณเป็นสมาชิกคนสุดท้าย)' };
         } else {
-            // แค่ลบตัวเองออก
+            // ลบตัวเองออกก่อน
             await this.prisma.teammember.delete({
                 where: { teammember_id: membership.teammember_id },
             });
+
+            // ✅ บัค — เช็คอีกรอบ ถ้าเหลือ 0 คน → ลบทีมด้วย (กรณี race หรือ data inconsistency)
+            const remaining = await this.prisma.teammember.count({
+                where: { team_id: team.team_id },
+            });
+            if (remaining === 0) {
+                await this.prisma.$transaction((tx) => deleteTeamCascade(tx));
+                return { message: 'ออกจากกลุ่มและลบกลุ่มสำเร็จ (ไม่มีสมาชิกเหลือ)' };
+            }
 
             return { message: 'ออกจากกลุ่มสำเร็จ' };
         }

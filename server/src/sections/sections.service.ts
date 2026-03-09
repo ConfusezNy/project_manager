@@ -6,6 +6,7 @@ import {
     Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventsService } from '../events/events.service';
 import {
     CreateSectionDto,
     UpdateSectionDto,
@@ -36,7 +37,10 @@ import { Prisma } from '@prisma/client';
 export class SectionsService {
     private readonly logger = new Logger(SectionsService.name);
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private eventsService: EventsService,
+    ) { }
 
     // =====================================================
     // GET /sections — ดึงรายการ section ทั้งหมด
@@ -136,9 +140,17 @@ export class SectionsService {
 
         const updateData: Prisma.SectionUpdateInput = {};
         if (dto.team_locked !== undefined) updateData.team_locked = dto.team_locked;
-
         if (dto.min_team_size !== undefined) updateData.min_team_size = dto.min_team_size;
         if (dto.max_team_size !== undefined) updateData.max_team_size = dto.max_team_size;
+
+        // ✅ บัค #7 — validate min <= max โดยเทียบกับค่าปัจจุบันถ้าไม่ได้ส่งมา
+        const effectiveMin = dto.min_team_size ?? section.min_team_size;
+        const effectiveMax = dto.max_team_size ?? section.max_team_size;
+        if (effectiveMin > effectiveMax) {
+            throw new BadRequestException(
+                `min_team_size (${effectiveMin}) ต้องน้อยกว่าหรือเท่ากับ max_team_size (${effectiveMax})`,
+            );
+        }
 
         const updatedSection = await this.prisma.section.update({
             where: { section_id: id },
@@ -664,6 +676,9 @@ export class SectionsService {
                     },
                 });
 
+                // 5a-1. Backfill submissions for the new team in the new section
+                await this.eventsService.backfillSubmissionsForTeam(newTeam.team_id, newSection.section_id, tx);
+
                 // 5b. Clone Teammember
                 if (team.Teammember.length > 0) {
                     await tx.teammember.createMany({
@@ -685,7 +700,7 @@ export class SectionsService {
                             projectnameEng: oldProject.projectnameEng,
                             description: oldProject.description,
                             project_type: oldProject.project_type,
-                            status: 'DRAFT',
+                            status: oldProject.status, // 💡 คัดลอกสถานะเดิมมาเลย (ไม่ต้องหล่นไป DRAFT)
                             team_id: newTeam.team_id,
                         },
                     });
@@ -696,9 +711,75 @@ export class SectionsService {
                             data: oldProject.ProjectAdvisor.map((pa) => ({
                                 project_id: newProject.project_id,
                                 advisor_id: pa.advisor_id,
+                                advisor_role: pa.advisor_role, // 💡 คัดลอกบทบาท (PRIMARY / CO_ADVISOR)
+                                status: pa.status, // 💡 คัดลอกการอนุมัติ
                             })),
                             skipDuplicates: true,
                         });
+                    }
+
+                    // 5e. Clone Tasks (Kanban board, Comments, Attachments)
+                    const oldTasks = await tx.task.findMany({
+                        where: { project_id: oldProject.project_id },
+                        include: {
+                            TaskAssignment: true,
+                            Attachment: true,
+                            Comment: true,
+                        },
+                    });
+
+                    if (oldTasks.length > 0) {
+                        for (const oldTask of oldTasks) {
+                            const newTask = await tx.task.create({
+                                data: {
+                                    title: oldTask.title,
+                                    description: oldTask.description,
+                                    status: oldTask.status,
+                                    priority: oldTask.priority,
+                                    tags: oldTask.tags,
+                                    startDate: oldTask.startDate,
+                                    dueDate: oldTask.dueDate,
+                                    authorUserId: oldTask.authorUserId,
+                                    project_id: newProject.project_id,
+                                    position: oldTask.position,
+                                },
+                            });
+
+                            if (oldTask.TaskAssignment.length > 0) {
+                                await tx.taskAssignment.createMany({
+                                    data: oldTask.TaskAssignment.map((ta) => ({
+                                        user_id: ta.user_id,
+                                        task_id: newTask.task_id,
+                                    })),
+                                    skipDuplicates: true,
+                                });
+                            }
+
+                            if (oldTask.Attachment.length > 0) {
+                                await tx.attachment.createMany({
+                                    data: oldTask.Attachment.map((a) => ({
+                                        fileUrl: a.fileUrl,
+                                        filename: a.filename,
+                                        uploadedBy_id: a.uploadedBy_id,
+                                        task_id: newTask.task_id,
+                                    })),
+                                    skipDuplicates: true,
+                                });
+                            }
+
+                            if (oldTask.Comment.length > 0) {
+                                await tx.comment.createMany({
+                                    data: oldTask.Comment.map((c) => ({
+                                        text: c.text,
+                                        createdAt: c.createdAt,
+                                        isRead: c.isRead,
+                                        user_id: c.user_id,
+                                        task_id: newTask.task_id,
+                                    })),
+                                    skipDuplicates: true,
+                                });
+                            }
+                        }
                     }
                 }
 

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "ProjectAdvisor" ADD COLUMN     "advisor_role" TEXT NOT NULL DEFAULT 'PRIMARY',
+ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'PENDING';

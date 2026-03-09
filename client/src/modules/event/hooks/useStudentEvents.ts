@@ -102,9 +102,10 @@ export function useStudentEvents() {
       }
 
       // 5. Fetch all submissions for this team (filtered by enrolled sections)
+      // ให้ Backend ดึงจากทุกทีมที่ นศ. คนนี้เคยสังกัด (ทั้งวิชา 1 และ 2)
       const url = sectionIdsParam
-        ? `/submissions?team_id=${team.team_id}&section_ids=${sectionIdsParam}`
-        : `/submissions?team_id=${team.team_id}`;
+        ? `/submissions?section_ids=${sectionIdsParam}`
+        : `/submissions`;
       const submissionsData = await api.get<SubmissionWithEvent[]>(url);
 
       setSubmissions(submissionsData || []);

@@ -169,8 +169,8 @@ export const CreateSectionModal: React.FC<Props> = ({
                 setForm({ ...form, course_type: e.target.value })
               }
             >
-              <option value="PROJECT">Project</option>
               <option value="PRE_PROJECT">Pre Project</option>
+              <option value="PROJECT">Project</option>
             </select>
           </div>
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, ParseIntPipe, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { TermsService } from './terms.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -45,8 +45,19 @@ export class TermsController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN')
     @Post()
-    @HttpCode(HttpStatus.CREATED) // return 201 แทน 200
+    @HttpCode(HttpStatus.CREATED)
     async create(@Body() dto: CreateTermDto) {
         return this.termsService.create(dto);
+    }
+
+    /**
+     * DELETE /terms/:id — ลบเทอม (เฉพาะถ้าไม่มี Section ผูก)
+     * 🛡️ Admin only
+     */
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    @Delete(':id')
+    async remove(@Param('id', ParseIntPipe) id: number) {
+        return this.termsService.remove(id);
     }
 }

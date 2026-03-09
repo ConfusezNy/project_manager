@@ -88,8 +88,8 @@ export const TeamDashboard: React.FC = () => {
 
       {/* Content */}
       <div className="space-y-6">
-        {/* Pending Invites */}
-        {!hasTeam && (
+        {/* Pending Invites — แสดงเสมอถ้ามีคำเชิญ */}
+        {pendingInvites.length > 0 && (
           <PendingInvites
             invites={pendingInvites}
             onAccept={handlers.acceptInvite}
@@ -244,6 +244,7 @@ export const TeamDashboard: React.FC = () => {
           onClose={() => setShowAdvisorModal(false)}
           projectId={projectData.project_id}
           sectionId={teamData?.section?.section_id ?? section?.section_id}
+          currentAdvisors={projectData.advisors}
           onAdvisorSelected={handlers.fetchData}
         />
       )}

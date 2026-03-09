@@ -23,6 +23,9 @@ export interface Term {
   term_id: number;
   academicYear: string;
   semester: string;
+  startDate?: string;
+  endDate?: string;
+  _count?: { Section: number };
 }
 
 export interface Candidate {
@@ -133,6 +136,11 @@ export const sectionService = {
   // Create term
   async createTerm(form: CreateTermForm) {
     return api.post("/terms", form);
+  },
+
+  // Delete term (Admin only — only if no sections linked)
+  async deleteTerm(termId: number) {
+    return api.delete(`/terms/${termId}`);
   },
 
   // Get enrollments for a section

@@ -56,26 +56,37 @@ export const teamService = {
       const data = await api.get<any>("/teams/my-team");
       if (!data) return null;
 
-      // Prisma returns relation as 'Team' (uppercase)
-      const team = data?.Team || data?.team;
+      // Backend returns teammember row: { team_id, user_id, Team: { ... } }
+      // หรือในบางกรณีอาจคืน Team object ตรงๆ
+      const team = data?.Team || data?.team || (data?.team_id ? data : null);
       if (!team) return null;
 
-      // Normalize Prisma PascalCase to camelCase
+      // ดึง Section (รองรับทั้ง PascalCase และ camelCase)
+      const rawSection = team.Section || team.section;
+
+      // Normalize Prisma PascalCase → camelCase
       return {
         ...team,
-        section: team.Section || team.section,
+        // ✅ Bug #2 fix: backend ส่ง groupNumber ไม่ใช่ teamname
+        teamname: team.groupNumber ?? team.teamname,
+        section: rawSection
+          ? {
+              ...rawSection,
+              section_id: rawSection.section_id,
+              section_code: rawSection.section_code,
+              // รองรับ Term ทั้ง PascalCase และ camelCase
+              term: rawSection.Term || rawSection.term,
+            }
+          : undefined,
         members: (team.Teammember || team.members || []).map((m: any) => {
-          // Get users_id from multiple possible sources (FK is user_id, PK is users_id)
+          // FK คือ user_id, PK ของ Users คือ users_id
           const usersId = m.user_id || m.Users?.users_id || m.user?.users_id;
           const userObj = m.Users || m.user;
           return {
             ...m,
-            users_id: usersId, // Standard field for components
+            users_id: usersId,
             user: userObj
-              ? {
-                ...userObj,
-                users_id: userObj.users_id || usersId,
-              }
+              ? { ...userObj, users_id: userObj.users_id || usersId }
               : undefined,
             firstname: userObj?.firstname || m.firstname,
             lastname: userObj?.lastname || m.lastname,
@@ -83,6 +94,7 @@ export const teamService = {
         }),
       };
     } catch (error) {
+      console.error('[teamService] getMyTeam error:', error);
       return null;
     }
   },
@@ -99,7 +111,34 @@ export const teamService = {
   // Fetch pending invites
   async getPendingInvites(): Promise<PendingInvite[]> {
     try {
-      return await api.get<PendingInvite[]>("/teams/pending-invites");
+      const data = await api.get<any[]>("/teams/pending-invites");
+      if (!Array.isArray(data)) return [];
+      // ✅ Normalize Prisma PascalCase → camelCase
+      return data.map((n: any) => ({
+        notification_id: n.notification_id,
+        actor: n.Users_Notification_actor_user_idToUsers
+          ? {
+              firstname: n.Users_Notification_actor_user_idToUsers.firstname,
+              lastname: n.Users_Notification_actor_user_idToUsers.lastname,
+            }
+          : n.actor,
+        team: n.Team
+          ? {
+              team_id: n.Team.team_id,
+              name: n.Team.groupNumber,
+              section: n.Team.Section
+                ? { section_code: n.Team.Section.section_code }
+                : undefined,
+              members: (n.Team.Teammember || []).map((m: any) => ({
+                users_id: m.user_id,
+                firstname: m.Users?.firstname,
+                lastname: m.Users?.lastname,
+                email: m.Users?.email,
+                role: m.Users?.role,
+              })),
+            }
+          : n.team,
+      }));
     } catch {
       return [];
     }

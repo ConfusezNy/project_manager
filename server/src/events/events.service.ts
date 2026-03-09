@@ -1,6 +1,7 @@
 import {
     Injectable,
     NotFoundException,
+    BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
@@ -71,6 +72,12 @@ export class EventsService {
         });
         if (!section) {
             throw new NotFoundException('Section not found');
+        }
+
+        // ✅ บัค #8 — dueDate ต้องเป็นอนาคต
+        const due = new Date(dto.dueDate);
+        if (due <= new Date()) {
+            throw new BadRequestException('กำหนดส่งงาน (dueDate) ต้องเป็นวันในอนาคต');
         }
 
         const event = await this.prisma.event.create({

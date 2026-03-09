@@ -217,8 +217,8 @@ export class ProjectsService {
     // POST /projects/:id/advisor — เพิ่มอาจารย์ที่ปรึกษา
     // ย้ายจาก: projects/[id]/advisor/route.ts → POST
     //
-    // 📌 Flow: เช็คสมาชิก → เช็คก่อน approve → เช็ค capacity (max 2) →
-    //          ลบอาจารย์เก่า → เพิ่มใหม่ → status = PENDING
+    // 📌 Flow: เช็คสมาชิก → เช็คก่อน approve → เช็ค duplicate →
+    //          เช็ค capacity (max 2) → ADD (ไม่ลบเก่า) → status = PENDING
     // =====================================================
     async addAdvisor(id: number, userId: string, dto: AddAdvisorDto) {
         const project = await this.prisma.project.findUnique({
@@ -239,36 +239,74 @@ export class ProjectsService {
             throw new ForbiddenException('You are not a member of this team');
         }
 
-        if (project.status === 'APPROVED') {
-            throw new ForbiddenException('Cannot change advisor for approved project');
+        let role = dto.advisor_role || 'PRIMARY';
+
+        const hasPrimary = project.ProjectAdvisor.some(pa => pa.advisor_role === 'PRIMARY');
+
+        // กำหนดบทบาทอาจารย์
+        if (!hasPrimary) {
+            // ถ้ายังไม่มีที่ปรึกษาหลัก บังคับให้เป็น PRIMARY ทันที (ป้องกันบั๊ก State ไม่ตรง)
+            role = 'PRIMARY';
+        } else {
+            if (project.status === 'APPROVED') {
+                role = 'CO_ADVISOR';
+            } else if (project.status === 'PENDING') {
+                throw new BadRequestException('โครงงานอยู่ระหว่างรอการอนุมัติโปรดรอสักครู่');
+            } else {
+                role = 'PRIMARY';
+            }
         }
 
-        // เช็คว่าอาจารย์รับได้อีกไหม (นับเฉพาะ APPROVED projects)
+        // ✅ เช็ค duplicate — อาจารย์คนนี้เป็นที่ปรึกษา project นี้อยู่แล้ว
+        const alreadyAdvisor = project.ProjectAdvisor.some(
+            (pa) => pa.advisor_id === dto.advisor_id,
+        );
+        if (alreadyAdvisor) {
+            throw new BadRequestException('อาจารย์ท่านนี้เป็นที่ปรึกษาของโปรเจกต์นี้อยู่แล้ว');
+        }
+
+        // ✅ เช็คจำนวน — PRIMARY ได้ 1 คน, CO_ADVISOR ได้ 1 คน
+        const currentRoleCount = project.ProjectAdvisor.filter(pa => pa.advisor_role === role).length;
+        if (currentRoleCount > 0 && role === 'PRIMARY') {
+            throw new BadRequestException('มีอาจารย์ที่ปรึกษาหลักอยู่แล้ว');
+        }
+        if (currentRoleCount > 0 && role === 'CO_ADVISOR') {
+            throw new BadRequestException('มีอาจารย์ที่ปรึกษาร่วมอยู่แล้ว');
+        }
+
+        // ✅ เช็คว่าอาจารย์รับได้อีกไหม (นับเฉพาะ APPROVED projects)
         const advisorCount = await this.prisma.projectAdvisor.count({
             where: {
                 advisor_id: dto.advisor_id,
-                Project: { status: 'APPROVED' },
+                status: 'APPROVED',
             },
         });
         if (advisorCount >= 2) {
-            throw new BadRequestException('อาจารย์ท่านนี้รับโปรเจกต์เต็มแล้ว');
+            throw new BadRequestException('อาจารย์ท่านนี้รับโปรเจกต์เต็มแล้ว (2/2)');
         }
 
-        // ลบอาจารย์เก่า → เพิ่มใหม่ → เปลี่ยนสถานะ
-        await this.prisma.projectAdvisor.deleteMany({
-            where: { project_id: id },
-        });
-
+        // ✅ เพิ่มอาจารย์ใหม่โดยไม่ลบอาจารย์เก่า
         await this.prisma.projectAdvisor.create({
-            data: { project_id: id, advisor_id: dto.advisor_id },
+            data: {
+                project_id: id,
+                advisor_id: dto.advisor_id,
+                advisor_role: role,
+                status: 'PENDING'
+            },
         });
 
-        await this.prisma.project.update({
-            where: { project_id: id },
-            data: { status: 'PENDING' },
-        });
+        // เปลี่ยน status เป็น PENDING เฉพาะเวลาขอ PRIMARY
+        if (role === 'PRIMARY') {
+            await this.prisma.project.update({
+                where: { project_id: id },
+                data: { status: 'PENDING' },
+            });
+        }
 
-        return { message: 'เพิ่มอาจารย์ที่ปรึกษาสำเร็จ' };
+        return {
+            message: role === 'PRIMARY' ? 'ขออาจารย์ที่ปรึกษาหลักสำเร็จ' : 'ขออาจารย์ที่ปรึกษาร่วมสำเร็จ',
+            totalAdvisors: project.ProjectAdvisor.length + 1,
+        };
     }
 
     // =====================================================
@@ -324,22 +362,42 @@ export class ProjectsService {
             throw new ForbiddenException('You are not an advisor of this project');
         }
 
-        if (projectAdvisor.Project.status !== 'PENDING') {
-            throw new BadRequestException('Can only approve/reject PENDING projects');
+        if (projectAdvisor.status !== 'PENDING') {
+            throw new BadRequestException('คำขอนี้ได้รับการดำเนินการไปแล้ว');
         }
 
         // ✅ ใช้ $transaction ให้ทุก DB operation เป็น atomic
         const project = await this.prisma.$transaction(async (tx) => {
-            await tx.project.update({
-                where: { project_id: id },
+            // อัปเดตสถานะรายบุคคล (ProjectAdvisor)
+            await tx.projectAdvisor.update({
+                where: { projectAdvisor_id: projectAdvisor.projectAdvisor_id },
                 data: { status: dto.status as any },
             });
 
-            // ถ้าปฏิเสธ → ลบ ProjectAdvisor record ด้วย
-            if (dto.status === 'REJECTED') {
-                await tx.projectAdvisor.deleteMany({
-                    where: { project_id: id },
-                });
+            // ถ้าเป็นที่ปรึกษาหลัก (PRIMARY) ให้มีผลกับสถานะโครงงาน (Project) ด้วย
+            if (projectAdvisor.advisor_role === 'PRIMARY') {
+                if (dto.status === 'APPROVED') {
+                    await tx.project.update({
+                        where: { project_id: id },
+                        data: { status: 'APPROVED' },
+                    });
+                } else if (dto.status === 'REJECTED') {
+                    await tx.project.update({
+                        where: { project_id: id },
+                        data: { status: 'DRAFT' },
+                    });
+                    // ลบตัวอย่างที่ปรึกษาหลักที่ปฏิเสธออกไปเพื่อให้นักศึกษาขอใหม่ได้
+                    await tx.projectAdvisor.delete({
+                        where: { projectAdvisor_id: projectAdvisor.projectAdvisor_id },
+                    });
+                }
+            } else if (projectAdvisor.advisor_role === 'CO_ADVISOR') {
+                // ถ้าเป็นที่ปรึกษาร่วมและปฏิเสธ ให้ลบคำขอทิ้งไปเลย (เพื่อให้นักศึกษาขอคนใหม่ได้)
+                if (dto.status === 'REJECTED') {
+                    await tx.projectAdvisor.delete({
+                        where: { projectAdvisor_id: projectAdvisor.projectAdvisor_id },
+                    });
+                }
             }
 
             return tx.project.findUnique({
@@ -348,13 +406,14 @@ export class ProjectsService {
             });
         });
 
-        // แจ้งสมาชิกทีมว่าโครงงานถูกอนุมัติ/ปฏิเสธ (หลัง transaction สำเร็จ)
+        // แจ้งสมาชิกทีมว่าโครงงานถูกอนุมัติ/ปฏิเสธ หรือมีที่ปรึกษาร่วม (หลัง transaction สำเร็จ)
         if (project?.Team) {
+            const roleName = projectAdvisor.advisor_role === 'PRIMARY' ? 'ที่ปรึกษาหลัก' : 'ที่ปรึกษาร่วม';
             const eventType = dto.status === 'APPROVED' ? 'PROJECT_APPROVED' : 'PROJECT_REJECTED';
-            const title = dto.status === 'APPROVED' ? 'โครงงานได้รับการอนุมัติ' : 'โครงงานถูกปฏิเสธ';
+            const title = dto.status === 'APPROVED' ? `การร้องขอ${roleName}ได้รับการอนุมัติ` : `การร้องขอ${roleName}ถูกปฏิเสธ`;
             const message = dto.status === 'APPROVED'
-                ? `โครงงาน "${project.projectname}" ได้รับการอนุมัติแล้ว`
-                : `โครงงาน "${project.projectname}" ถูกปฏิเสธ`;
+                ? `คำร้องขอเป็น${roleName}ของโครงงาน "${project.projectname}" ได้รับการอนุมัติแล้ว`
+                : `คำร้องขอเป็น${roleName}ของโครงงาน "${project.projectname}" ถูกปฏิเสธ`;
 
             await this.notificationsService.createForTeamMembers(
                 project.Team.team_id,
@@ -369,8 +428,8 @@ export class ProjectsService {
         return {
             message:
                 dto.status === 'APPROVED'
-                    ? 'อนุมัติโปรเจกต์แล้ว'
-                    : 'ปฏิเสธโปรเจกต์แล้ว',
+                    ? 'อนุมัติเรียบร้อย'
+                    : 'ปฏิเสธเรียบร้อย',
         };
     }
 

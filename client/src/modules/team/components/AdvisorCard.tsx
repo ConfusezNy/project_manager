@@ -22,6 +22,8 @@ interface Props {
 export const AdvisorCard: React.FC<Props> = ({ projectData, onSelectAdvisor }) => {
   const advisors = projectData?.advisors || [];
   const hasAdvisor = advisors.length > 0;
+  // We rely on individual pa.status now, but retain global pending for the summary badge
+  const isGlobalPending = projectData?.status === "PENDING";
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -31,8 +33,20 @@ export const AdvisorCard: React.FC<Props> = ({ projectData, onSelectAdvisor }) =
 
       {hasAdvisor ? (
         <div className="flex flex-col gap-4">
+          {/* ✅ Badge แจ้งสถานะรวมที่ด้านบน */}
+          {isGlobalPending && (
+            <div className="flex items-center justify-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                รอการพิจารณาจากอาจารย์
+              </span>
+            </div>
+          )}
+
           {advisors.map((pa: any) => {
             const advisor = pa.advisor;
+            const isPaPending = pa.status === "PENDING";
+            const roleName = pa.advisor_role === "PRIMARY" ? "ที่ปรึกษาหลัก" : "ที่ปรึกษาร่วม";
             const fullName = `${advisor?.titles ?? ""} ${advisor?.firstname ?? ""} ${advisor?.lastname ?? ""}`.trim();
             const initial = advisor?.firstname?.charAt(0)?.toUpperCase() || "A";
             const expertiseTags = advisor?.expertiseAreas
@@ -42,16 +56,24 @@ export const AdvisorCard: React.FC<Props> = ({ projectData, onSelectAdvisor }) =
             return (
               <div
                 key={pa.advisor_id}
-                className="flex flex-col items-center gap-3 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50"
+                className={`flex flex-col items-center gap-3 p-5 rounded-xl border ${
+                  isPaPending
+                    ? "bg-amber-50/60 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
+                    : "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-100 dark:border-blue-800/50"
+                }`}
               >
                 {/* Profile Picture */}
-                <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500 flex-shrink-0 shadow-md">
+                <div className={`relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 shadow-md ${
+                  isPaPending
+                    ? "opacity-70 bg-gradient-to-br from-amber-300 to-orange-400"
+                    : "bg-gradient-to-br from-blue-400 to-purple-500"
+                }`}>
                   {getImageSrc(advisor?.profilePicture) ? (
                     <Image
                       src={getImageSrc(advisor.profilePicture)!}
                       alt={fullName}
                       fill
-                      className="object-cover"
+                      className={`object-cover ${isPaPending ? "opacity-70" : ""}`}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">
@@ -60,13 +82,18 @@ export const AdvisorCard: React.FC<Props> = ({ projectData, onSelectAdvisor }) =
                   )}
                 </div>
 
-                {/* Name */}
+                {/* Name + Status label */}
                 <div className="text-center">
                   <p className="text-base font-semibold text-gray-900 dark:text-white leading-tight">
                     {fullName}
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5">
-                    อาจารย์ที่ปรึกษา
+                  {/* ✅ label บอก status ชัดเจน */}
+                  <p className={`text-xs font-medium mt-0.5 ${
+                    isPaPending
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-blue-600 dark:text-blue-400"
+                  }`}>
+                    {isPaPending ? `⏳ รอการยืนยัน (${roleName})` : roleName}
                   </p>
                 </div>
 
@@ -117,14 +144,25 @@ export const AdvisorCard: React.FC<Props> = ({ projectData, onSelectAdvisor }) =
             );
           })}
 
-          {/* Change Advisor Button */}
+          {/* Change Advisor Button — แสดงเฉพาะตอนที่ยังไม่ APPROVED */}
           {projectData?.status !== "APPROVED" && (
             <Button
               variant="secondary"
               className="!py-2 !px-4 !text-sm w-full mt-1"
               onClick={onSelectAdvisor}
             >
-              เปลี่ยนอาจารย์
+              เปลี่ยนอาจารย์ที่ปรึกษาหลัก
+            </Button>
+          )}
+
+          {/* ขอเพิ่มอาจารย์ที่ปรึกษาร่วมได้ ถ้า Project Approved แล้ว และมีอาจารย์แค่ 1 คน */}
+          {projectData?.status === "APPROVED" && advisors.length < 2 && (
+            <Button
+              variant="secondary"
+              className="!py-2 !px-4 !text-sm w-full mt-1"
+              onClick={onSelectAdvisor}
+            >
+              ขออาจารย์ที่ปรึกษาร่วม +
             </Button>
           )}
         </div>

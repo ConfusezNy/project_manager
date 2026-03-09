@@ -21,15 +21,14 @@ export class AdvisorsService {
 
         const advisorsWithCount = await Promise.all(
             advisors.map(async (advisor) => {
-                // นับเฉพาะ APPROVED project ใน section นี้ (ถ้า sectionId มา) หรือ global
+                // นับเฉพาะ APPROVED ใน projectAdvisor (ทั้ง PRIMARY และ CO_ADVISOR)
                 const projectWhere: any = {
                     advisor_id: advisor.users_id,
-                    Project: { status: 'APPROVED' },
+                    status: 'APPROVED',
                 };
 
                 if (sectionId) {
                     projectWhere.Project = {
-                        status: 'APPROVED',
                         Team: { section_id: sectionId },
                     };
                 }
@@ -115,6 +114,8 @@ export class AdvisorsService {
                     })),
                 },
                 advisors: (project.ProjectAdvisor || []).map((a) => ({
+                    advisor_role: a.advisor_role,
+                    status: a.status,
                     advisor: {
                         users_id: a.Users?.users_id || a.advisor_id,
                         firstname: a.Users?.firstname,

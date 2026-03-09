@@ -35,6 +35,8 @@ export interface AdvisorProject {
     }>;
   };
   advisors: Array<{
+    advisor_role?: string;
+    status?: string;
     advisor: {
       users_id: number;
       firstname: string;

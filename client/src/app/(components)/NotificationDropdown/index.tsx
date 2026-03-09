@@ -96,7 +96,11 @@ const NotificationDropdown = () => {
   }, []);
 
   const handleNotificationClick = (notification: NotificationItem) => {
-    markAsRead(notification.notification_id);
+    // ✅ TEAM_INVITE: ไม่ mark as read ที่นี่ เพราะ getPendingInvites กรอง isRead: false
+    // การ mark read จะเกิดขึ้นตอนกด "รับคำเชิญ" / "ปฏิเสธ" บนหน้า /Teams เท่านั้น
+    if (!notification.isRead && notification.event_type !== "TEAM_INVITE") {
+      markAsRead(notification.notification_id);
+    }
     const role = user?.role || "STUDENT";
 
     switch (notification.event_type) {
@@ -219,6 +223,18 @@ const NotificationDropdown = () => {
                       {getActorName(item) && (
                         <p className="text-xs text-gray-400 mt-1">
                           จาก: {getActorName(item)}
+                        </p>
+                      )}
+                      {/* ✅ แสดง section_code */}
+                      {item.Team?.Section?.section_code && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          รายวิชา: {item.Team.Section.section_code}
+                        </p>
+                      )}
+                      {/* ✅ hint สำหรับ TEAM_INVITE */}
+                      {item.event_type === "TEAM_INVITE" && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-1">
+                          → กดเพื่อยืนยัน/ปฏิเสธ
                         </p>
                       )}
                       <p className="text-[10px] text-gray-400 mt-1">{formatTime(item.createdAt)}</p>

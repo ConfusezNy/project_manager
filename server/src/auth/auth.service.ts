@@ -76,9 +76,17 @@ export class AuthService {
 
     // 5. ส่งอีเมลผ่าน Resend
     const fromEmail = this.configService.get<string>('RESEND_FROM');
+    const devEmail = this.configService.get<string>('DEV_EMAIL');
+
+    // DEV: ถ้ามี DEV_EMAIL → redirect ทุกอีเมลไปที่ dev inbox แทน
+    const toEmail = devEmail ?? email;
+    if (devEmail) {
+      this.logger.warn(`[DEV] redirect email: ${email} → ${devEmail}`);
+    }
+
     const { error } = await this.resend.emails.send({
       from: `ระบบปริญญานิพนธ์ CPE RMUTT <${fromEmail ?? 'onboarding@resend.dev'}>`,
-      to: [email],
+      to: [toEmail],
       subject: `[CPE RMUTT] รหัส OTP ของคุณคือ ${otp} — ใช้ได้ภายใน 5 นาที`,
       html: `<!DOCTYPE html>
 <html lang="th">

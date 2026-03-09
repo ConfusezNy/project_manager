@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTermDto } from './dto/create-term.dto';
 
@@ -27,6 +27,9 @@ export class TermsService {
                 { academicYear: 'desc' },
                 { semester: 'desc' },
             ],
+            include: {
+                _count: { select: { Section: true } },
+            },
         });
     }
 
@@ -53,5 +56,23 @@ export class TermsService {
             message: 'สร้างเทอมสำเร็จ',
             data: newTerm,
         };
+    }
+
+    /**
+     * ลบเทอม — เฉพาะถ้าไม่มี Section ผูกอยู่
+     */
+    async remove(id: number) {
+        const term = await this.prisma.term.findUnique({ where: { term_id: id } });
+        if (!term) throw new NotFoundException('ไม่พบเทอมนี้');
+
+        const sectionCount = await this.prisma.section.count({ where: { term_id: id } });
+        if (sectionCount > 0) {
+            throw new BadRequestException(
+                `ไม่สามารถลบได้ มีหมู่เรียน ${sectionCount} หมู่ที่ใช้เทอมนี้อยู่`,
+            );
+        }
+
+        await this.prisma.term.delete({ where: { term_id: id } });
+        return { message: 'ลบเทอมเรียบร้อย' };
     }
 }
