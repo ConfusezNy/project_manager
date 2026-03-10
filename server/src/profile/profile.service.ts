@@ -61,13 +61,19 @@ export class ProfileService {
      * @param userId - users_id ดึงจาก JWT (ใน controller ใช้ @CurrentUser('users_id'))
      * @param dto - ข้อมูลที่จะอัพเดท (ส่งเฉพาะ field ที่แก้ก็ได้)
      */
-    async update(userId: string, dto: UpdateProfileDto) {
+    async update(userId: string, role: string, dto: UpdateProfileDto) {
+        // อาจารย์/นักศึกษา แก้ได้แค่รูปโปรไฟล์ และ expertiseAreas เท่านั้น
+        // ไม่สามารถแก้ชื่อ นามสกุล หรือเบอร์โทรได้
+        const isAdmin = role === 'ADMIN';
+
         const updatedUser = await this.prisma.users.update({
             where: { users_id: userId },
             data: {
-                ...(dto.firstname !== undefined && { firstname: dto.firstname }),
-                ...(dto.lastname !== undefined && { lastname: dto.lastname }),
-                ...(dto.tel_number !== undefined && { tel_number: dto.tel_number }),
+                // เฉพาะ ADMIN เท่านั้นที่แก้ชื่อ นามสกุล เบอร์โทรได้
+                ...(isAdmin && dto.firstname !== undefined && { firstname: dto.firstname }),
+                ...(isAdmin && dto.lastname !== undefined && { lastname: dto.lastname }),
+                ...(isAdmin && dto.tel_number !== undefined && { tel_number: dto.tel_number }),
+                // ทุก role เปลี่ยนรูปโปรไฟล์ได้
                 ...(dto.profilePicture !== undefined && { profilePicture: dto.profilePicture }),
                 ...(dto.expertiseAreas !== undefined && { expertiseAreas: dto.expertiseAreas }),
             },

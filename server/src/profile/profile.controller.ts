@@ -28,13 +28,15 @@ export class ProfileController {
 
     /**
      * PATCH /profile — อัพเดทโปรไฟล์ตัวเอง
+     * อาจารย์/นักศึกษา แก้ได้แค่รูปโปรไฟล์ ไม่สามารถแก้ชื่อหรือเบอร์โทรได้
      */
     @UseGuards(JwtAuthGuard)
     @Patch()
     async update(
         @CurrentUser('users_id') userId: string,
+        @CurrentUser('role') role: string,
         @Body() dto: UpdateProfileDto,
     ) {
-        return this.profileService.update(userId, dto);
+        return this.profileService.update(userId, role, dto);
     }
 }

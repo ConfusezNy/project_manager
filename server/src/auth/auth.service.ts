@@ -202,6 +202,162 @@ export class AuthService {
     return { verified: true, email, role };
   }
 
+  // =====================================================
+  // requestPasswordResetOtp — POST /auth/forgot-password
+  // ส่ง OTP สำหรับรีเซ็ตรหัสผ่าน (ต้องมี user ในระบบ)
+  // =====================================================
+  async requestPasswordResetOtp(email: string) {
+    // 1. ตรวจว่า user มีอยู่ในระบบ
+    const user = await this.prisma.users.findUnique({ where: { email } });
+    if (!user) {
+      throw new BadRequestException('ไม่พบอีเมลนี้ในระบบ กรุณาตรวจสอบอีเมลอีกครั้ง');
+    }
+
+    // 2. Rate limit (max 5 requests / 5 min)
+    const recentCount = await this.prisma.otpCode.count({
+      where: {
+        email,
+        createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+      },
+    });
+    if (recentCount >= 5) {
+      throw new BadRequestException('ขอ OTP บ่อยเกินไป กรุณารอ 5 นาทีแล้วลองใหม่');
+    }
+
+    // 3. ลบ OTP เก่าที่ยังไม่ได้ใช้
+    await this.prisma.otpCode.deleteMany({
+      where: { email, isUsed: false },
+    });
+
+    // 4. สร้าง OTP 6 หลัก
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // 5. บันทึก OTP ลง DB (หมดอายุ 5 นาที)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    await this.prisma.otpCode.create({
+      data: { email, otp, expiresAt },
+    });
+
+    this.logger.log(`Password reset OTP สร้างสำเร็จสำหรับ ${email}`);
+
+    // 6. ส่งอีเมลผ่าน Resend พร้อม template สำหรับรีเซ็ตรหัสผ่าน
+    const fromEmail = this.configService.get<string>('RESEND_FROM');
+    const devEmail = this.configService.get<string>('DEV_EMAIL');
+    const toEmail = devEmail ?? email;
+    if (devEmail) {
+      this.logger.warn(`[DEV] redirect email: ${email} → ${devEmail}`);
+    }
+
+    const { error } = await this.resend.emails.send({
+      from: `ระบบปริญญานิพนธ์ CPE RMUTT <${fromEmail ?? 'onboarding@resend.dev'}>`,
+      to: [toEmail],
+      subject: `[CPE RMUTT] รหัส OTP สำหรับรีเซ็ตรหัสผ่าน — ใช้ได้ภายใน 5 นาที`,
+      html: `<!DOCTYPE html>
+<html lang="th">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 16px;">
+  <tr><td align="center">
+    <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:8px;border:1px solid #e5e5e5;">
+      <!-- Header -->
+      <tr><td style="padding:32px 40px 24px;border-bottom:1px solid #f0f0f0;">
+        <p style="margin:0;font-size:13px;font-weight:600;color:#111111;letter-spacing:0.3px;">🔒 รีเซ็ตรหัสผ่าน</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#888888;">ระบบบริหารจัดการปริญญานิพนธ์ · ภาควิชา CPE · RMUTT</p>
+      </td></tr>
+      <!-- Body -->
+      <tr><td style="padding:32px 40px;">
+        <p style="margin:0 0 6px;font-size:15px;font-weight:600;color:#111111;">รหัส OTP สำหรับรีเซ็ตรหัสผ่าน</p>
+        <p style="margin:0 0 28px;font-size:13px;color:#666666;line-height:1.6;">
+          มีคำขอรีเซ็ตรหัสผ่านสำหรับบัญชี <strong style="color:#111111;">${email}</strong>
+        </p>
+        <!-- OTP -->
+        <div style="background:#f9f9f9;border:1px solid #e5e5e5;border-radius:6px;padding:28px;text-align:center;margin:0 0 24px;">
+          <p style="margin:0 0 10px;font-size:11px;color:#888888;letter-spacing:2px;text-transform:uppercase;">รหัสยืนยัน</p>
+          <div style="font-size:42px;font-weight:700;letter-spacing:14px;color:#111111;font-family:'Courier New',monospace;padding-left:14px;">${otp}</div>
+          <p style="margin:12px 0 0;font-size:12px;color:#888888;">ใช้ได้ภายใน <strong style="color:#111111;">5 นาที</strong></p>
+        </div>
+        <p style="margin:0;font-size:12px;color:#999999;line-height:1.6;">
+          หากคุณไม่ได้ทำรายการนี้ กรุณาเพิกเฉยต่ออีเมลฉบับนี้ — รหัสผ่านของคุณจะไม่ถูกเปลี่ยน
+        </p>
+      </td></tr>
+      <!-- Footer -->
+      <tr><td style="padding:16px 40px 24px;border-top:1px solid #f0f0f0;">
+        <p style="margin:0;font-size:11px;color:#bbbbbb;line-height:1.6;">
+          อีเมลนี้ถูกส่งโดยอัตโนมัติ · กรุณาอย่าตอบกลับ<br>
+          Sent to: ${email}
+        </p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`,
+    });
+
+    if (error) {
+      this.logger.error(`ส่งอีเมลรีเซ็ตรหัสผ่านล้มเหลว: ${JSON.stringify(error)}`);
+      throw new BadRequestException('ไม่สามารถส่งอีเมลได้ กรุณาลองใหม่อีกครั้ง');
+    }
+
+    this.logger.log(`ส่ง OTP รีเซ็ตรหัสผ่านไปยัง ${email} สำเร็จ`);
+    return { message: `ส่งรหัส OTP ไปยัง ${email} แล้ว กรุณาตรวจสอบกล่องจดหมาย` };
+  }
+
+  // =====================================================
+  // resetPassword — POST /auth/reset-password
+  // ยืนยัน OTP + เปลี่ยนรหัสผ่านใหม่
+  // =====================================================
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    // 1. หา OTP ล่าสุดของ email นี้
+    const record = await this.prisma.otpCode.findFirst({
+      where: { email, isUsed: false },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!record) {
+      throw new UnauthorizedException('ไม่พบรหัส OTP กรุณาขอรหัสใหม่');
+    }
+
+    // 2. เช็ค lock
+    if (record.failCount >= 5) {
+      throw new UnauthorizedException('รหัส OTP ถูก lock เนื่องจากใส่ผิดหลายครั้ง กรุณาขอรหัสใหม่');
+    }
+
+    // 3. เช็คหมดอายุ
+    if (record.expiresAt < new Date()) {
+      throw new UnauthorizedException('รหัส OTP หมดอายุแล้ว กรุณาขอรหัสใหม่');
+    }
+
+    // 4. เช็ค OTP ตรง
+    if (record.otp !== otp) {
+      await this.prisma.otpCode.update({
+        where: { id: record.id },
+        data: { failCount: { increment: 1 } },
+      });
+      const remaining = 4 - record.failCount;
+      if (remaining <= 0) {
+        throw new UnauthorizedException('รหัส OTP ไม่ถูกต้อง และถูก lock แล้ว กรุณาขอรหัสใหม่');
+      }
+      throw new UnauthorizedException(`รหัส OTP ไม่ถูกต้อง (เหลือ ${remaining} ครั้ง)`);
+    }
+
+    // 5. Mark OTP ว่าใช้แล้ว
+    await this.prisma.otpCode.update({
+      where: { id: record.id },
+      data: { isUsed: true },
+    });
+
+    // 6. Hash + อัปเดตรหัสผ่านใหม่
+    const hashedPassword = bcrypt.hashSync(newPassword, 10);
+    await this.prisma.users.update({
+      where: { email },
+      data: { passwordHash: hashedPassword },
+    });
+
+    this.logger.log(`รีเซ็ตรหัสผ่านสำเร็จสำหรับ ${email}`);
+    return { message: 'เปลี่ยนรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
+  }
+
   /**
    * สมัครสมาชิก
    * ย้ายมาจาก: client/src/app/api/auth/signup/route.ts

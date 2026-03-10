@@ -74,8 +74,6 @@ const StudentInfoCard = ({
     const courseTypeLabel: Record<string, string> = {
         PROJECT: "โปรเจกต์",
         PRE_PROJECT: "เตรียมโปรเจกต์",
-        THESIS: "วิทยานิพนธ์",
-        COOPERATIVE: "สหกิจ",
     };
 
     const projectStatusColor: Record<string, string> = {

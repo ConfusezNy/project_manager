@@ -8,6 +8,7 @@ export { OtpVerifyForm } from "./components/OtpVerifyForm";
 
 // Hooks
 export { useLoginForm, useSignupForm } from "./hooks/useAuthForm";
+export { useForgotPasswordForm } from "./hooks/useForgotPasswordForm";
 
 // Types
 export type { LoginFormData, SignupFormData } from "./hooks/useAuthForm";

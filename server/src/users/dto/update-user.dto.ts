@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsEnum, MinLength, Matches } from 'class-validator';
 
 enum Role {
     ADMIN = 'ADMIN',
@@ -34,4 +34,14 @@ export class UpdateUserDto {
     @IsOptional()
     @IsEnum(Role)
     role?: Role;
+
+    @IsOptional()
+    @IsString()
+    @MinLength(8, { message: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' })
+    @Matches(/\d/, { message: 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว' })
+    newPassword?: string;
+
+    @IsOptional()
+    @IsString()
+    expertiseAreas?: string;
 }

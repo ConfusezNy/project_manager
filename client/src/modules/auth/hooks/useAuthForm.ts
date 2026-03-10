@@ -55,7 +55,8 @@ export function useSignupForm() {
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
-      setForm((prev) => ({ ...prev, [name]: value }));
+      const sanitized = name === "tel_number" ? value.replace(/\D/g, "") : value;
+      setForm((prev) => ({ ...prev, [name]: sanitized }));
     },
     [],
   );
@@ -66,13 +67,33 @@ export function useSignupForm() {
       setLoading(true);
       setMessage(null);
 
+      // Validate required fields (trim to reject whitespace-only)
+      if (!form.firstname.trim()) {
+        setMessage("กรุณากรอกชื่อจริง");
+        setLoading(false);
+        return;
+      }
+      if (!form.lastname.trim()) {
+        setMessage("กรุณากรอกนามสกุล");
+        setLoading(false);
+        return;
+      }
+      if (form.tel_number) {
+        const tel = form.tel_number.trim();
+        if (!/^0\d{9}$/.test(tel)) {
+          setMessage("เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0");
+          setLoading(false);
+          return;
+        }
+      }
+
       try {
         // ใช้ useAuth().signup() → POST /auth/signup ไปที่ NestJS
         await signup({
           titles: form.titles || undefined,
-          firstname: form.firstname,
-          lastname: form.lastname,
-          tel_number: form.tel_number || undefined,
+          firstname: form.firstname.trim(),
+          lastname: form.lastname.trim(),
+          tel_number: form.tel_number.trim() || undefined,
           email: form.email,
           password: form.password,
         });

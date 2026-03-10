@@ -30,6 +30,7 @@ export const CreateTeamModal = ({
     topicThai: "",
     description: "",
   });
+  const [nameError, setNameError] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -44,7 +45,12 @@ export const CreateTeamModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (!formData.name.trim()) {
+      setNameError("กรุณากรอกชื่อกลุ่ม");
+      return;
+    }
+    setNameError("");
+    onSubmit({ ...formData, name: formData.name.trim() });
   };
 
   return (
@@ -72,10 +78,17 @@ export const CreateTeamModal = ({
             <input
               required
               name="name"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
+              className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white ${nameError ? "border-red-400 dark:border-red-500" : "border-none"
+                }`}
               placeholder="เช่น Smart Agriculture Team"
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                if (e.target.value.trim()) setNameError("");
+              }}
             />
+            {nameError && (
+              <p className="text-xs text-red-500 mt-1">{nameError}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">

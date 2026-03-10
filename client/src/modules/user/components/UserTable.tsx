@@ -13,9 +13,14 @@ export interface User {
     name: string;
     email: string;
     role: "ADMIN" | "ADVISOR" | "STUDENT" | string;
-    status: "Active" | "Inactive";
-    lastActive: string;
     avatar?: string;
+    team?: string;
+    project?: string;
+    titles?: string;
+    firstname?: string;
+    lastname?: string;
+    tel_number?: string;
+    expertiseAreas?: string;
 }
 
 interface Props {
@@ -72,9 +77,10 @@ const UserTable: React.FC<Props> = ({
                     <thead className="bg-slate-50 dark:bg-gray-900/50 text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider text-[11px]">
                         <tr>
                             <th className="px-6 py-5">ข้อมูลสมาชิก</th>
+                            <th className="px-6 py-5">อีเมล</th>
                             <th className="px-6 py-5">ระดับสิทธิ์</th>
-                            <th className="px-6 py-5">สถานะ</th>
-                            <th className="px-6 py-5">การใช้งานล่าสุด</th>
+                            <th className="px-6 py-5">กลุ่ม</th>
+                            <th className="px-6 py-5">ชื่อโครงงาน</th>
                             {!readOnly && <th className="px-6 py-5 text-right">การจัดการ</th>}
                         </tr>
                     </thead>
@@ -100,11 +106,11 @@ const UserTable: React.FC<Props> = ({
                                             <div className="font-bold text-slate-900 dark:text-white">
                                                 {user.name}
                                             </div>
-                                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                                                {user.email}
-                                            </div>
                                         </div>
                                     </div>
+                                </td>
+                                <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-medium">
+                                    {user.email}
                                 </td>
                                 <td className="px-6 py-4">
                                     {!readOnly && onRoleChange ? (
@@ -127,17 +133,12 @@ const UserTable: React.FC<Props> = ({
                                     )}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className={`w-2 h-2 rounded-full ${user.status === "Active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-rose-500"}`}
-                                        />
-                                        <span className="font-medium text-slate-700 dark:text-slate-300">
-                                            {user.status}
-                                        </span>
-                                    </div>
+                                    <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
+                                        {user.team || "-"}
+                                    </span>
                                 </td>
-                                <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-medium">
-                                    {user.lastActive}
+                                <td className="px-6 py-4 text-slate-700 dark:text-slate-300 font-medium">
+                                    {user.project || "-"}
                                 </td>
                                 {!readOnly && (
                                     <td className="px-6 py-4 text-right">

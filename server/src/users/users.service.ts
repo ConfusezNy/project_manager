@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
@@ -28,7 +29,11 @@ export class UsersService {
                     },
                     Teammember: {
                         include: {
-                            Team: { select: { team_id: true, groupNumber: true } },
+                            Team: {
+                                include: {
+                                    Project: { select: { projectname: true } }
+                                }
+                            },
                         },
                     },
                 },
@@ -58,7 +63,11 @@ export class UsersService {
                     },
                     Teammember: {
                         include: {
-                            Team: { select: { team_id: true, groupNumber: true } },
+                            Team: {
+                                include: {
+                                    Project: { select: { projectname: true } }
+                                }
+                            },
                         },
                     },
                 },
@@ -125,6 +134,13 @@ export class UsersService {
         if (data.email !== undefined) updateData.email = data.email;
         if (data.tel_number !== undefined) updateData.tel_number = data.tel_number;
         if (data.titles !== undefined) updateData.titles = data.titles;
+        if (data.profilePicture !== undefined) updateData.profilePicture = data.profilePicture;
+        if (data.expertiseAreas !== undefined) updateData.expertiseAreas = data.expertiseAreas;
+
+        // Handle password change
+        if (data.newPassword) {
+            updateData.passwordHash = bcrypt.hashSync(data.newPassword, 10);
+        }
 
         const updated = await this.prisma.users.update({
             where: { users_id: id },
@@ -171,15 +187,21 @@ export class UsersService {
             tel_number: u.tel_number,
             role: u.role,
             profilePicture: u.profilePicture,
+            expertiseAreas: u.expertiseAreas,
             sections: (u.Section_Enrollment as Array<Record<string, unknown>>)?.map((e) => ({
                 section_id: (e.Section as Record<string, unknown>).section_id,
                 section_code: (e.Section as Record<string, unknown>).section_code,
                 course_type: (e.Section as Record<string, unknown>).course_type,
             })) || [],
-            teams: (u.Teammember as Array<Record<string, unknown>>)?.map((t) => ({
-                team_id: (t.Team as Record<string, unknown>).team_id,
-                groupNumber: (t.Team as Record<string, unknown>).groupNumber,
-            })) || [],
+            teams: (u.Teammember as Array<Record<string, unknown>>)?.map((t) => {
+                const team = t.Team as Record<string, any>;
+                return {
+                    team_id: team.team_id,
+                    groupNumber: team.groupNumber,
+                    name: team.topicThai || team.description || "",
+                    project: team.Project ? { projectname: team.Project.projectname } : null
+                };
+            }) || [],
         };
     }
 }

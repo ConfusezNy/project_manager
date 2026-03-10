@@ -19,12 +19,17 @@ export default function ProfileSettings() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [errors, setErrors] = useState<{ firstname?: string; lastname?: string; tel_number?: string }>({});
 
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
     tel_number: "",
   });
+
+  // อาจารย์และนักศึกษาแก้ไขได้แค่รูปโปรไฟล์ ไม่สามารถแก้ชื่อหรือเบอร์โทรได้
+  const isAdmin = user?.role === "ADMIN";
+  const canEditFields = isAdmin;
 
   // Fetch full profile from API (JWT ไม่มี profilePicture)
   useEffect(() => {
@@ -109,11 +114,39 @@ export default function ProfileSettings() {
     setIsSubmitting(true);
 
     try {
-      const payload: Record<string, string> = { ...formData };
-      // Include profilePicture only if user uploaded a new one
+      const payload: Record<string, string> = {};
+
+      // ADMIN สามารถแก้ไขชื่อ นามสกุล เบอร์โทรได้
+      if (canEditFields) {
+        const newErrors: typeof errors = {};
+        if (!formData.firstname.trim()) newErrors.firstname = "กรุณากรอกชื่อจริง";
+        if (!formData.lastname.trim()) newErrors.lastname = "กรุณากรอกนามสกุล";
+        if (formData.tel_number && !/^0\d{9}$/.test(formData.tel_number)) {
+          newErrors.tel_number = "เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0";
+        }
+        if (Object.keys(newErrors).length > 0) {
+          setErrors(newErrors);
+          setIsSubmitting(false);
+          return;
+        }
+        setErrors({});
+        payload.firstname = formData.firstname.trim();
+        payload.lastname = formData.lastname.trim();
+        payload.tel_number = formData.tel_number.trim();
+      }
+
+      // ทุก role สามารถเปลี่ยนรูปโปรไฟล์ได้
       if (uploadedFileUrl) {
         payload.profilePicture = uploadedFileUrl;
       }
+
+      // ถ้าไม่มีอะไรจะบันทึก
+      if (Object.keys(payload).length === 0) {
+        alert("ไม่มีการเปลี่ยนแปลง");
+        setIsSubmitting(false);
+        return;
+      }
+
       await api.patch("/profile", payload);
       alert("บันทึกข้อมูลสำเร็จ!");
     } catch (error: unknown) {
@@ -143,21 +176,69 @@ export default function ProfileSettings() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
             <label className="text-sm font-semibold dark:text-gray-300">ชื่อจริง</label>
-            <input type="text" value={formData.firstname} onChange={e => setFormData({ ...formData, firstname: e.target.value })} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+            {canEditFields ? (
+              <>
+                <input
+                  type="text"
+                  value={formData.firstname}
+                  onChange={e => {
+                    setFormData({ ...formData, firstname: e.target.value });
+                    if (e.target.value.trim()) setErrors(prev => ({ ...prev, firstname: undefined }));
+                  }}
+                  className={`w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 ${errors.firstname ? "border-red-400" : ""}`}
+                />
+                {errors.firstname && <p className="text-xs text-red-500">{errors.firstname}</p>}
+              </>
+            ) : (
+              <p className="w-full p-3 border rounded-xl bg-gray-50 dark:bg-gray-900/50 dark:text-gray-300 text-gray-700">{formData.firstname || "-"}</p>
+            )}
           </div>
           <div className="space-y-1">
             <label className="text-sm font-semibold dark:text-gray-300">นามสกุล</label>
-            <input type="text" value={formData.lastname} onChange={e => setFormData({ ...formData, lastname: e.target.value })} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+            {canEditFields ? (
+              <>
+                <input
+                  type="text"
+                  value={formData.lastname}
+                  onChange={e => {
+                    setFormData({ ...formData, lastname: e.target.value });
+                    if (e.target.value.trim()) setErrors(prev => ({ ...prev, lastname: undefined }));
+                  }}
+                  className={`w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 ${errors.lastname ? "border-red-400" : ""}`}
+                />
+                {errors.lastname && <p className="text-xs text-red-500">{errors.lastname}</p>}
+              </>
+            ) : (
+              <p className="w-full p-3 border rounded-xl bg-gray-50 dark:bg-gray-900/50 dark:text-gray-300 text-gray-700">{formData.lastname || "-"}</p>
+            )}
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-semibold dark:text-gray-300">เบอร์โทรศัพท์ (สูงสุด 10 หลัก)</label>
-            <input type="tel" maxLength={10} value={formData.tel_number} onChange={e => setFormData({ ...formData, tel_number: e.target.value })} className="w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+            <label className="text-sm font-semibold dark:text-gray-300">เบอร์โทรศัพท์</label>
+            {canEditFields ? (
+              <>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  inputMode="numeric"
+                  value={formData.tel_number}
+                  onChange={e => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    setFormData({ ...formData, tel_number: digits });
+                    if (!digits || /^0\d{9}$/.test(digits)) setErrors(prev => ({ ...prev, tel_number: undefined }));
+                  }}
+                  className={`w-full p-3 border rounded-xl dark:bg-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 ${errors.tel_number ? "border-red-400" : ""}`}
+                />
+                {errors.tel_number && <p className="text-xs text-red-500">{errors.tel_number}</p>}
+              </>
+            ) : (
+              <p className="w-full p-3 border rounded-xl bg-gray-50 dark:bg-gray-900/50 dark:text-gray-300 text-gray-700">{formData.tel_number || "-"}</p>
+            )}
           </div>
         </div>
 
         <div className="flex justify-end">
           <button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-50">
-            {isSubmitting ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
+            {isSubmitting ? "กำลังบันทึก..." : (canEditFields ? "บันทึกการเปลี่ยนแปลง" : "บันทึกรูปโปรไฟล์")}
           </button>
         </div>
       </form>

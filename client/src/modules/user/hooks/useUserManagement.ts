@@ -10,8 +10,14 @@ export interface User {
   name: string;
   email: string;
   role: string;
-  status: "Active" | "Inactive";
-  lastActive: string;
+  avatar?: string;
+  team?: string;
+  project?: string;
+  titles?: string;
+  firstname?: string;
+  lastname?: string;
+  tel_number?: string;
+  expertiseAreas?: string;
 }
 
 export function useUserManagement() {
@@ -22,7 +28,6 @@ export function useUserManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -32,14 +37,32 @@ export function useUserManagement() {
       const data = await api.get<any[]>("/users");
 
       if (data) {
-        const mappedUsers = data.map((u: any) => ({
-          id: u.users_id,
-          name: `${u.firstname} ${u.lastname}`,
-          email: u.email,
-          role: u.role,
-          status: "Active" as "Active" | "Inactive",
-          lastActive: "Now",
-        }));
+        const mappedUsers = data.map((u: any) => {
+          const mainTeam = u.teams && u.teams.length > 0 ? u.teams[0] : null;
+          let teamStr = "-";
+          if (mainTeam) {
+            teamStr = `กลุ่ม ${mainTeam.groupNumber || "?"}`;
+            const tName = mainTeam.name?.trim();
+            if (tName && tName !== "รออนุมัติหัวข้อ") {
+              teamStr += ` — ${tName}`;
+            }
+          }
+
+          return {
+            id: u.users_id,
+            name: `${u.firstname} ${u.lastname}`,
+            email: u.email,
+            role: u.role,
+            avatar: u.profilePicture,
+            team: teamStr,
+            project: mainTeam?.project?.projectname || "-",
+            titles: u.titles || "",
+            firstname: u.firstname || "",
+            lastname: u.lastname || "",
+            tel_number: u.tel_number || "",
+            expertiseAreas: u.expertiseAreas || "",
+          };
+        });
         setUsers(mappedUsers);
       }
     } catch (error) {
@@ -58,9 +81,7 @@ export function useUserManagement() {
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === "All" || user.role === roleFilter;
-    const matchesStatus =
-      statusFilter === "All" || user.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesRole;
   });
 
   const handleAddClick = useCallback(() => {
@@ -85,14 +106,27 @@ export function useUserManagement() {
   }, []);
 
   const handleFormSubmit = useCallback(
-    async (formData: Partial<User>) => {
+    async (formData: Partial<User> & { newPassword?: string; profilePicture?: string }) => {
       try {
         if (editingUser) {
           // Update existing user
-          await api.patch(`/users/${editingUser.id}`, {
+          const payload: any = {
             role: formData.role,
-            // Split name back to firstname/lastname if needed
-          });
+            titles: formData.titles,
+            firstname: formData.firstname,
+            lastname: formData.lastname,
+            tel_number: formData.tel_number,
+          };
+          if (formData.newPassword) {
+            payload.newPassword = formData.newPassword;
+          }
+          if (formData.profilePicture !== undefined) {
+            payload.profilePicture = formData.profilePicture;
+          }
+          if (formData.expertiseAreas !== undefined) {
+            payload.expertiseAreas = formData.expertiseAreas;
+          }
+          await api.patch(`/users/${editingUser.id}`, payload);
         }
         await fetchUsers();
         setIsModalOpen(false);
@@ -133,8 +167,6 @@ export function useUserManagement() {
     setSearchQuery,
     roleFilter,
     setRoleFilter,
-    statusFilter,
-    setStatusFilter,
 
     // Modal
     isModalOpen,

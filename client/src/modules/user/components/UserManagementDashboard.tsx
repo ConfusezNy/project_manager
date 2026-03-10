@@ -21,8 +21,6 @@ export const UserManagementDashboard: React.FC = () => {
     setSearchQuery,
     roleFilter,
     setRoleFilter,
-    statusFilter,
-    setStatusFilter,
     isModalOpen,
     setIsModalOpen,
     editingUser,
@@ -43,7 +41,7 @@ export const UserManagementDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            User Management
+            User
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             สถานะของคุณ:{" "}
@@ -66,7 +64,6 @@ export const UserManagementDashboard: React.FC = () => {
       {/* Stats */}
       <UserStats
         total={users.length}
-        active={users.length}
         admins={users.filter((u) => u.role === "ADMIN").length}
       />
 
@@ -77,8 +74,6 @@ export const UserManagementDashboard: React.FC = () => {
           setSearchQuery={setSearchQuery}
           roleFilter={roleFilter}
           setRoleFilter={setRoleFilter}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
         />
       </div>
 

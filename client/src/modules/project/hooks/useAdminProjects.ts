@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { exportToCSV } from "@/lib/exportCSV";
-import { exportToExcel } from "@/modules/export/utils/exportExcel";
-import { exportToPdf } from "@/modules/export/utils/exportPdf";
 import { Project, ProjectStats, Section } from "../types/adminProject";
 
 export function useAdminProjects() {
@@ -25,8 +23,7 @@ export function useAdminProjects() {
     const [statusFilter, setStatusFilter] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Export menu
-    const [showExportMenu, setShowExportMenu] = useState(false);
+
 
     // Fetch projects
     const fetchProjects = useCallback(async () => {
@@ -94,7 +91,8 @@ export function useAdminProjects() {
     // CSV Export
     const handleExport = () => {
         const headers = [
-            { key: "project_id", label: "Project ID" },
+            { key: "courseType", label: "ประเภทรายวิชา" },
+            { key: "academicTerm", label: "ปีการศึกษา" },
             { key: "projectname", label: "ชื่อโครงงาน (TH)" },
             { key: "projectnameEng", label: "ชื่อโครงงาน (EN)" },
             { key: "status", label: "สถานะ" },
@@ -104,67 +102,28 @@ export function useAdminProjects() {
             { key: "advisor", label: "อาจารย์ที่ปรึกษา" },
             { key: "memberCount", label: "จำนวนสมาชิก" },
         ];
-        const rows = projects.map((p) => ({
-            project_id: p.project_id,
-            projectname: p.projectname || "",
-            projectnameEng: p.projectnameEng || "",
-            status: p.status || "",
-            team: p.team?.name || "",
-            group: p.team?.groupNumber || "",
-            section: p.team?.section?.section_code || "",
-            advisor: p.advisors.map((a) => `${a.titles || ""} ${a.firstname} ${a.lastname}`).join(", "),
-            memberCount: p.team?.memberCount || 0,
-        }));
+        const rows = projects.map((p) => {
+            const courseType = p.team?.section?.course_type || "N/A";
+            const semester = p.team?.section?.term?.semester || "-";
+            const year = p.team?.section?.term?.academicYear || "-";
+
+            return {
+                courseType: courseType,
+                academicTerm: `${semester}/${year}`,
+                projectname: p.projectname || "",
+                projectnameEng: p.projectnameEng || "",
+                status: p.status || "",
+                team: p.team?.name || "",
+                group: p.team?.groupNumber || "",
+                section: p.team?.section?.section_code || "",
+                advisor: p.advisors.map((a) => `${a.titles || ""} ${a.firstname} ${a.lastname}`).join(", "),
+                memberCount: p.team?.memberCount || 0,
+            };
+        });
         exportToCSV(rows, headers, "admin-projects-export");
     };
 
-    // Excel Export
-    const handleExportExcel = () => {
-        const columns = [
-            { header: "Project ID", key: "project_id", width: 12 },
-            { header: "ชื่อโครงงาน (TH)", key: "projectname", width: 35 },
-            { header: "ชื่อโครงงาน (EN)", key: "projectnameEng", width: 35 },
-            { header: "สถานะ", key: "status", width: 12 },
-            { header: "ทีม", key: "team", width: 20 },
-            { header: "กลุ่ม", key: "group", width: 8 },
-            { header: "Section", key: "section", width: 12 },
-            { header: "อาจารย์ที่ปรึกษา", key: "advisor", width: 30 },
-            { header: "จำนวนสมาชิก", key: "memberCount", width: 12 },
-        ];
-        const rows = projects.map((p) => ({
-            project_id: p.project_id,
-            projectname: p.projectname || "",
-            projectnameEng: p.projectnameEng || "",
-            status: p.status || "",
-            team: p.team?.name || "",
-            group: p.team?.groupNumber || "",
-            section: p.team?.section?.section_code || "",
-            advisor: p.advisors.map((a) => `${a.titles || ""} ${a.firstname} ${a.lastname}`).join(", "),
-            memberCount: p.team?.memberCount || 0,
-        }));
-        exportToExcel(rows, columns, "admin-projects-export", "โครงงานทั้งหมด");
-    };
 
-    // PDF Export
-    const handleExportPdf = () => {
-        const columns = [
-            { header: "ID", key: "project_id" },
-            { header: "Project Name (TH)", key: "projectname" },
-            { header: "Status", key: "status" },
-            { header: "Team", key: "team" },
-            { header: "Section", key: "section" },
-            { header: "Advisor", key: "advisor" },
-        ];
-        const rows = projects.map((p) => ({
-            project_id: p.project_id,
-            projectname: p.projectname || "",
-            status: p.status || "",
-            team: p.team?.name || "",
-            section: p.team?.section?.section_code || "",
-            advisor: p.advisors.map((a) => `${a.titles || ""} ${a.firstname} ${a.lastname}`).join(", "),
-        }));
-        exportToPdf(rows, columns, "admin-projects-export", "Admin - Projects Report");
-    };
 
     // Clear filters
     const clearFilters = () => {
@@ -188,15 +147,11 @@ export function useAdminProjects() {
         setStatusFilter,
         searchQuery,
         setSearchQuery,
-        showExportMenu,
-        setShowExportMenu,
         goToTasks,
         goToSubmissions,
         openDetail,
         handleToggleArchive,
         handleExport,
-        handleExportExcel,
-        handleExportPdf,
         clearFilters,
     };
 }

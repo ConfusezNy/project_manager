@@ -64,11 +64,10 @@ export const SignupForm: React.FC = () => {
 
             {message && (
               <div
-                className={`mb-6 p-4 rounded-xl text-sm font-bold animate-in slide-in-from-top duration-300 ${
-                  message.includes("สำเร็จ")
+                className={`mb-6 p-4 rounded-xl text-sm font-bold animate-in slide-in-from-top duration-300 ${message.includes("สำเร็จ")
                     ? "bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800"
                     : "bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-900/20 dark:border-rose-800"
-                }`}
+                  }`}
               >
                 {message}
               </div>
@@ -111,6 +110,7 @@ export const SignupForm: React.FC = () => {
                       value={form.firstname}
                       onChange={handleChange}
                       placeholder="John"
+                      required
                       className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl text-sm font-semibold dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     />
                   </div>
@@ -131,6 +131,7 @@ export const SignupForm: React.FC = () => {
                     value={form.lastname}
                     onChange={handleChange}
                     placeholder="Doe"
+                    required
                     className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl text-sm font-semibold dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   />
                 </div>
@@ -151,6 +152,8 @@ export const SignupForm: React.FC = () => {
                       value={form.tel_number}
                       onChange={handleChange}
                       maxLength={10}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       placeholder="08XXXXXXXX"
                       className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl text-sm font-semibold dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     />

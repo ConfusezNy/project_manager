@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Loader2,
@@ -131,7 +131,7 @@ const AdvisorDocRow = ({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function AdvisorEventsPage() {
+function AdvisorEventsInner() {
   const { status } = useAuth();
   const searchParams = useSearchParams();
   const projectId = searchParams.get("project") ? parseInt(searchParams.get("project")!) : undefined;
@@ -250,5 +250,17 @@ export default function AdvisorEventsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdvisorEventsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      <AdvisorEventsInner />
+    </Suspense>
   );
 }

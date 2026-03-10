@@ -23,7 +23,7 @@ interface JwtPayload {
 }
 
 // หน้าที่ไม่ต้อง login
-const publicPaths = ["/signin", "/signup"];
+const publicPaths = ["/signin", "/signup", "/forgot-password", "/reset-password"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

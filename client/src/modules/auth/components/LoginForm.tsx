@@ -23,7 +23,7 @@ export const LoginForm: React.FC = () => {
         <div className="hidden lg:flex flex-1 relative items-center justify-center p-12 bg-gradient-to-br from-blue-600 to-indigo-800 text-white overflow-hidden">
           <img
             className="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-overlay"
-            src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop"
+            src="/cpe.jpg"
             alt="Technology Background"
           />
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
@@ -182,7 +182,7 @@ export const LoginForm: React.FC = () => {
                   </label>
                 </div>
                 <Link
-                  href="#"
+                  href="/forgot-password"
                   className="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                 >
                   ลืมรหัสผ่าน?

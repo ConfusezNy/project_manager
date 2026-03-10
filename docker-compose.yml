@@ -16,5 +16,47 @@ services:
       timeout: 5s
       retries: 5
 
+  server:
+    build: ./server
+    container_name: projectmanagement_server
+    environment:
+      - DATABASE_URL=postgresql://postgres:165050@postgres:5432/projectmanagement
+      - JWT_SECRET=p7TevVUKL215n9yzT7rSAWRlwGQgIaVvBKsmsW5+Ynud+gHg2Ruww/wDqNM=
+      - PORT=4000
+      - CLIENT_URL=https://cpeproject.app
+      - RESEND_API_KEY=re_B5Qgff3h_67HktHRBwEHc5Pbk7nKbknwz
+      - RESEND_FROM=noreply@cpeproject.app
+      - DEV_EMAIL=natthachai.confuse@gmail.com
+    ports:
+      - "4000:4000"
+    volumes:
+      - server_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      args:
+        - NEXT_PUBLIC_API_URL=https://api.cpeproject.app
+    container_name: projectmanagement_client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: projectmanagement_tunnel
+    command: tunnel --no-autoupdate run --token eyJhIjoiMGQ4ODM2Y2MxOWM3NGQxZDU2NDJlYjE3NDQxYzAwNTciLCJ0IjoiY2NmMjRlNWItYTE2Zi00NzAzLTg3YzEtNjM1M2RmZTYwZWY3IiwicyI6Ik1XTmxPVE15T1RBdE9UQXhNQzAwTnpFMkxXSmhPVFF0TldNMk9HWmtOMk0xTTJFeiJ9
+    depends_on:
+      - client
+      - server
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  server_uploads:

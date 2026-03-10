@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 import { RequestOtpDto, VerifyOtpDto } from './dto/otp.dto';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/forgot-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -41,5 +42,23 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async verifyOtp(@Body() dto: VerifyOtpDto) {
         return this.authService.verifyOtp(dto.email, dto.otp);
+    }
+
+    // =====================================================
+    // POST /auth/forgot-password — ขอ OTP สำหรับรีเซ็ตรหัสผ่าน
+    // =====================================================
+    @Post('forgot-password')
+    @HttpCode(HttpStatus.OK)
+    async forgotPassword(@Body() dto: ForgotPasswordDto) {
+        return this.authService.requestPasswordResetOtp(dto.email);
+    }
+
+    // =====================================================
+    // POST /auth/reset-password — ยืนยัน OTP + เปลี่ยนรหัสผ่าน
+    // =====================================================
+    @Post('reset-password')
+    @HttpCode(HttpStatus.OK)
+    async resetPassword(@Body() dto: ResetPasswordDto) {
+        return this.authService.resetPassword(dto.email, dto.otp, dto.newPassword);
     }
 }

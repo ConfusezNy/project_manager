@@ -52,15 +52,11 @@ export const AdminProjectsDashboard: React.FC = () => {
         setStatusFilter,
         searchQuery,
         setSearchQuery,
-        showExportMenu,
-        setShowExportMenu,
         goToTasks,
         goToSubmissions,
         openDetail,
         handleToggleArchive,
         handleExport,
-        handleExportExcel,
-        handleExportPdf,
         clearFilters,
     } = useAdminProjects();
 
@@ -80,34 +76,12 @@ export const AdminProjectsDashboard: React.FC = () => {
                     </div>
                     <div className="relative">
                         <button
-                            onClick={() => setShowExportMenu(!showExportMenu)}
+                            onClick={handleExport}
                             className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md"
                         >
                             <Download size={16} />
-                            Export
+                            Export CSV
                         </button>
-                        {showExportMenu && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-20 overflow-hidden">
-                                <button
-                                    onClick={() => { handleExport(); setShowExportMenu(false); }}
-                                    className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
-                                >
-                                    Export CSV
-                                </button>
-                                <button
-                                    onClick={() => { handleExportExcel(); setShowExportMenu(false); }}
-                                    className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
-                                >
-                                    Export Excel
-                                </button>
-                                <button
-                                    onClick={() => { handleExportPdf(); setShowExportMenu(false); }}
-                                    className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
-                                >
-                                    Export PDF
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
 

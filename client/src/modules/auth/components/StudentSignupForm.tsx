@@ -35,7 +35,13 @@ export const StudentSignupForm: React.FC = () => {
     const handleChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
             const { name, value } = e.target;
-            setForm((prev) => ({ ...prev, [name]: value }));
+            let sanitized = value;
+            if (name === "tel_number") {
+                sanitized = value.replace(/\D/g, ""); // ตัวเลขเท่านั้น
+            } else if (name === "firstname" || name === "lastname") {
+                sanitized = value.replace(/[^ก-๙\s]/g, ""); // ภาษาไทยและช่องว่างเท่านั้น
+            }
+            setForm((prev) => ({ ...prev, [name]: sanitized }));
         },
         []
     );
@@ -45,12 +51,43 @@ export const StudentSignupForm: React.FC = () => {
             e.preventDefault();
             setLoading(true);
             setMessage(null);
+
+            // Validate required fields
+            if (!form.firstname.trim()) {
+                setMessage({ type: "error", text: "กรุณากรอกชื่อจริง" });
+                setLoading(false);
+                return;
+            }
+            if (!/^[ก-๙\s]+$/.test(form.firstname.trim())) {
+                setMessage({ type: "error", text: "ชื่อจริงต้องเป็นภาษาไทยเท่านั้น" });
+                setLoading(false);
+                return;
+            }
+            if (!form.lastname.trim()) {
+                setMessage({ type: "error", text: "กรุณากรอกนามสกุล" });
+                setLoading(false);
+                return;
+            }
+            if (!/^[ก-๙\s]+$/.test(form.lastname.trim())) {
+                setMessage({ type: "error", text: "นามสกุลต้องเป็นภาษาไทยเท่านั้น" });
+                setLoading(false);
+                return;
+            }
+            if (form.tel_number) {
+                const tel = form.tel_number.trim();
+                if (!/^0\d{9}$/.test(tel)) {
+                    setMessage({ type: "error", text: "เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0" });
+                    setLoading(false);
+                    return;
+                }
+            }
+
             try {
                 await signup({
                     titles: form.titles || undefined,
-                    firstname: form.firstname,
-                    lastname: form.lastname,
-                    tel_number: form.tel_number || undefined,
+                    firstname: form.firstname.trim(),
+                    lastname: form.lastname.trim(),
+                    tel_number: form.tel_number.trim() || undefined,
                     email: form.email,
                     password: form.password,
                 });
@@ -153,7 +190,7 @@ export const StudentSignupForm: React.FC = () => {
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <User className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                                         </div>
-                                        <input name="firstname" value={form.firstname} onChange={handleChange} placeholder="ชื่อจริง" required className={inputClass} />
+                                        <input name="firstname" value={form.firstname} onChange={handleChange} placeholder="ชื่อจริง (ภาษาไทย)" required className={inputClass} />
                                     </div>
                                 </div>
                             </div>
@@ -165,7 +202,7 @@ export const StudentSignupForm: React.FC = () => {
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <User className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                                     </div>
-                                    <input name="lastname" value={form.lastname} onChange={handleChange} placeholder="นามสกุล" required className={inputClass} />
+                                    <input name="lastname" value={form.lastname} onChange={handleChange} placeholder="นามสกุล (ภาษาไทย)" required className={inputClass} />
                                 </div>
                             </div>
 
@@ -176,7 +213,7 @@ export const StudentSignupForm: React.FC = () => {
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <Phone className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                                     </div>
-                                    <input name="tel_number" value={form.tel_number} onChange={handleChange} placeholder="08XXXXXXXX" maxLength={10} className={inputClass} />
+                                    <input name="tel_number" value={form.tel_number} onChange={handleChange} placeholder="08XXXXXXXX" maxLength={10} inputMode="numeric" pattern="[0-9]*" className={inputClass} />
                                 </div>
                             </div>
 

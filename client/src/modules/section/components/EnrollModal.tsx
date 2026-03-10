@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Search, X, Users, UserSearch, CheckCircle2 } from "lucide-react";
+import { Search, X, CheckCircle2 } from "lucide-react";
 import { Candidate, sectionService } from "../services/sectionService";
 
 interface Props {
@@ -22,34 +22,32 @@ export const EnrollModal: React.FC<Props> = ({
   selectedCandidates,
   sectionId,
   onToggle,
-  onToggleAll,
+  // onToggleAll is handled internally now (supports both candidates & search results)
   onEnroll,
 }) => {
-  const [tab, setTab] = useState<"pattern" | "search">("pattern");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Candidate[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [filterText, setFilterText] = useState(""); // local filter for pattern tab
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setTab("pattern");
       setSearchQuery("");
       setSearchResults([]);
-      setFilterText("");
     }
   }, [isOpen]);
 
-  // Debounced search for repeating students tab
+  // Debounced search — ค้นหานักศึกษาทุกคนที่ยังไม่ enroll ใน section นี้
   useEffect(() => {
-    if (tab !== "search") return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
+
     if (!searchQuery || searchQuery.trim().length < 2) {
       setSearchResults([]);
+      setSearchLoading(false);
       return;
     }
+
     setSearchLoading(true);
     debounceRef.current = setTimeout(async () => {
       try {
@@ -61,22 +59,33 @@ export const EnrollModal: React.FC<Props> = ({
         setSearchLoading(false);
       }
     }, 400);
-  }, [searchQuery, tab, sectionId]);
+  }, [searchQuery, sectionId]);
 
   if (!isOpen) return null;
 
-  // Filter candidates locally by the filter text (pattern tab)
-  const filteredCandidates = filterText.trim()
-    ? candidates.filter(
-      (c) =>
-        c.users_id.includes(filterText) ||
-        (c.firstname ?? "").toLowerCase().includes(filterText.toLowerCase()) ||
-        (c.lastname ?? "").toLowerCase().includes(filterText.toLowerCase()),
-    )
-    : candidates;
+  // ถ้ามี searchQuery → แสดง searchResults (ค้นหาทุกคน)
+  // ถ้าไม่มี → แสดง candidates (pattern match of section_code)
+  const isSearching = searchQuery.trim().length >= 2;
+  const activeList = isSearching ? searchResults : candidates;
 
-  // Active list based on current tab
-  const activeList = tab === "pattern" ? filteredCandidates : searchResults;
+  // Select All ทำงานกับ activeList
+  const allSelected =
+    activeList.length > 0 &&
+    activeList.every((c) => selectedCandidates.includes(c.users_id));
+
+  const handleToggleAll = () => {
+    if (allSelected) {
+      // deselect all in activeList
+      activeList.forEach((c) => {
+        if (selectedCandidates.includes(c.users_id)) onToggle(c.users_id);
+      });
+    } else {
+      // select all in activeList
+      activeList.forEach((c) => {
+        if (!selectedCandidates.includes(c.users_id)) onToggle(c.users_id);
+      });
+    }
+  };
 
   const renderTable = (list: Candidate[]) => (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -84,14 +93,12 @@ export const EnrollModal: React.FC<Props> = ({
         <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
           <tr>
             <th className="px-4 py-3 text-center w-12">
-              {tab === "pattern" && (
-                <input
-                  type="checkbox"
-                  checked={filteredCandidates.length > 0 && filteredCandidates.every(c => selectedCandidates.includes(c.users_id))}
-                  onChange={onToggleAll}
-                  className="w-4 h-4 text-blue-600 rounded"
-                />
-              )}
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={handleToggleAll}
+                className="w-4 h-4 text-blue-600 rounded"
+              />
             </th>
             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">รหัสนักศึกษา</th>
             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">ชื่อ - นามสกุล</th>
@@ -131,12 +138,13 @@ export const EnrollModal: React.FC<Props> = ({
           })}
         </tbody>
       </table>
+
       {list.length === 0 && (
-        <div className="py-10 text-center text-gray-400 dark:text-gray-500">
-          {tab === "search" && searchQuery.length >= 2 && !searchLoading
-            ? "ไม่พบนักศึกษาที่ตรงกัน"
-            : tab === "search"
-              ? "พิมพ์ชื่อหรือรหัสนักศึกษาเพื่อค้นหา"
+        <div className="py-10 text-center text-gray-400 dark:text-gray-500 text-sm">
+          {isSearching && !searchLoading
+            ? "ไม่พบนักศึกษาที่ตรงกับคำค้นหา"
+            : isSearching
+              ? "กำลังค้นหา..."
               : "ไม่มีนักศึกษาที่สามารถเพิ่มได้"}
         </div>
       )}
@@ -152,7 +160,10 @@ export const EnrollModal: React.FC<Props> = ({
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">เพิ่มนักศึกษาเข้าหมู่เรียน</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              เลือกแล้ว <span className="font-semibold text-blue-600">{selectedCandidates.length}</span> คน
+              {isSearching
+                ? <>ผลการค้นหา <span className="font-semibold text-blue-600">{activeList.length}</span> คน · เลือกแล้ว <span className="font-semibold text-blue-600">{selectedCandidates.length}</span> คน</>
+                : <>นักศึกษาที่ตรงกับหมู่เรียน <span className="font-semibold text-blue-600">{candidates.length}</span> คน · เลือกแล้ว <span className="font-semibold text-blue-600">{selectedCandidates.length}</span> คน</>
+              }
             </p>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
@@ -160,61 +171,38 @@ export const EnrollModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 px-6">
-          <button
-            onClick={() => setTab("pattern")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${tab === "pattern"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              }`}
-          >
-            <Users className="w-4 h-4" />
-            รายชื่อตาม Section
-            <span className="ml-1 px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
-              {candidates.length}
-            </span>
-          </button>
-          <button
-            onClick={() => setTab("search")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${tab === "search"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              }`}
-          >
-            <UserSearch className="w-4 h-4" />
-            ค้นหา (นักศึกษาซ้ำชั้น)
-          </button>
-        </div>
-
-        {/* Search / Filter Bar */}
-        <div className="px-6 pt-4 pb-2">
-          {tab === "pattern" ? (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="กรองชื่อหรือรหัสนักศึกษา..."
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          ) : (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="ค้นหาด้วยชื่อ นามสกุล หรือรหัสนักศึกษา..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {searchLoading && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              )}
-            </div>
+        {/* Search Bar */}
+        <div className="px-6 pt-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="ค้นหาด้วยรหัสนักศึกษา หรือชื่อ-นามสกุล..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-10 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+            />
+            {searchLoading && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            )}
+            {searchQuery && !searchLoading && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {isSearching && (
+            <p className="text-xs text-blue-500 mt-1.5 ml-1">
+              🔍 ค้นหาจากนักศึกษาทั้งหมดที่ยังไม่อยู่ในหมู่เรียนนี้
+            </p>
+          )}
+          {!isSearching && candidates.length > 0 && (
+            <p className="text-xs text-gray-400 mt-1.5 ml-1">
+              แสดงนักศึกษาที่ตรงกับรหัสหมู่เรียน · พิมพ์เพื่อค้นหานักศึกษาคนอื่น
+            </p>
           )}
         </div>
 

@@ -155,7 +155,7 @@ export const OtpVerifyForm: React.FC = () => {
                 <div className="hidden lg:flex flex-1 relative items-center justify-center p-12 bg-gradient-to-br from-blue-600 to-indigo-800 text-white overflow-hidden">
                     <img
                         className="absolute inset-0 h-full w-full object-cover opacity-20 mix-blend-overlay"
-                        src="https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=2086&auto=format&fit=crop"
+                        src="/cpe.jpg"
                         alt="University Background"
                     />
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
