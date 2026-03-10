@@ -14,6 +14,7 @@ import {
   Award,
 } from "lucide-react";
 import { useNotification } from "@/lib/notification-context";
+import { useAutoMarkRead } from "@/modules/notification/hooks/useAutoMarkRead";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -40,6 +41,7 @@ const NBadge = ({ count, compact }: { count: number; compact?: boolean }) => {
 
 const AdminSidebar = ({ isSidebarOpen }: SidebarProps) => {
   const { unreadCount } = useNotification();
+  useAutoMarkRead();
 
   const sidebarClassNames = `
     fixed inset-y-0 left-0 z-50 h-screen bg-white shadow-xl dark:bg-black 

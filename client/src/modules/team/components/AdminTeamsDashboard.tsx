@@ -135,7 +135,7 @@ export const AdminTeamsDashboard: React.FC = () => {
                             </label>
                             <input
                                 type="text"
-                                placeholder="ชื่อทีม, รหัสกลุ่ม, ชื่อโปรเจกต์..."
+                                placeholder="รหัสกลุ่ม, ชื่อโปรเจกต์..."
                                 className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -304,7 +304,7 @@ export const AdminTeamsDashboard: React.FC = () => {
                                                         e.stopPropagation();
                                                         handleDeleteTeam(
                                                             team.team_id,
-                                                            team.name || team.groupNumber,
+                                                            team.groupNumber,
                                                         );
                                                     }}
                                                     className="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition"

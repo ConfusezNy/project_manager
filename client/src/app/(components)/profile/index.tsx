@@ -1,15 +1,9 @@
 "use client";
 
-/**
- * Profile Component — Dropdown menu บน Navbar
- * ⚠️ สิ่งที่เปลี่ยนจากเดิม:
- * - เดิม: useSession() + signOut() จาก next-auth/react
- * - ใหม่: useAuth() จาก lib/auth-context
- */
-
 import React, { useState, useEffect, useRef } from "react";
 import { LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 const Profile = () => {
@@ -17,6 +11,19 @@ const Profile = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, status, logout } = useAuth();
   const router = useRouter();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // ✅ ดึง profilePicture จาก /profile API โดยตรง ไม่ต้องพึ่ง JWT
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    api.get("/profile")
+      .then((profile) => {
+        if (profile?.profilePicture) {
+          setAvatarUrl(profile.profilePicture);
+        }
+      })
+      .catch(() => {/* ถ้า fetch ไม่ได้ก็ใช้ initial แทน */ });
+  }, [status]);
 
   // ปิด Dropdown เมื่อคลิกข้างนอก
   useEffect(() => {
@@ -33,6 +40,7 @@ const Profile = () => {
   }, []);
 
   const handleLogout = () => {
+    setIsOpen(false);
     logout();
   };
 
@@ -52,7 +60,15 @@ const Profile = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700 transition-all overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm"
       >
-        {getInitial()}
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="Profile"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          getInitial()
+        )}
       </button>
 
       {/* Dropdown Content */}
@@ -64,7 +80,15 @@ const Profile = () => {
               <div className="flex items-center gap-3">
                 {/* --- 2. แก้ไขรูปภาพในส่วน Header ของ Dropdown --- */}
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 font-bold text-white text-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-sm">
-                  {getInitial()}
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Profile"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    getInitial()
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-900 dark:text-white truncate">

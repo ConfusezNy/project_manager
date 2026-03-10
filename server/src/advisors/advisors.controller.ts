@@ -21,4 +21,11 @@ export class AdvisorsController {
     async getMyProjects(@CurrentUser('users_id') userId: string) {
         return this.advisorsService.getMyProjects(userId);
     }
+
+    @UseGuards(RolesGuard)
+    @Roles('ADVISOR')
+    @Get('all-projects')
+    async getAllProjects(@CurrentUser('users_id') userId: string) {
+        return this.advisorsService.getAllProjects(userId);
+    }
 }

@@ -51,9 +51,13 @@ const StatusBadge = ({ status }: { status: string }) => {
 const AdvisorDocRow = ({
   sub,
   index,
+  groupNum,
+  sectionCode,
 }: {
   sub: SubmissionWithEvent;
   index: number;
+  groupNum?: string;
+  sectionCode?: string;
 }) => {
   const isApproved = sub.status === "APPROVED";
   const isRevision = sub.status === "NEEDS_REVISION";
@@ -75,6 +79,13 @@ const AdvisorDocRow = ({
 
       {/* Event info */}
       <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap mb-1">
+          {sectionCode && groupNum && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+              วิชา {sectionCode} กลุ่ม {groupNum}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           <p className={`text-base font-semibold ${isApproved ? "text-gray-400 line-through" : "text-gray-800 dark:text-gray-100"}`}>
             {sub.Event?.name || "—"}
@@ -86,7 +97,7 @@ const AdvisorDocRow = ({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3 mt-0.5 text-sm text-gray-400 dark:text-gray-500 flex-wrap">
+        <div className="flex items-center gap-3 mt-1 text-sm text-gray-400 dark:text-gray-500 flex-wrap">
           <span className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
             ครบกำหนด: {formatThaiDate(sub.Event?.dueDate)}
@@ -125,9 +136,7 @@ export default function AdvisorEventsPage() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get("project") ? parseInt(searchParams.get("project")!) : undefined;
 
-  const { projectGroups, loading, error } = useAdvisorEvents(projectId);
-
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const { projectGroups, loading, error, overallProgress, pendingEvent, pendingProject } = useAdvisorEvents(projectId);
 
   if (status === "loading" || loading) {
     return (
@@ -150,45 +159,24 @@ export default function AdvisorEventsPage() {
     );
   }
 
-  const group = projectGroups.find((g) => g.project_id === selectedProjectId) ?? projectGroups[0];
+  // รวม submissions เอกสารทั้งหมดมาใน list เดียว
+  const allDocSubmissions = projectGroups
+    .flatMap((g) => g.submissions)
+    .filter((s) => s.Event?.requireFile === true);
 
-  // เฉพาะเอกสาร (requireFile === true)
-  const docSubmissions = group.submissions.filter((s) => s.Event?.requireFile === true);
-  const approvedCount = docSubmissions.filter((s) => s.status === "APPROVED").length;
-  const progress = docSubmissions.length > 0 ? Math.round((approvedCount / docSubmissions.length) * 100) : 0;
-
-  // งานถัดไปที่นักศึกษาส่งมาแล้ว
-  const nextPending = docSubmissions.find((s) => s.status === "SUBMITTED");
+  const totalDocs = allDocSubmissions.length;
+  const passedDocs = allDocSubmissions.filter((s) => s.status === "APPROVED").length;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8">
 
       {/* ── Header ── */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">ภาพรวมเอกสาร</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">รายการเอกสารนักศึกษา</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1 text-base">
-          ติดตามความคืบหน้าการส่งเอกสารของโครงงานที่ดูแล
+          รายการเอกสารและรายงานที่นักศึกษาต้องส่งตามกำหนดการ
         </p>
       </div>
-
-      {/* ── Project Tabs ── */}
-      {projectGroups.length > 1 && (
-        <div className="flex gap-2 flex-wrap mb-6">
-          {projectGroups.map((g) => (
-            <button
-              key={g.project_id}
-              onClick={() => setSelectedProjectId(g.project_id)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${group.project_id === g.project_id
-                ? "bg-blue-600 text-white shadow"
-                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                }`}
-            >
-              กลุ่ม {g.groupNumber}
-              <span className="ml-1.5 text-xs opacity-70">{g.section?.section_code}</span>
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* ── Summary Row ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -198,15 +186,15 @@ export default function AdvisorEventsPage() {
           <p className="text-sm font-medium text-gray-400 dark:text-gray-500 mb-3">ความคืบหน้าภาพรวม</p>
           <div>
             <p className="text-4xl font-bold text-gray-900 dark:text-white">
-              {progress}<span className="text-xl text-gray-400">%</span>
+              {overallProgress}<span className="text-xl text-gray-400">%</span>
             </p>
             <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full mt-3 overflow-hidden">
               <div
                 className="h-2.5 rounded-full bg-emerald-500 transition-all duration-700"
-                style={{ width: `${progress}%` }}
+                style={{ width: `${overallProgress}%` }}
               />
             </div>
-            <p className="text-sm text-gray-400 mt-2">{approvedCount} / {docSubmissions.length} ผ่านแล้ว</p>
+            <p className="text-sm text-gray-400 mt-2">{passedDocs} / {totalDocs} ผ่านแล้ว</p>
           </div>
         </div>
 
@@ -216,48 +204,50 @@ export default function AdvisorEventsPage() {
             <Users className="w-28 h-28" />
           </div>
           <div className="relative z-10">
-            <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-medium border border-white/10">
-              {group.section?.section_code} • กลุ่ม {group.groupNumber}
-            </span>
-            <h2 className="text-2xl font-bold mt-3 mb-1 leading-tight">
-              {nextPending
-                ? `รอดูงาน: ${nextPending.Event?.name}`
-                : "นักศึกษายังไม่มีงานค้างส่ง 🎉"}
+            {pendingProject && (
+              <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-medium border border-white/10 mb-2 inline-block">
+                วิชา {pendingProject.section?.section_code} • กลุ่ม {pendingProject.groupNumber}
+              </span>
+            )}
+            <span className="block text-xs text-blue-200 mt-2">งานถัดไป</span>
+            <h2 className="text-2xl font-bold mt-1 mb-1 leading-tight">
+              {pendingEvent
+                ? `${pendingEvent.name}`
+                : "ตรวจครบทุกรายการแล้ว 🎉"}
             </h2>
-            {nextPending ? (
+            {pendingEvent ? (
               <p className="text-blue-100 flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4" />
-                ครบกำหนด: {formatThaiDate(nextPending.Event?.dueDate)}
+                ครบกำหนด: {formatThaiDate(pendingEvent.dueDate)}
               </p>
             ) : (
-              <p className="text-blue-100 text-sm">{group.projectname}</p>
+              <p className="text-blue-100 text-sm">{projectGroups[0]?.projectname}</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── Document List (read-only) ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+      {/* ── Document List (เหมือนหน้า student) ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex-1 min-w-0">
         <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700">
           <FileText className="w-5 h-5 text-blue-500" />
-          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">รายการเอกสาร</h2>
-          <span className="ml-auto text-sm text-gray-400">{docSubmissions.length} รายการ</span>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">รายการเอกสารทั้งหมด</h2>
+          <span className="ml-auto text-sm text-gray-400">{totalDocs} รายการ</span>
         </div>
 
-        {docSubmissions.length === 0 ? (
-          <div className="py-16 text-center text-gray-400 dark:text-gray-500">
-            <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-base">ยังไม่มีรายการเอกสาร</p>
-          </div>
-        ) : (
-          docSubmissions.map((sub, i) => (
-            <AdvisorDocRow
-              key={sub.submission_id}
-              sub={sub}
-              index={i}
-            />
-          ))
-        )}
+        <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
+          {totalDocs === 0 ? (
+            <div className="py-16 text-center text-gray-400 dark:text-gray-500">
+              <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-base">ยังไม่มีเอกสารที่ต้องส่ง</p>
+            </div>
+          ) : (
+            allDocSubmissions.map((sub, i) => {
+              const g = projectGroups.find(x => x.team_id === sub.team_id);
+              return <AdvisorDocRow key={sub.submission_id} sub={sub} index={i} groupNum={g?.groupNumber} sectionCode={g?.section?.section_code} />;
+            })
+          )}
+        </div>
       </div>
     </div>
   );

@@ -209,6 +209,7 @@ export class TasksService {
                     taskId: task.task_id,
                     projectId: dto.project_id,
                     teamId: project.Team.team_id,
+                    link: `/tasks`,
                 });
             }
         }
@@ -314,6 +315,8 @@ export class TasksService {
                     title: 'อัปเดตสถานะงาน',
                     message: `งาน "${updatedTask.title}" เปลี่ยนสถานะเป็น ${dto.status}`,
                     taskId: id,
+                    projectId: updatedTask.project_id,
+                    link: `/tasks`,
                 });
             }
         }
@@ -386,6 +389,7 @@ export class TasksService {
             taskId: id,
             projectId: task.Project?.project_id,
             teamId: task.Project?.Team?.team_id ?? undefined,
+            link: `/tasks`,
         });
 
         return { message: 'Assigned successfully' };
@@ -469,6 +473,7 @@ export class TasksService {
                     taskId: id,
                     projectId: taskForNotif.Project?.project_id,
                     teamId: taskForNotif.Project?.team_id ?? undefined,
+                    link: `/tasks`,
                 });
             }
         }

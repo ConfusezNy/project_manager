@@ -20,7 +20,6 @@ export function AdminTeamDetailModal({
 }: Props) {
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({
-        name: "",
         groupNumber: "",
     });
     const [saving, setSaving] = useState(false);
@@ -39,7 +38,6 @@ export function AdminTeamDetailModal({
     useEffect(() => {
         if (team) {
             setEditForm({
-                name: team.name || "",
                 groupNumber: team.groupNumber || "",
             });
             setIsEditing(false);
@@ -106,7 +104,6 @@ export function AdminTeamDetailModal({
         setError("");
         try {
             await api.put(`/admin/teams/${team.team_id}`, {
-                name: editForm.name,
                 groupNumber: editForm.groupNumber,
             });
             setIsEditing(false);
@@ -134,7 +131,7 @@ export function AdminTeamDetailModal({
     const handleDeleteTeam = async () => {
         if (
             !confirm(
-                `คุณแน่ใจหรือไม่ที่จะลบทีม "${team.name || team.groupNumber}"?\n\nการลบจะลบ:\n- สมาชิกทั้งหมด\n- โปรเจกต์ (ถ้ามี)\n- Tasks ทั้งหมด`,
+                `คุณแน่ใจหรือไม่ที่จะลบทีมกลุ่ม "${team.groupNumber}"?\n\nการลบจะลบ:\n- สมาชิกทั้งหมด\n- โปรเจกต์ (ถ้ามี)\n- Tasks ทั้งหมด`,
             )
         ) {
             return;
@@ -211,20 +208,6 @@ export function AdminTeamDetailModal({
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        ชื่อทีม
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editForm.name}
-                                        onChange={(e) =>
-                                            setEditForm({ ...editForm, name: e.target.value })
-                                        }
-                                        className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                        placeholder="ชื่อทีม"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         รหัสกลุ่ม
                                     </label>
                                     <input
@@ -248,14 +231,6 @@ export function AdminTeamDetailModal({
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                                        ชื่อทีม
-                                    </span>
-                                    <p className="font-medium text-gray-900 dark:text-white">
-                                        {team.name || "-"}
-                                    </p>
-                                </div>
                                 <div>
                                     <span className="text-sm text-gray-500 dark:text-gray-400">
                                         รหัสกลุ่ม

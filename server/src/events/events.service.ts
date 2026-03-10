@@ -4,6 +4,7 @@ import {
     BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
 
 /**
@@ -19,7 +20,10 @@ import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
  */
 @Injectable()
 export class EventsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService,
+    ) { }
 
     // =====================================================
     // GET /events?section_id= — ดึง Events ของ Section
@@ -105,7 +109,7 @@ export class EventsService {
             });
         }
 
-        return this.prisma.event.findUnique({
+        const fullEvent = await this.prisma.event.findUnique({
             where: { event_id: event.event_id },
             include: {
                 Submission: {
@@ -115,6 +119,29 @@ export class EventsService {
                 },
             },
         });
+
+        // แจ้ง student ทุกคนใน section ว่ามี event ใหม่
+        const allMembers = await this.prisma.teammember.findMany({
+            where: { Team: { section_id: dto.section_id } },
+            select: { user_id: true },
+        });
+        const uniqueStudentIds = [...new Set(allMembers.map((m) => m.user_id))];
+        const dueDateText = new Date(event.dueDate).toLocaleDateString('th-TH', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        });
+        for (const studentId of uniqueStudentIds) {
+            await this.notificationsService.create({
+                userId: studentId,
+                eventType: 'EVENT_CREATED',
+                title: 'มีกิจกรรมใหม่',
+                message: `มีกิจกรรมใหม่: "${event.name}" กำหนดส่ง ${dueDateText}`,
+                link: '/events',
+            });
+        }
+
+        return fullEvent;
     }
 
     // =====================================================

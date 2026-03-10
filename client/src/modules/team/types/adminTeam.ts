@@ -8,7 +8,6 @@ export interface AdminTeamMember {
 
 export interface AdminTeam {
     team_id: number;
-    name: string;
     groupNumber: string;
     status: string;
     semester: string;

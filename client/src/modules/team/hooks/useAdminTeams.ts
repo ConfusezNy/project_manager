@@ -28,7 +28,6 @@ export function useAdminTeams() {
         teams.flatMap((team) =>
             team.members.map((m) => ({
                 group: team.groupNumber,
-                team_name: team.name,
                 section: team.section?.section_code || "-",
                 status: team.status,
                 student_id: m.user_id,
@@ -45,7 +44,6 @@ export function useAdminTeams() {
             getExportRows(),
             [
                 { key: "group", label: "กลุ่ม" },
-                { key: "team_name", label: "ชื่อทีม" },
                 { key: "section", label: "Section" },
                 { key: "status", label: "สถานะทีม" },
                 { key: "student_id", label: "รหัสนักศึกษา" },
@@ -64,7 +62,6 @@ export function useAdminTeams() {
             getExportRows(),
             [
                 { header: "กลุ่ม", key: "group", width: 8 },
-                { header: "ชื่อทีม", key: "team_name", width: 20 },
                 { header: "Section", key: "section", width: 12 },
                 { header: "สถานะทีม", key: "status", width: 12 },
                 { header: "รหัสนักศึกษา", key: "student_id", width: 15 },
@@ -84,7 +81,6 @@ export function useAdminTeams() {
             getExportRows(),
             [
                 { header: "Group", key: "group" },
-                { header: "Team", key: "team_name" },
                 { header: "Section", key: "section" },
                 { header: "Status", key: "status" },
                 { header: "Student ID", key: "student_id" },
@@ -134,10 +130,10 @@ export function useAdminTeams() {
     }, [fetchTeams, fetchSections]);
 
     // Delete team
-    const handleDeleteTeam = async (teamId: number, teamName: string) => {
+    const handleDeleteTeam = async (teamId: number, groupNumber: string) => {
         if (
             !confirm(
-                `คุณแน่ใจหรือไม่ที่จะลบทีม "${teamName}"?\n\nการลบจะลบ:\n- สมาชิกทั้งหมด\n- โปรเจกต์ (ถ้ามี)\n- Tasks ทั้งหมด`,
+                `คุณแน่ใจหรือไม่ที่จะลบทีมกลุ่ม "${groupNumber}"?\n\nการลบจะลบ:\n- สมาชิกทั้งหมด\n- โปรเจกต์ (ถ้ามี)\n- Tasks ทั้งหมด`,
             )
         ) {
             return;

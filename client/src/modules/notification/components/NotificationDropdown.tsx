@@ -12,10 +12,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Bell, Users, CheckCheck, FileText, MessageSquare,
-  Award, FolderCheck, FolderX, Send, CheckCircle, XCircle,
+  Award, FolderCheck, FolderX, Send, CheckCircle, XCircle, Calendar,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNotification } from "@/lib/notification-context";
+import { useAuth } from "@/lib/auth-context";
 import type { NotificationItem } from "../types/notification.types";
 
 const formatTime = (dateString: string) => {
@@ -39,6 +40,8 @@ const formatTime = (dateString: string) => {
 
 const getEventIcon = (eventType: string) => {
   switch (eventType) {
+    case "EVENT_CREATED":
+      return <Calendar size={16} className="text-indigo-400" />;
     case "TEAM_INVITE":
     case "TEAM_MEMBER_JOINED":
       return <Users size={16} className="text-blue-400" />;
@@ -66,6 +69,8 @@ const getEventIcon = (eventType: string) => {
 
 const getIconBg = (eventType: string) => {
   switch (eventType) {
+    case "EVENT_CREATED":
+      return "bg-indigo-500/20";
     case "TEAM_INVITE":
     case "TEAM_MEMBER_JOINED":
       return "bg-blue-500/20";
@@ -89,32 +94,42 @@ const getIconBg = (eventType: string) => {
   }
 };
 
-// Smart routing: ถ้า backend set link ไว้ใช้เลย ไม่งั้น map จาก event_type
-const getRoute = (item: NotificationItem): string => {
+// Smart routing: ถ้า backend set link ไว้ใช้เลย ไม่งั้น fallback ตาม event_type
+// role-aware จะใช้ใน component แล้วส่ง role เข้ามา
+const getRoute = (item: NotificationItem, role: string): string => {
   if (item.link) return item.link;
+
+  const isAdvisor = role === "ADVISOR";
+  const isAdmin   = role === "ADMIN";
+
   switch (item.event_type) {
+    case "EVENT_CREATED":
+      return isAdmin ? "/admin-events" : isAdvisor ? "/advisor-events" : "/events";
     case "TEAM_INVITE":
     case "TEAM_MEMBER_JOINED":
-      return "/Teams"; // ✅ ไป /Teams ซึ่งมีปุ่ม Accept/Reject อยู่แล้ว
+      return isAdvisor ? "/advisorteams" : "/Teams";
     case "TASK_ASSIGNED":
     case "TASK_UPDATED":
     case "COMMENT_ADDED":
-      return "/tasks";
+      return isAdvisor ? "/advisor-tasks" : "/tasks";
     case "SUBMISSION_SUBMITTED":
     case "SUBMISSION_APPROVED":
     case "SUBMISSION_REJECTED":
-      return "/events";
+      return isAdmin ? "/admin-events" : isAdvisor ? "/advisor-events" : "/events";
     case "PROJECT_APPROVED":
     case "PROJECT_REJECTED":
-      return "/projects";
+      return isAdvisor ? "/advisor-dashboard" : "/Teams";
     case "GRADE_GIVEN":
+      return isAdmin ? "/admin-grades" : "/dashboard";
     default:
-      return "/dashboard";
+      return isAdmin ? "/admin-dashboard" : isAdvisor ? "/advisor-dashboard" : "/dashboard";
   }
 };
 
 export const NotificationDropdown = () => {
   const router = useRouter();
+  const { user } = useAuth();
+  const role = user?.role ?? "STUDENT";
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -136,11 +151,10 @@ export const NotificationDropdown = () => {
 
   const handleClick = (item: NotificationItem) => {
     // ✅ TEAM_INVITE: ไม่ mark as read ที่นี่ เพราะ getPendingInvites กรอง isRead: false
-    // การ mark read จะเกิดขึ้นตอนกด "รับคำเชิญ" / "ปฏิเสธ" บนหน้า /Teams เท่านั้น
     if (!item.isRead && item.event_type !== "TEAM_INVITE") {
       markAsRead(item.notification_id);
     }
-    router.push(getRoute(item));
+    router.push(getRoute(item, role));
     setIsOpen(false);
   };
 

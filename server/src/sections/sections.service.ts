@@ -191,13 +191,20 @@ export class SectionsService {
             );
         }
 
-        // ลบ enrollments ก่อน (FK constraint)
+        // 1. ลบ enrollments ก่อน (FK constraint)
         if (section.Section_Enrollment.length > 0) {
             await this.prisma.section_Enrollment.deleteMany({
                 where: { section_id: id },
             });
         }
 
+        // 2. ลบ events ที่ผูกอยู่กับรายวิขานี้ออกก่อน (FK constraint)
+        // เนื่องจากไม่มีทีม (Team.length === 0) จึงไม่มี Submissions ค้างแน่นอน สามารถลบ Event ได้เลย
+        await this.prisma.event.deleteMany({
+            where: { section_id: id },
+        });
+
+        // 3. ท้ายสุดลบตัว Section เอง
         await this.prisma.section.delete({
             where: { section_id: id },
         });
@@ -584,7 +591,7 @@ export class SectionsService {
     // PROJECT section จะได้ทีมใหม่ที่ clone มา
     //
     // สิ่งที่ clone:
-    //   Team           → ใหม่ (groupNumber ต่อท้าย -P)
+    //   Team           → ใหม่ (groupNumber เดิม ซ้ำได้เพราะคนละ section)
     //   Teammember     → copy สมาชิกทั้งหมด
     //   Project        → clone ชื่อ/รายละเอียด ผูกกับทีมใหม่
     //   ProjectAdvisor → copy ไปยัง Project ใหม่
@@ -665,11 +672,10 @@ export class SectionsService {
                 // 5a. สร้างทีมใหม่ใน PROJECT section
                 const newTeam = await tx.team.create({
                     data: {
-                        // groupNumber ต้อง @unique — ต่อท้าย -P เพื่อไม่ซ้ำ
-                        groupNumber: `${team.groupNumber}-P`,
+                        // ใช้ชื่อกลุ่มเดิม (composite unique [groupNumber, section_id] ทำให้ซ้ำข้ามวิชาได้)
+                        groupNumber: team.groupNumber,
                         semester: `${newTerm.semester}/${newTerm.academicYear}`,
                         status: team.status ?? 'รออนุมัติหัวข้อ',
-                        advisorName: team.advisorName,
                         description: team.description,
                         topicThai: team.topicThai,
                         section_id: newSection.section_id,
@@ -796,9 +802,9 @@ export class SectionsService {
 
             if (existingEvents.length > 0) {
                 for (const team of teamsToClone) {
-                    // หา newTeam จากที่เพิ่งสร้าง โดย groupNumber
+                    // หา newTeam จากที่เพิ่งสร้าง โดย groupNumber + section_id
                     const newTeam = await tx.team.findFirst({
-                        where: { groupNumber: `${team.groupNumber}-P`, section_id: newSection.section_id },
+                        where: { groupNumber: team.groupNumber, section_id: newSection.section_id },
                         select: { team_id: true },
                     });
                     if (!newTeam) continue;

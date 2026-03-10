@@ -142,7 +142,8 @@ export class GradesService {
                     actorUserId: userId,
                     eventType: 'GRADE_GIVEN',
                     title: 'ได้รับเกรดใหม่',
-                    message: `คุณได้รับเกรดแล้ว กรุณาตรวจสอบ`,
+                    message: `คุณได้รับเกรดแล้ว กรุณาตรวจสอบที่ Dashboard`,
+                    link: '/dashboard',
                 });
             }
         }

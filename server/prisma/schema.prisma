@@ -151,10 +151,9 @@ model TaskAssignment {
 model Team {
   team_id      Int            @id @default(autoincrement())
   section_id   Int
-  advisorName  String?
   createdAt    DateTime       @default(now())
   description  String?
-  groupNumber  String         @unique
+  groupNumber  String
   semester     String
   status       String         @default("รออนุมัติหัวข้อ")
   topicThai    String?
@@ -164,6 +163,8 @@ model Team {
   Section      Section        @relation(fields: [section_id], references: [section_id])
   Teammember   Teammember[]
   Users        Users[]
+
+  @@unique([groupNumber, section_id])
 }
 
 model Teammember {

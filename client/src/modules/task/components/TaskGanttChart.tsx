@@ -120,32 +120,29 @@ export const TaskGanttChart: React.FC<TaskGanttChartProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewMode(ViewMode.Day)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === ViewMode.Day
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === ViewMode.Day
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-            }`}
+              }`}
           >
             <ZoomIn size={14} className="inline mr-1" />
             วัน
           </button>
           <button
             onClick={() => setViewMode(ViewMode.Week)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === ViewMode.Week
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === ViewMode.Week
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-            }`}
+              }`}
           >
             สัปดาห์
           </button>
           <button
             onClick={() => setViewMode(ViewMode.Month)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === ViewMode.Month
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === ViewMode.Month
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-            }`}
+              }`}
           >
             <ZoomOut size={14} className="inline mr-1" />
             เดือน

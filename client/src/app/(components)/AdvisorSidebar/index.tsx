@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { useNotification } from "@/lib/notification-context";
+import { useAutoMarkRead } from "@/modules/notification/hooks/useAutoMarkRead";
 import {
   Home,
   Search,
@@ -29,12 +30,30 @@ interface ProjectData {
 
 const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   const { user, status } = useAuth();
-  const { unreadCount } = useNotification();
+  const { unreadCount, notifications } = useNotification();
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(
     new Set(),
   );
+
+  // คำนวณ badge count แยกตาม section
+  const teamsCount = notifications.filter(
+    (n) => !n.isRead && (n.event_type === "TEAM_INVITE" || n.event_type === "TEAM_MEMBER_JOINED")
+  ).length;
+  const tasksCount = notifications.filter(
+    (n) => !n.isRead && (n.event_type === "TASK_ASSIGNED" || n.event_type === "TASK_UPDATED" || n.event_type === "COMMENT_ADDED")
+  ).length;
+  const eventsCount = notifications.filter(
+    (n) => !n.isRead && (
+      n.event_type === "SUBMISSION_SUBMITTED" ||
+      n.event_type === "SUBMISSION_APPROVED" ||
+      n.event_type === "SUBMISSION_REJECTED"
+    )
+  ).length;
+
+  // auto-mark unread notifications เป็น read เมื่อ navigate มาหน้านี้
+  useAutoMarkRead();
 
   // Self-contained: Fetch advisor's projects
   useEffect(() => {
@@ -102,9 +121,6 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   const linkBaseClass =
     "group flex items-center w-full py-4 px-6 transition-colors duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 cursor-pointer overflow-hidden";
 
-  const subLinkClass =
-    "group flex items-center w-full py-3 px-6 pl-12 transition-colors duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-pointer overflow-hidden text-sm";
-
   const contentClass = `
     text-lg font-bold
     whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out
@@ -114,19 +130,8 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
     }
   `;
 
-  const subContentClass = `
-    whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out
-    ${isSidebarOpen
-      ? "max-w-[160px] opacity-100 ml-3 translate-x-0"
-      : "max-w-0 opacity-0 ml-0 -translate-x-5"
-    }
-  `;
-
   const iconClass =
     "min-w-[24px] min-h-[24px] flex justify-center items-center relative";
-
-  const smallIconClass =
-    "min-w-[18px] min-h-[18px] flex justify-center items-center";
 
   // Truncate project name
   const truncateName = (name: string, maxLen: number = 18) =>
@@ -170,8 +175,18 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
           <Link href="/advisorteams" className={linkBaseClass}>
             <div className={iconClass}>
               <Users size={24} />
+              {!isSidebarOpen && teamsCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-[3px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {teamsCount > 99 ? "99+" : teamsCount}
+                </span>
+              )}
             </div>
             <span className={contentClass}>Teams</span>
+            {isSidebarOpen && teamsCount > 0 && (
+              <span className="ml-auto flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                {teamsCount > 99 ? "99+" : teamsCount}
+              </span>
+            )}
           </Link>
 
           <Link href="/settings" className={linkBaseClass}>
@@ -242,24 +257,39 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
 
                 {/* Sub-menu items */}
                 {expandedProjects.has(project.project_id) && (
-                  <div className="overflow-hidden">
+                  <div className="overflow-hidden bg-gray-50/50 dark:bg-gray-900/20">
                     <Link
                       href={`/advisor-tasks?project=${project.project_id}`}
-                      className={subLinkClass}
+                      className={linkBaseClass}
                     >
-                      <div className={smallIconClass}>
-                        <ListTodo size={18} />
+                      <div className={`${iconClass} ml-2`}>
+                        <div className="absolute -left-3 top-1/2 w-2 h-[1px] bg-gray-300 dark:bg-gray-600"></div>
+                        <div className="absolute -left-3 -top-4 w-[1px] h-[calc(100%+16px)] bg-gray-300 dark:bg-gray-600"></div>
+                        <ListTodo size={20} className="text-gray-500" />
                       </div>
-                      <span className={subContentClass}>งาน</span>
+                      <span className={contentClass}>งาน</span>
+                      {isSidebarOpen && tasksCount > 0 && (
+                        <span className="ml-auto flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                          {tasksCount > 99 ? "99+" : tasksCount}
+                        </span>
+                      )}
                     </Link>
                     <Link
                       href={`/advisor-events?project=${project.project_id}`}
-                      className={subLinkClass}
+                      className={linkBaseClass}
                     >
-                      <div className={smallIconClass}>
-                        <FileText size={18} />
+                      <div className={`${iconClass} ml-2`}>
+                        <div className="absolute -left-3 top-1/2 w-2 h-[1px] bg-gray-300 dark:bg-gray-600"></div>
+                        <div className="absolute -left-3 -top-4 w-[calc(50%+16px)] h-[1px] bg-transparent border-l border-gray-300 dark:border-gray-600"></div>
+                        <div className="absolute -left-3 bottom-1/2 w-[1px] h-10 bg-gray-300 dark:bg-gray-600"></div>
+                        <FileText size={20} className="text-gray-500" />
                       </div>
-                      <span className={subContentClass}>ส่งเอกสาร</span>
+                      <span className={contentClass}>ส่งเอกสาร</span>
+                      {isSidebarOpen && eventsCount > 0 && (
+                        <span className="ml-auto flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                          {eventsCount > 99 ? "99+" : eventsCount}
+                        </span>
+                      )}
                     </Link>
                   </div>
                 )}
