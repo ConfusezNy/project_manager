@@ -42,10 +42,6 @@ export function useUserManagement() {
           let teamStr = "-";
           if (mainTeam) {
             teamStr = `กลุ่ม ${mainTeam.groupNumber || "?"}`;
-            const tName = mainTeam.name?.trim();
-            if (tName && tName !== "รออนุมัติหัวข้อ") {
-              teamStr += ` — ${tName}`;
-            }
           }
 
           return {

@@ -9,8 +9,7 @@
 import { useAuth, getToken } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { useEffect, useState, useRef } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { API_URL } from "@/lib/image";
 
 export default function ProfileSettings() {
   const { user, status } = useAuth();

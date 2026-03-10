@@ -10,8 +10,7 @@ import type {
   TaskStatus,
 } from "../types/task.types";
 import { taskService } from "../services/taskService";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { API_URL } from "@/lib/image";
 
 interface TaskFormModalProps {
   onClose: () => void;

@@ -9,8 +9,7 @@ import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { User, Mail, Phone, Lock, Eye, EyeOff, ChevronDown, UserPlus, BookOpen } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { API_URL } from "@/lib/image";
 
 const ADVISOR_TITLES = [
     "รองศาสตราจารย์ ดร.",

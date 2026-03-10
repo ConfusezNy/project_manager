@@ -55,7 +55,7 @@ export class AdvisorsService {
         const projectAdvisors = await this.prisma.projectAdvisor.findMany({
             where: {
                 advisor_id: userId,
-                status: 'APPROVED',  // ✅ เฉพาะที่อนุมัติแล้ว
+                status: { in: ['PENDING', 'APPROVED'] },  // ✅ รวมทั้ง PENDING (รอการอนุมัติ) และ APPROVED
             },
             include: {
                 Project: {
@@ -121,6 +121,7 @@ export class AdvisorsService {
                 project_type: project.project_type,
                 description: project.description,
                 status: project.status,
+                advisor_status: pa.status,
                 team: {
                     team_id: team.team_id,
                     groupNumber: team.groupNumber,

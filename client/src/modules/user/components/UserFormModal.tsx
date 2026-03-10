@@ -3,8 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Camera, ChevronDown, Plus, X as XIcon } from "lucide-react";
 import { User } from "./UserTable";
 import { getToken } from "@/lib/auth-context";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { getImageSrc, API_URL } from "@/lib/image";
 
 const ALL_TITLES = [
     "รองศาสตราจารย์ ดร.",

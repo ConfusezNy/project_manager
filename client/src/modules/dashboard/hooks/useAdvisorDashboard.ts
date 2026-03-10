@@ -96,6 +96,9 @@ export function useAdvisorDashboard() {
       const now = new Date();
 
       for (const proj of projectsData) {
+        // เฉพาะโครงงานที่อาจารย์ตอบรับแล้วเท่านั้นที่จะแสดงใน Dashboard
+        if (proj.advisor_status !== "APPROVED") continue;
+
         const team = proj.team;
         if (!team) continue;
 

@@ -5,14 +5,7 @@ import Image from "next/image";
 import { UserPlus, Mail, Phone, BookOpen } from "lucide-react";
 import Button from "@/shared/components/Button";
 import { ProjectData } from "../services/projectService";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
-function getImageSrc(url?: string | null): string | null {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  return `${API_URL}${url}`;
-}
+import { getImageSrc } from "@/lib/image";
 
 interface Props {
   projectData: ProjectData | null;
@@ -33,15 +26,7 @@ export const AdvisorCard: React.FC<Props> = ({ projectData, onSelectAdvisor }) =
 
       {hasAdvisor ? (
         <div className="flex flex-col gap-4">
-          {/* ✅ Badge แจ้งสถานะรวมที่ด้านบน */}
-          {isGlobalPending && (
-            <div className="flex items-center justify-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                รอการพิจารณาจากอาจารย์
-              </span>
-            </div>
-          )}
+
 
           {advisors.map((pa: any) => {
             const advisor = pa.advisor;
@@ -56,18 +41,16 @@ export const AdvisorCard: React.FC<Props> = ({ projectData, onSelectAdvisor }) =
             return (
               <div
                 key={pa.advisor_id}
-                className={`flex flex-col items-center gap-3 p-5 rounded-xl border ${
-                  isPaPending
-                    ? "bg-amber-50/60 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
-                    : "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-100 dark:border-blue-800/50"
-                }`}
+                className={`flex flex-col items-center gap-3 p-5 rounded-xl border ${isPaPending
+                  ? "bg-amber-50/60 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
+                  : "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-100 dark:border-blue-800/50"
+                  }`}
               >
                 {/* Profile Picture */}
-                <div className={`relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 shadow-md ${
-                  isPaPending
-                    ? "opacity-70 bg-gradient-to-br from-amber-300 to-orange-400"
-                    : "bg-gradient-to-br from-blue-400 to-purple-500"
-                }`}>
+                <div className={`relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 shadow-md ${isPaPending
+                  ? "opacity-70 bg-gradient-to-br from-amber-300 to-orange-400"
+                  : "bg-gradient-to-br from-blue-400 to-purple-500"
+                  }`}>
                   {getImageSrc(advisor?.profilePicture) ? (
                     <Image
                       src={getImageSrc(advisor.profilePicture)!}
@@ -88,12 +71,11 @@ export const AdvisorCard: React.FC<Props> = ({ projectData, onSelectAdvisor }) =
                     {fullName}
                   </p>
                   {/* ✅ label บอก status ชัดเจน */}
-                  <p className={`text-xs font-medium mt-0.5 ${
-                    isPaPending
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-blue-600 dark:text-blue-400"
-                  }`}>
-                    {isPaPending ? `⏳ รอการยืนยัน (${roleName})` : roleName}
+                  <p className={`text-xs font-medium mt-0.5 ${isPaPending
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-blue-600 dark:text-blue-400"
+                    }`}>
+                    {isPaPending ? ` รอการยืนยัน (${roleName})` : roleName}
                   </p>
                 </div>
 

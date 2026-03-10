@@ -11,8 +11,7 @@ import React, { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, ArrowRight, ShieldCheck, RefreshCw, CheckCircle } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { API_URL } from "@/lib/image";
 
 type Step = "email" | "otp";
 

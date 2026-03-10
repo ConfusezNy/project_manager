@@ -141,6 +141,25 @@ export class EventsService {
             });
         }
 
+        // ✅ แจ้งอาจารย์ที่ปรึกษา (APPROVED) ของโปรเจกต์ใน section นี้ด้วย
+        const sectionAdvisors = await this.prisma.projectAdvisor.findMany({
+            where: {
+                status: 'APPROVED',
+                Project: { Team: { section_id: dto.section_id } },
+            },
+            select: { advisor_id: true },
+        });
+        const uniqueAdvisorIds = [...new Set(sectionAdvisors.map((a) => a.advisor_id))];
+        for (const advisorId of uniqueAdvisorIds) {
+            await this.notificationsService.create({
+                userId: advisorId,
+                eventType: 'EVENT_CREATED',
+                title: 'มีกิจกรรมใหม่ในหน่วยที่ดูแล',
+                message: `มีกิจกรรมใหม่: "${event.name}" กำหนดส่ง ${dueDateText}`,
+                link: '/advisor-dashboard',
+            });
+        }
+
         return fullEvent;
     }
 

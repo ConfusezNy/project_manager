@@ -38,8 +38,20 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   );
 
   // คำนวณ badge count แยกตาม section
+  const dashboardCount = notifications.filter(
+    (n) => !n.isRead && (n.event_type === "EVENT_CREATED")
+  ).length;
   const teamsCount = notifications.filter(
-    (n) => !n.isRead && (n.event_type === "TEAM_INVITE" || n.event_type === "TEAM_MEMBER_JOINED")
+    (n) => !n.isRead && (
+      n.event_type === "TEAM_INVITE" ||
+      n.event_type === "TEAM_MEMBER_JOINED" ||
+      n.event_type === "ADVISOR_REQUEST" ||
+      n.event_type === "PROJECT_APPROVED" ||
+      n.event_type === "PROJECT_REJECTED" ||
+      n.event_type === "SUBMISSION_SUBMITTED" ||
+      n.event_type === "SUBMISSION_APPROVED" ||
+      n.event_type === "SUBMISSION_REJECTED"
+    )
   ).length;
   const tasksCount = notifications.filter(
     (n) => !n.isRead && (n.event_type === "TASK_ASSIGNED" || n.event_type === "TASK_UPDATED" || n.event_type === "COMMENT_ADDED")
@@ -144,16 +156,16 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
           <Link href="/advisor-dashboard" className={linkBaseClass}>
             <div className={iconClass}>
               <Home size={24} />
-              {!isSidebarOpen && unreadCount > 0 && (
+              {!isSidebarOpen && dashboardCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-[3px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {unreadCount > 99 ? "99+" : unreadCount}
+                  {dashboardCount > 99 ? "99+" : dashboardCount}
                 </span>
               )}
             </div>
             <span className={contentClass}>Dashboard</span>
-            {isSidebarOpen && unreadCount > 0 && (
+            {isSidebarOpen && dashboardCount > 0 && (
               <span className="ml-auto flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                {unreadCount > 99 ? "99+" : unreadCount}
+                {dashboardCount > 99 ? "99+" : dashboardCount}
               </span>
             )}
           </Link>

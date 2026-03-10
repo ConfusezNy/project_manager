@@ -6,8 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Calendar, MessageSquare, Paperclip, AlertTriangle } from "lucide-react";
 import type { Task } from "../types/task.types";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { API_URL } from "@/lib/image";
 
 interface TaskCardProps {
   task: Task;

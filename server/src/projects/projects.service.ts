@@ -303,6 +303,18 @@ export class ProjectsService {
             });
         }
 
+        // ✅ แจ้งเตือนอาจารย์ว่ามีนักศึกษาขอให้เป็นที่ปรึกษา
+        const roleName = role === 'PRIMARY' ? 'ที่ปรึกษาหลัก' : 'ที่ปรึกษาร่วม';
+        await this.notificationsService.create({
+            userId: dto.advisor_id,
+            actorUserId: userId,
+            eventType: 'ADVISOR_REQUEST',
+            title: 'คำขอเป็นอาจารย์ที่ปรึกษา',
+            message: `มีคำขอให้คุณเป็น${roleName}ของโครงงาน "${project.projectname}"`,
+            link: '/advisorteams',
+            projectId: id,
+        });
+
         return {
             message: role === 'PRIMARY' ? 'ขออาจารย์ที่ปรึกษาหลักสำเร็จ' : 'ขออาจารย์ที่ปรึกษาร่วมสำเร็จ',
             totalAdvisors: project.ProjectAdvisor.length + 1,

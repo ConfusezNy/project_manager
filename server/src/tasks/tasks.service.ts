@@ -319,6 +319,16 @@ export class TasksService {
                     link: `/tasks`,
                 });
             }
+
+            // แจ้งเตือน advisors ของ project ด้วย
+            await this.notificationsService.createForProjectAdvisors(
+                updatedTask.project_id,
+                userId,
+                'TASK_UPDATED',
+                'นักศึกษาอัปเดตสถานะงาน',
+                `งาน "${updatedTask.title}" เปลี่ยนสถานะเป็น ${dto.status}`,
+                { taskId: id },
+            );
         }
 
         return {

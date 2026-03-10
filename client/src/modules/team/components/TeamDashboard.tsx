@@ -154,6 +154,7 @@ export const TeamDashboard: React.FC = () => {
               data={projectData}
               onEdit={handlers.editProject}
               onDelete={handlers.deleteProject}
+              onCancelAdvisor={handlers.cancelAdvisorRequest}
               canEdit={projectData.status !== "APPROVED"}
             />
           ) : (

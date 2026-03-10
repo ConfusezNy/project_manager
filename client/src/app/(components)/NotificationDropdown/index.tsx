@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Bell, Users, CheckCheck, FileText, MessageSquare,
-  Award, FolderCheck, FolderX, Send, CheckCircle, XCircle,
+  Award, FolderCheck, FolderX, Send, CheckCircle, XCircle, Calendar, UserPlus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -12,6 +12,8 @@ import { useNotification, type NotificationItem } from "@/lib/notification-conte
 // === Event type → Icon ===
 const getEventIcon = (eventType: string) => {
   switch (eventType) {
+    case "EVENT_CREATED":
+      return <Calendar size={16} className="text-indigo-400" />;
     case "TEAM_INVITE":
     case "TEAM_MEMBER_JOINED":
       return <Users size={16} className="text-blue-400" />;
@@ -32,6 +34,8 @@ const getEventIcon = (eventType: string) => {
       return <FolderCheck size={16} className="text-emerald-400" />;
     case "PROJECT_REJECTED":
       return <FolderX size={16} className="text-red-400" />;
+    case "ADVISOR_REQUEST":
+      return <UserPlus size={16} className="text-cyan-400" />;
     default:
       return <Bell size={16} className="text-gray-400" />;
   }
@@ -57,6 +61,10 @@ const getIconBg = (eventType: string) => {
       return "bg-red-500/20";
     case "GRADE_GIVEN":
       return "bg-yellow-500/20";
+    case "EVENT_CREATED":
+      return "bg-indigo-500/20";
+    case "ADVISOR_REQUEST":
+      return "bg-cyan-500/20";
     default:
       return "bg-gray-200 dark:bg-gray-700";
   }
@@ -104,6 +112,12 @@ const NotificationDropdown = () => {
     const role = user?.role || "STUDENT";
 
     switch (notification.event_type) {
+      case "EVENT_CREATED":
+        if (role === "ADMIN") router.push("/admin-events");
+        else if (role === "ADVISOR") router.push("/advisor-dashboard");
+        else router.push("/events");
+        break;
+
       case "TEAM_INVITE":
       case "TEAM_MEMBER_JOINED":
         if (role === "ADMIN") router.push("/admin-teams");
@@ -114,10 +128,10 @@ const NotificationDropdown = () => {
       case "TASK_ASSIGNED":
       case "TASK_UPDATED":
       case "COMMENT_ADDED": {
-        const taskParam = notification.Task?.task_id ? `?task_id=${notification.Task.task_id}` : "";
-        if (role === "ADMIN") router.push(`/admin-tasks${taskParam}`);
-        else if (role === "ADVISOR") router.push(`/advisor-tasks${taskParam}`);
-        else router.push(`/tasks${taskParam}`);
+        const projectParam = notification.Project?.project_id ? `?project=${notification.Project.project_id}` : "";
+        if (role === "ADMIN") router.push(`/admin-tasks`);
+        else if (role === "ADVISOR") router.push(`/advisor-tasks${projectParam}`);
+        else router.push(`/tasks`);
         break;
       }
 
@@ -125,7 +139,7 @@ const NotificationDropdown = () => {
       case "SUBMISSION_APPROVED":
       case "SUBMISSION_REJECTED":
         if (role === "ADMIN") router.push("/admin-events");
-        else if (role === "ADVISOR") router.push("/advisor-events");
+        else if (role === "ADVISOR") router.push("/advisorteams");
         else router.push("/events");
         break;
 
@@ -137,11 +151,18 @@ const NotificationDropdown = () => {
       case "PROJECT_APPROVED":
       case "PROJECT_REJECTED":
         if (role === "ADMIN") router.push("/admin-projects");
-        else router.push("/dashboard");
+        else if (role === "ADVISOR") router.push("/advisorteams");
+        else router.push("/Teams");
+        break;
+
+      case "ADVISOR_REQUEST":
+        router.push("/advisorteams");
         break;
 
       default:
-        router.push("/dashboard");
+        if (role === "ADMIN") router.push("/admin-dashboard");
+        else if (role === "ADVISOR") router.push("/advisor-dashboard");
+        else router.push("/dashboard");
     }
 
     setIsOpen(false);
@@ -231,10 +252,15 @@ const NotificationDropdown = () => {
                           รายวิชา: {item.Team.Section.section_code}
                         </p>
                       )}
-                      {/* ✅ hint สำหรับ TEAM_INVITE */}
+                      {/* ✅ hint สำหรับ TEAM_INVITE / ADVISOR_REQUEST */}
                       {item.event_type === "TEAM_INVITE" && (
                         <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-1">
                           → กดเพื่อยืนยัน/ปฏิเสธ
+                        </p>
+                      )}
+                      {item.event_type === "ADVISOR_REQUEST" && (
+                        <p className="text-xs text-cyan-600 dark:text-cyan-400 font-medium mt-1">
+                          → คลิกเพื่ออนุมัติ/ปฏิเสธคำขอ
                         </p>
                       )}
                       <p className="text-[10px] text-gray-400 mt-1">{formatTime(item.createdAt)}</p>

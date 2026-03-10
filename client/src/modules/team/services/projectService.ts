@@ -91,4 +91,9 @@ export const projectService = {
   async deleteProject(projectId: number) {
     return api.delete(`/projects/${projectId}`);
   },
+
+  // Cancel advisor request (student cancels PENDING advisor before approval)
+  async cancelAdvisorRequest(projectId: number) {
+    return api.delete(`/projects/${projectId}/advisor`);
+  },
 };

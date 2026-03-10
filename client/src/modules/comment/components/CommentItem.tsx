@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { Comment } from "../types/comment.types";
+import { getImageSrc } from "@/lib/image";
 
 interface CommentItemProps {
     comment: Comment;
@@ -19,13 +20,22 @@ const formatTime = (date: Date | string) => {
 
 export const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
     const initial = comment.user?.firstname?.[0] || "U";
+    const profileSrc = getImageSrc(comment.user?.profilePicture);
 
     return (
         <div className="flex gap-3 group">
             {/* Avatar */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                {initial}
-            </div>
+            {profileSrc ? (
+                <img
+                    src={profileSrc}
+                    alt={`${comment.user?.firstname || ''}`}
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 shadow-sm"
+                />
+            ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                    {initial}
+                </div>
+            )}
 
             {/* Content */}
             <div className="flex-1 min-w-0">

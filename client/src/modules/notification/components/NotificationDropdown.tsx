@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Bell, Users, CheckCheck, FileText, MessageSquare,
-  Award, FolderCheck, FolderX, Send, CheckCircle, XCircle, Calendar,
+  Award, FolderCheck, FolderX, Send, CheckCircle, XCircle, Calendar, UserPlus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNotification } from "@/lib/notification-context";
@@ -62,6 +62,8 @@ const getEventIcon = (eventType: string) => {
       return <FolderCheck size={16} className="text-emerald-400" />;
     case "PROJECT_REJECTED":
       return <FolderX size={16} className="text-red-400" />;
+    case "ADVISOR_REQUEST":
+      return <UserPlus size={16} className="text-cyan-400" />;
     default:
       return <Bell size={16} className="text-gray-400" />;
   }
@@ -89,36 +91,40 @@ const getIconBg = (eventType: string) => {
       return "bg-red-500/20";
     case "GRADE_GIVEN":
       return "bg-yellow-500/20";
+    case "ADVISOR_REQUEST":
+      return "bg-cyan-500/20";
     default:
       return "bg-gray-200 dark:bg-gray-700";
   }
 };
 
-// Smart routing: ถ้า backend set link ไว้ใช้เลย ไม่งั้น fallback ตาม event_type
-// role-aware จะใช้ใน component แล้วส่ง role เข้ามา
+// Smart routing: ใช้ role-aware routing ตาม event_type เสมอ
+// ไม่ใช้ link จาก backend เพราะ hardcode เป็น student path
 const getRoute = (item: NotificationItem, role: string): string => {
-  if (item.link) return item.link;
-
   const isAdvisor = role === "ADVISOR";
-  const isAdmin   = role === "ADMIN";
+  const isAdmin = role === "ADMIN";
 
   switch (item.event_type) {
     case "EVENT_CREATED":
-      return isAdmin ? "/admin-events" : isAdvisor ? "/advisor-events" : "/events";
+      return isAdmin ? "/admin-events" : isAdvisor ? "/advisor-dashboard" : "/events";
     case "TEAM_INVITE":
     case "TEAM_MEMBER_JOINED":
       return isAdvisor ? "/advisorteams" : "/Teams";
     case "TASK_ASSIGNED":
     case "TASK_UPDATED":
-    case "COMMENT_ADDED":
-      return isAdvisor ? "/advisor-tasks" : "/tasks";
+    case "COMMENT_ADDED": {
+      const projectParam = item.Project?.project_id ? `?project=${item.Project.project_id}` : "";
+      return isAdvisor ? `/advisor-tasks${projectParam}` : "/tasks";
+    }
     case "SUBMISSION_SUBMITTED":
     case "SUBMISSION_APPROVED":
     case "SUBMISSION_REJECTED":
-      return isAdmin ? "/admin-events" : isAdvisor ? "/advisor-events" : "/events";
+      return isAdmin ? "/admin-events" : isAdvisor ? "/advisorteams" : "/events";
     case "PROJECT_APPROVED":
     case "PROJECT_REJECTED":
-      return isAdvisor ? "/advisor-dashboard" : "/Teams";
+      return isAdvisor ? "/advisorteams" : "/Teams";
+    case "ADVISOR_REQUEST":
+      return "/advisorteams";
     case "GRADE_GIVEN":
       return isAdmin ? "/admin-grades" : "/dashboard";
     default:
@@ -213,14 +219,14 @@ export const NotificationDropdown = () => {
               notifications.map((item) => {
                 const actor = item.Users_Notification_actor_user_idToUsers;
                 const isInvite = item.event_type === "TEAM_INVITE";
+                const isAdvisorRequest = item.event_type === "ADVISOR_REQUEST";
 
                 return (
                   <div
                     key={item.notification_id}
                     onClick={() => handleClick(item)}
-                    className={`relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0 cursor-pointer ${
-                      !item.isRead ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
-                    }`}
+                    className={`relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0 cursor-pointer ${!item.isRead ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       {/* Icon */}
@@ -235,11 +241,10 @@ export const NotificationDropdown = () => {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <p
-                          className={`text-sm font-medium ${
-                            !item.isRead
-                              ? "text-gray-900 dark:text-white"
-                              : "text-gray-600 dark:text-gray-400"
-                          }`}
+                          className={`text-sm font-medium ${!item.isRead
+                            ? "text-gray-900 dark:text-white"
+                            : "text-gray-600 dark:text-gray-400"
+                            }`}
                         >
                           {item.title}
                         </p>
@@ -256,10 +261,15 @@ export const NotificationDropdown = () => {
                             รายวิชา: {item.Team.Section.section_code}
                           </p>
                         )}
-                        {/* ✅ hint สำหรับ TEAM_INVITE ว่าให้ไปกดที่หน้าทีม */}
+                        {/* ✅ hint สำหรับ TEAM_INVITE / ADVISOR_REQUEST */}
                         {isInvite && (
                           <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
                             → คลิกเพื่อไปยืนยัน/ปฏิเสธ
+                          </p>
+                        )}
+                        {isAdvisorRequest && (
+                          <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-1 font-medium">
+                            → คลิกเพื่ออนุมัติ/ปฏิเสธคำขอ
                           </p>
                         )}
                         <p className="text-[10px] text-gray-400 mt-1">

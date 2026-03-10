@@ -16,11 +16,11 @@ import {
   File,
   Download,
 } from "lucide-react";
-import type { Task, UpdateTaskInput } from "../types/task.types";
+import type { Task, UpdateTaskInput, CreateTaskInput } from "../types/task.types";
 import { CommentSection } from "@/modules/comment";
+import { TaskFormModal } from "./TaskFormModal";
 import { taskService } from "../services/taskService";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { API_URL, getImageSrc } from "@/lib/image";
 
 interface TaskDetailModalProps {
   task: Task;
@@ -66,6 +66,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 }) => {
   const { user: currentUser } = useAuth();
   const currentUserId = currentUser?.users_id;
+  const [isEditing, setIsEditing] = useState(false);
   const [showAssignMenu, setShowAssignMenu] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -144,6 +145,36 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     }
   };
 
+  const handleEditSubmit = async (data: CreateTaskInput) => {
+    await onUpdate(task.task_id, {
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      tags: data.tags,
+      startDate: data.startDate,
+      dueDate: data.dueDate,
+    });
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <TaskFormModal
+        onClose={() => setIsEditing(false)}
+        onSubmit={handleEditSubmit}
+        teamMembers={teamMembers}
+        initialData={{
+          title: task.title,
+          description: task.description || "",
+          priority: task.priority,
+          tags: task.tags || "",
+          startDate: task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : "",
+          dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : "",
+        }}
+      />
+    );
+  }
+
   // Get assignable members (exclude self + already assigned)
   const assignedIds = new Set(task.assignees?.map((a) => a.users_id) || []);
   const availableMembers = teamMembers.filter(
@@ -181,8 +212,18 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            {/* ปุ่มลบ — เฉพาะผู้สร้าง task เท่านั้น */}
-            {currentUserId === task.authorUserId && (
+            {/* ปุ่มแก้ไข — ผู้สร้าง task หรือ ADMIN */}
+            {(currentUserId === task.authorUserId || currentUser?.role === "ADMIN") && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 rounded-lg transition-colors"
+                title="แก้ไข Task"
+              >
+                <Edit3 size={18} />
+              </button>
+            )}
+            {/* ปุ่มลบ — ผู้สร้าง task หรือ ADMIN */}
+            {(currentUserId === task.authorUserId || currentUser?.role === "ADMIN") && (
               <button
                 onClick={handleDelete}
                 className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors"
@@ -295,7 +336,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         <div className="w-full h-28 bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
                           {isImage ? (
                             <img
-                              src={`${API_URL}${att.fileUrl}`}
+                              src={getImageSrc(att.fileUrl) || ''}
                               alt={att.filename}
                               className="w-full h-full object-cover"
                             />
@@ -324,7 +365,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         {/* Hover overlay actions */}
                         <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <a
-                            href={`${API_URL}${att.fileUrl}`}
+                            href={getImageSrc(att.fileUrl) || '#'}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-500 transition-colors"
@@ -378,8 +419,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 ผู้รับผิดชอบ
               </h3>
-              {/* แสดงปุ่มเพิ่มเฉพาะผู้สร้าง task */}
-              {currentUserId === task.authorUserId && (
+              {/* แสดงปุ่มเพิ่มเฉพาะผู้สร้าง task หรือ ADMIN */}
+              {(currentUserId === task.authorUserId || currentUser?.role === "ADMIN") && (
                 <div className="relative">
                   <button
                     onClick={() => setShowAssignMenu(!showAssignMenu)}
@@ -461,8 +502,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           {a.user?.firstname} {a.user?.lastname}
                         </span>
                       </div>
-                      {/* ปุ่มลบเฉพาะผู้สร้าง */}
-                      {currentUserId === task.authorUserId && (
+                      {/* ปุ่มลบเฉพาะผู้สร้างหรือ ADMIN */}
+                      {(currentUserId === task.authorUserId || currentUser?.role === "ADMIN") && (
                         <button
                           onClick={() => onUnassign(task.task_id, a.users_id)}
                           className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded"

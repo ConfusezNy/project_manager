@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { FileText, Edit2, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { FileText, Edit2, Trash2, XCircle } from "lucide-react";
+import { getImageSrc } from "@/lib/image";
 
 interface ProjectAdvisor {
   advisor_id: string;
@@ -12,6 +14,7 @@ interface ProjectAdvisor {
     lastname?: string;
     titles?: string;
     email?: string;
+    profilePicture?: string;
   };
 }
 
@@ -28,6 +31,7 @@ interface TeamProjectDetailProps {
   data: ProjectData | null;
   onEdit?: () => void;
   onDelete?: () => void;
+  onCancelAdvisor?: () => void;
   canEdit?: boolean;
 }
 
@@ -35,6 +39,7 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
   data,
   onEdit,
   onDelete,
+  onCancelAdvisor,
   canEdit = false,
 }) => {
   if (!data) {
@@ -174,18 +179,25 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
               {data.advisors.map((advisor) => (
                 <div
                   key={advisor.advisor_id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border ${
-                    advisor.advisor_role === "PRIMARY"
-                      ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-                      : "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800"
-                  }`}
+                  className={`flex items-center gap-3 p-3 rounded-lg border ${advisor.advisor_role === "PRIMARY"
+                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                    : "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800"
+                    }`}
                 >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                    advisor.advisor_role === "PRIMARY"
-                      ? "bg-gradient-to-br from-blue-400 to-blue-600"
-                      : "bg-gradient-to-br from-purple-400 to-purple-600"
-                  }`}>
-                    {advisor.advisor?.firstname?.charAt(0) || "A"}
+                  <div className={`relative w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold overflow-hidden shadow-sm ${advisor.advisor_role === "PRIMARY"
+                    ? "bg-gradient-to-br from-blue-400 to-blue-600"
+                    : "bg-gradient-to-br from-purple-400 to-purple-600"
+                    }`}>
+                    {getImageSrc(advisor.advisor?.profilePicture) ? (
+                      <Image
+                        src={getImageSrc(advisor.advisor?.profilePicture)!}
+                        alt="Advisor Profile"
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      advisor.advisor?.firstname?.charAt(0) || "A"
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
@@ -193,15 +205,27 @@ export const TeamProjectDetail: React.FC<TeamProjectDetailProps> = ({
                         {advisor.advisor?.titles} {advisor.advisor?.firstname}{" "}
                         {advisor.advisor?.lastname}
                       </p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        advisor.status === "APPROVED" ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400" :
-                        advisor.status === "REJECTED" ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400" :
-                        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
-                      }`}>
-                        {advisor.status === "APPROVED" ? "อนุมัติแล้ว" :
-                         advisor.status === "REJECTED" ? "ปฏิเสธ" :
-                         "รอการอนุมัติ"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${advisor.status === "APPROVED" ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400" :
+                          advisor.status === "REJECTED" ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400" :
+                            "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
+                          }`}>
+                          {advisor.status === "APPROVED" ? "อนุมัติแล้ว" :
+                            advisor.status === "REJECTED" ? "ปฏิเสธ" :
+                              "รอการอนุมัติ"}
+                        </span>
+                        {/* ปุ่มยกเลิกคำขอ — แสดงเฉพาะตอน PENDING และมี canEdit */}
+                        {canEdit && advisor.status === "PENDING" && onCancelAdvisor && (
+                          <button
+                            onClick={onCancelAdvisor}
+                            title="ยกเลิกคำขอ"
+                            className="flex items-center gap-1 text-[10px] font-semibold text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2 py-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border border-red-200 dark:border-red-800"
+                          >
+                            <XCircle size={12} />
+                            ยกเลิก
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 flex justify-between mt-1">
                       <span>{advisor.advisor?.email}</span>

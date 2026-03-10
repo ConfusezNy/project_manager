@@ -75,8 +75,8 @@ export const StudentSignupForm: React.FC = () => {
             }
             if (form.tel_number) {
                 const tel = form.tel_number.trim();
-                if (!/^0\d{9}$/.test(tel)) {
-                    setMessage({ type: "error", text: "เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0" });
+                if (!/^0\d{8,9}$/.test(tel)) {
+                    setMessage({ type: "error", text: "เบอร์โทรศัพท์ต้องขึ้นต้นด้วย 0 และความยาว 9-10 หลัก" });
                     setLoading(false);
                     return;
                 }

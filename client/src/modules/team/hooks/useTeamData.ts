@@ -63,6 +63,7 @@ export interface UseTeamDataReturn {
     editProject: () => void;
     submitProject: (data: ProjectFormData) => Promise<void>;
     deleteProject: () => Promise<void>;
+    cancelAdvisorRequest: () => Promise<void>;
   };
 }
 
@@ -323,6 +324,19 @@ export function useTeamData(): UseTeamDataReturn {
     }
   }, [projectData, fetchData]);
 
+  // Cancel advisor request (student cancels PENDING request before advisor approves)
+  const cancelAdvisorRequest = useCallback(async () => {
+    if (!projectData) return;
+    if (!confirm("ยืนยันการยกเลิกคำขออาจารย์ที่ปรึกษา?\nนักศึกษาสามารถเลือกอาจารย์ใหม่ได้ภายหลัง")) return;
+    try {
+      await projectService.cancelAdvisorRequest(projectData.project_id);
+      alert("ยกเลิกคำขอสำเร็จ!");
+      fetchData();
+    } catch (error: any) {
+      alert(error.message || "เกิดข้อผิดพลาด");
+    }
+  }, [projectData, fetchData]);
+
   return {
     // Session
     user,
@@ -369,6 +383,7 @@ export function useTeamData(): UseTeamDataReturn {
       editProject,
       submitProject,
       deleteProject,
+      cancelAdvisorRequest,
     },
   };
 }

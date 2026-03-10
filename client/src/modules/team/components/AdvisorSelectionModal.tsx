@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { api } from "@/lib/api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
-function getImageSrc(url?: string | null): string | null {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  return `${API_URL}${url}`;
-}
-
+import { getImageSrc } from "@/lib/image";
 
 interface AdvisorData {
   users_id: string; // API returns string
@@ -62,10 +54,10 @@ export default function AdvisorSelectionModal({
         ? `/advisors/available?section_id=${sectionId}`
         : "/advisors/available";
       const data = await api.get<AdvisorData[]>(url);
-      
+
       const existingIds = new Set(currentAdvisors.map(a => String(a.advisor_id)));
       const filteredAdvisors = data.filter(a => !existingIds.has(String(a.users_id)));
-      
+
       setAdvisors(filteredAdvisors);
     } catch (err) {
       setError("ไม่สามารถโหลดรายชื่ออาจารย์ได้");

@@ -63,13 +63,29 @@ function TasksContent() {
                 });
 
                 // Normalize team members so each has users_id at root level
+                // AND nested user object (TaskFormModal expects { users_id, user: { firstname, lastname } })
                 if (projectData.team?.members) {
-                    const normalized = projectData.team.members.map((m: Record<string, unknown>) => ({
-                        ...m,
-                        users_id: (m as { users_id?: string }).users_id
+                    const normalized = projectData.team.members.map((m: Record<string, unknown>) => {
+                        const uid = (m as { users_id?: string }).users_id
+                            || (m as { user_id?: string }).user_id
                             || ((m as { user?: { users_id?: string } }).user?.users_id)
-                            || "",
-                    }));
+                            || "";
+                        const fname = (m as { firstname?: string }).firstname
+                            || ((m as { user?: { firstname?: string } }).user?.firstname)
+                            || "";
+                        const lname = (m as { lastname?: string }).lastname
+                            || ((m as { user?: { lastname?: string } }).user?.lastname)
+                            || "";
+                        return {
+                            ...m,
+                            users_id: uid,
+                            user: {
+                                users_id: uid,
+                                firstname: fname,
+                                lastname: lname,
+                            },
+                        };
+                    });
                     setTeamMembers(normalized);
                 }
             } catch (err: unknown) {

@@ -16,27 +16,27 @@ import type { NotificationItem } from "../types/notification.types";
 
 // Map: path prefix → event_types ที่ควร mark as read เมื่อเข้าหน้านั้น
 const PATH_EVENT_MAP: Record<string, string[]> = {
-  "/Tasks":         ["TASK_ASSIGNED", "TASK_UPDATED", "COMMENT_ADDED"],
-  "/tasks":         ["TASK_ASSIGNED", "TASK_UPDATED", "COMMENT_ADDED"],
+  "/Tasks": ["TASK_ASSIGNED", "TASK_UPDATED", "COMMENT_ADDED"],
+  "/tasks": ["TASK_ASSIGNED", "TASK_UPDATED", "COMMENT_ADDED"],
   "/advisor-tasks": ["TASK_ASSIGNED", "TASK_UPDATED", "COMMENT_ADDED"],
-  "/admin-tasks":   ["TASK_ASSIGNED", "TASK_UPDATED", "COMMENT_ADDED"],
+  "/admin-tasks": ["TASK_ASSIGNED", "TASK_UPDATED", "COMMENT_ADDED"],
 
-  "/events":          ["EVENT_CREATED", "SUBMISSION_APPROVED", "SUBMISSION_REJECTED"],
-  "/advisor-events":  ["SUBMISSION_SUBMITTED", "SUBMISSION_APPROVED", "SUBMISSION_REJECTED"],
-  "/admin-events":    ["SUBMISSION_SUBMITTED", "SUBMISSION_APPROVED", "SUBMISSION_REJECTED", "EVENT_CREATED"],
+  "/events": ["EVENT_CREATED", "SUBMISSION_APPROVED", "SUBMISSION_REJECTED"],
+  "/advisor-events": ["SUBMISSION_SUBMITTED", "SUBMISSION_APPROVED", "SUBMISSION_REJECTED"],
+  "/admin-events": ["SUBMISSION_SUBMITTED", "SUBMISSION_APPROVED", "SUBMISSION_REJECTED", "EVENT_CREATED"],
 
-  "/Teams":       ["TEAM_MEMBER_JOINED"],
+  "/Teams": ["TEAM_MEMBER_JOINED"],
   // ⚠️ TEAM_INVITE ไม่ auto-mark เพราะ getPendingInvites filter isRead: false
   // invite จะ mark read ก็ต่อเมื่อ user กด "รับ" (join) หรือ "ปฏิเสธ" (reject) บน /Teams เท่านั้น
-  "/advisorteams":["TEAM_MEMBER_JOINED"],
+  "/advisorteams": ["TEAM_MEMBER_JOINED", "ADVISOR_REQUEST", "PROJECT_APPROVED", "PROJECT_REJECTED", "SUBMISSION_SUBMITTED", "SUBMISSION_APPROVED", "SUBMISSION_REJECTED"],
   "/admin-teams": ["TEAM_MEMBER_JOINED"],
 
-  "/dashboard":       ["GRADE_GIVEN", "PROJECT_APPROVED", "PROJECT_REJECTED"],
-  "/advisor-dashboard":["PROJECT_APPROVED", "PROJECT_REJECTED"],
+  "/dashboard": ["GRADE_GIVEN", "PROJECT_APPROVED", "PROJECT_REJECTED"],
+  "/advisor-dashboard": ["EVENT_CREATED"],
   "/admin-dashboard": ["PROJECT_APPROVED", "PROJECT_REJECTED"],
 
-  "/admin-grades":    ["GRADE_GIVEN"],
-  "/admin-projects":  ["PROJECT_APPROVED", "PROJECT_REJECTED"],
+  "/admin-grades": ["GRADE_GIVEN"],
+  "/admin-projects": ["PROJECT_APPROVED", "PROJECT_REJECTED"],
 };
 
 export function useAutoMarkRead() {

@@ -4,8 +4,7 @@
 import React, { useState, useRef } from "react";
 import { X, Upload, FileText, AlertCircle, File, Trash2, CheckCircle, RefreshCw, Download } from "lucide-react";
 import { getToken } from "@/lib/auth-context";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { API_URL } from "@/lib/image";
 
 const getFilename = (url: string): string => {
   try {
@@ -199,8 +198,8 @@ export const SubmitModal: React.FC<SubmitModalProps> = ({
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${dragOver
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                  : "border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 }`}
             >
               <Upload size={32} className="mx-auto text-gray-400 mb-2" />
