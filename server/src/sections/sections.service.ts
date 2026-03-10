@@ -326,6 +326,53 @@ export class SectionsService {
     }
 
     // =====================================================
+    // DELETE /sections/:id/enrollments/:userId — ลบนักศึกษาออกจาก section
+    // =====================================================
+    async unenroll(sectionId: number, userId: string) {
+        // 1. ตรวจสอบว่ามีการลงทะเบียนนี้หรือไม่
+        const enrollment = await this.prisma.section_Enrollment.findUnique({
+            where: {
+                section_id_users_id: {
+                    section_id: sectionId,
+                    users_id: userId,
+                },
+            },
+        });
+
+        if (!enrollment) {
+            throw new NotFoundException('ไม่พบข้อมูลการลงทะเบียนของนักศึกษาคนนี้ใน Section นี้');
+        }
+
+        // 2. ตรวจสอบว่านักศึกษาอยู่ในทีมของ Section นี้หรือไม่
+        const teamMember = await this.prisma.teammember.findFirst({
+            where: {
+                user_id: userId,
+                Team: { section_id: sectionId },
+            },
+            include: { Team: true },
+        });
+
+        if (teamMember) {
+            throw new BadRequestException(
+                `นักศึกษาคนนี้อยู่ในทีม "${teamMember.Team.groupNumber}" ของ Section นี้แล้ว กรุณาลบนักศึกษาออกจากทีมก่อน`,
+            );
+        }
+
+        // 3. ลบข้อมูลการลงทะเบียน
+        await this.prisma.section_Enrollment.delete({
+            where: {
+                section_enroll_id: enrollment.section_enroll_id,
+            },
+        });
+
+        return {
+            message: 'ลบนักศึกษาออกจาก Section เรียบร้อย',
+            section_id: sectionId,
+            users_id: userId,
+        };
+    }
+
+    // =====================================================
     // GET /sections/:id/teams — ดึงรายการทีมใน section (Admin)
     // ใช้ resolveTeamsForSection เพื่อรองรับ legacy data
     // =====================================================

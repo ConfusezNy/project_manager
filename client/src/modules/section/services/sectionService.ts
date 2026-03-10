@@ -177,6 +177,11 @@ export const sectionService = {
     });
   },
 
+  // Unenroll student
+  async unenrollStudent(sectionId: number, userId: string) {
+    return api.delete(`/sections/${sectionId}/enrollments/${userId}`);
+  },
+
   // Get teams for a section (for continue to project)
   async getTeamsBySection(sectionId: number): Promise<SectionTeamsResponse> {
     return api.get<SectionTeamsResponse>(`/sections/${sectionId}/teams`);

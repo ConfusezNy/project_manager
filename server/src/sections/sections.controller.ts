@@ -159,6 +159,20 @@ export class SectionsController {
     }
 
     // ==========================================
+    // DELETE /sections/:id/enrollments/:userId — ลบนักศึกษา
+    // 🛡️ Admin only
+    // ==========================================
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN')
+    @Delete(':id/enrollments/:userId')
+    async unenroll(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('userId') userId: string,
+    ) {
+        return this.sectionsService.unenroll(id, userId);
+    }
+
+    // ==========================================
     // GET /sections/:id/teams — รายการทีมใน section
     // 🛡️ Admin only
     // ==========================================

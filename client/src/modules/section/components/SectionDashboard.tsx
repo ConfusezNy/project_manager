@@ -143,6 +143,7 @@ export const SectionDashboard: React.FC = () => {
         onClose={() => setShowEnrollmentsModal(false)}
         enrollments={enrollments}
         sectionId={currentSectionId}
+        onUnenroll={handlers.handleUnenroll}
       />
 
       <EnrollModal

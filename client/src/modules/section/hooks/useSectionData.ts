@@ -161,6 +161,27 @@ export function useSectionData() {
     }
   }, [currentSectionId, selectedCandidates]);
 
+  const handleUnenroll = useCallback(
+    async (sectionId: number, userId: string) => {
+      if (
+        !confirm(
+          "คุณแน่ใจหรือไม่ที่จะลบนักศึกษานี้ออกจากหมู่เรียน?",
+        )
+      ) {
+        return;
+      }
+
+      try {
+        await sectionService.unenrollStudent(sectionId, userId);
+        alert("ลบนักศึกษาออกจากหมู่เรียนเรียบร้อย");
+        fetchEnrollments(sectionId); // Refresh the list
+      } catch (err: any) {
+        alert(err.message || "เกิดข้อผิดพลาดในการลบนักศึกษา");
+      }
+    },
+    [fetchEnrollments],
+  );
+
   const toggleCandidate = useCallback((userId: string) => {
     setSelectedCandidates((prev) =>
       prev.includes(userId)
@@ -348,6 +369,7 @@ export function useSectionData() {
       fetchEnrollments,
       openEnrollModal,
       handleEnroll,
+      handleUnenroll,
       toggleCandidate,
       toggleAllCandidates,
       openContinueModal,

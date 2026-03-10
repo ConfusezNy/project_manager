@@ -8,6 +8,7 @@ interface Props {
   onClose: () => void;
   enrollments: Enrollment[];
   sectionId: number | null;
+  onUnenroll?: (sectionId: number, userId: string) => void;
 }
 
 export const EnrollmentsModal: React.FC<Props> = ({
@@ -15,6 +16,7 @@ export const EnrollmentsModal: React.FC<Props> = ({
   onClose,
   enrollments,
   sectionId,
+  onUnenroll,
 }) => {
   if (!isOpen) return null;
 
@@ -49,6 +51,9 @@ export const EnrollmentsModal: React.FC<Props> = ({
                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                       วันที่ลงทะเบียน
                     </th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                      จัดการ
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -71,6 +76,14 @@ export const EnrollmentsModal: React.FC<Props> = ({
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => onUnenroll && sectionId && onUnenroll(sectionId, e.users_id)}
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 px-3 py-1 rounded-md transition-colors"
+                        >
+                          ลบ
+                        </button>
                       </td>
                     </tr>
                   ))}
