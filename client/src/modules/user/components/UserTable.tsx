@@ -7,6 +7,7 @@ import {
     GraduationCap,
     UserCog,
 } from "lucide-react";
+import { getImageSrc } from "@/lib/image";
 
 export interface User {
     id: string | number;
@@ -95,7 +96,7 @@ const UserTable: React.FC<Props> = ({
                                         <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm overflow-hidden uppercase">
                                             {user.avatar ? (
                                                 <img
-                                                    src={user.avatar}
+                                                    src={getImageSrc(user.avatar)!}
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (

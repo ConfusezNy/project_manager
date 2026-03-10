@@ -26,7 +26,6 @@ services:
       - CLIENT_URL=https://cpeproject.app
       - RESEND_API_KEY=re_B5Qgff3h_67HktHRBwEHc5Pbk7nKbknwz
       - RESEND_FROM=noreply@cpeproject.app
-      - DEV_EMAIL=natthachai.confuse@gmail.com
     ports:
       - "4000:4000"
     volumes:

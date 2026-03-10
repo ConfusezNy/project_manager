@@ -456,7 +456,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   <div className="flex items-center gap-2">
                     {task.author.profilePicture ? (
                       <img
-                        src={task.author.profilePicture.startsWith("http") ? task.author.profilePicture : `${API_URL}${task.author.profilePicture}`}
+                        src={getImageSrc(task.author.profilePicture)!}
                         alt=""
                         className="w-8 h-8 rounded-full object-cover"
                       />
@@ -489,7 +489,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       <div className="flex items-center gap-2">
                         {a.user?.profilePicture ? (
                           <img
-                            src={a.user.profilePicture.startsWith("http") ? a.user.profilePicture : `${API_URL}${a.user.profilePicture}`}
+                            src={getImageSrc(a.user.profilePicture)!}
                             alt=""
                             className="w-8 h-8 rounded-full object-cover"
                           />

@@ -1,4 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
@@ -22,6 +23,7 @@ export class AuthController {
     // =====================================================
     @Post('login')
     @HttpCode(HttpStatus.OK)
+    @Throttle({ short: { ttl: 60000, limit: 5 } }) // max 5 ครั้ง/นาที per IP
     async login(@Body() dto: LoginDto) {
         return this.authService.login(dto);
     }
@@ -31,6 +33,7 @@ export class AuthController {
     // =====================================================
     @Post('request-otp')
     @HttpCode(HttpStatus.OK)
+    @Throttle({ short: { ttl: 60000, limit: 3 } }) // max 3 ครั้ง/นาที per IP
     async requestOtp(@Body() dto: RequestOtpDto) {
         return this.authService.requestOtp(dto.email);
     }
@@ -49,6 +52,7 @@ export class AuthController {
     // =====================================================
     @Post('forgot-password')
     @HttpCode(HttpStatus.OK)
+    @Throttle({ short: { ttl: 60000, limit: 3 } }) // max 3 ครั้ง/นาที per IP
     async forgotPassword(@Body() dto: ForgotPasswordDto) {
         return this.authService.requestPasswordResetOtp(dto.email);
     }

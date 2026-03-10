@@ -1,9 +1,34 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import helmet from 'helmet';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
+    // Security headers (XSS, Clickjacking, Content-type sniffing, etc.)
+    // Allow images from the API server (cross-origin file uploads)
+    app.use(
+        helmet({
+            contentSecurityPolicy: {
+                directives: {
+                    defaultSrc: ["'self'"],
+                    scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+                    styleSrc: ["'self'", "'unsafe-inline'"],
+                    imgSrc: [
+                        "'self'",
+                        'data:',
+                        'blob:',
+                        'https://api.cpeproject.app',
+                        'http://localhost:4000',
+                    ],
+                    connectSrc: ["'self'", 'https://api.cpeproject.app', 'http://localhost:4000'],
+                    fontSrc: ["'self'", 'data:'],
+                },
+            },
+            crossOriginResourcePolicy: { policy: 'cross-origin' },
+        }),
+    );
 
     // CORS — ให้ Next.js frontend เรียกได้
     app.enableCors({

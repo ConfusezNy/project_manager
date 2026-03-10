@@ -89,8 +89,8 @@ export function useAdminDashboard() {
       // Fetch all users
       const users = await api.get<any[]>("/users");
 
-      // Calculate stats (use all sections for total count)
-      const sectionsCount = allSections?.length || 0;
+      // Calculate stats (use current term sections only)
+      const sectionsCount = sections?.length || 0;
       const teamsCount =
         sections?.reduce((acc, sec) => acc + (sec._count?.Team || 0), 0) || 0;
       const usersCount = users?.length || 0;
@@ -120,20 +120,26 @@ export function useAdminDashboard() {
 
           for (const event of sectionEvents || []) {
             const subs = event.Submission || [];
-            sectionTotal += subs.length;
+            // นับเฉพาะ submissions ที่ส่งแล้ว (ไม่รวม PENDING = ยังไม่ส่ง)
+            const activeSubs = subs.filter(
+              (s: any) => s.status === "SUBMITTED" || s.status === "APPROVED" || s.status === "NEEDS_REVISION",
+            );
+            sectionTotal += activeSubs.length;
+            // submitted = SUBMITTED + NEEDS_REVISION (ส่งแล้ว รอตรวจหรือรอแก้ไข)
             sectionSubmitted += subs.filter(
-              (s: any) => s.status === "SUBMITTED",
+              (s: any) => s.status === "SUBMITTED" || s.status === "NEEDS_REVISION",
             ).length;
             sectionApproved += subs.filter(
               (s: any) => s.status === "APPROVED",
             ).length;
+            // pendingSubmissions = รอตรวจ (SUBMITTED + NEEDS_REVISION)
             pendingSubmissions += subs.filter(
-              (s: any) => s.status === "SUBMITTED",
+              (s: any) => s.status === "SUBMITTED" || s.status === "NEEDS_REVISION",
             ).length;
             approvedSubmissions += subs.filter(
               (s: any) => s.status === "APPROVED",
             ).length;
-            totalSubmissions += subs.length;
+            totalSubmissions += activeSubs.length;
 
             // Collect deadlines
             if (event.dueDate) {

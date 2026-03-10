@@ -6,7 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Calendar, MessageSquare, Paperclip, AlertTriangle } from "lucide-react";
 import type { Task } from "../types/task.types";
-import { API_URL } from "@/lib/image";
+import { getImageSrc } from "@/lib/image";
 
 interface TaskCardProps {
   task: Task;
@@ -106,7 +106,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       {coverImage && (
         <div className="w-full overflow-hidden rounded-t-lg">
           <img
-            src={coverImage.startsWith("http") ? coverImage : `${API_URL}${coverImage}`}
+            src={getImageSrc(coverImage)!}
             alt=""
             className="w-full max-h-52 object-cover"
           />
@@ -180,7 +180,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                       u.profilePicture ? (
                         <img
                           key={u.id}
-                          src={u.profilePicture.startsWith("http") ? u.profilePicture : `${API_URL}${u.profilePicture}`}
+                          src={getImageSrc(u.profilePicture)!}
                           alt=""
                           className="w-6 h-6 rounded-full object-cover border-2 border-white dark:border-gray-800"
                           title={`${u.firstname || ""} ${u.lastname || ""}`}

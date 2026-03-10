@@ -76,7 +76,7 @@ const ProgressDonut = ({
     const remaining = total - approved - pending;
     const data = [
         { name: "อนุมัติแล้ว", value: approved, color: "#22c55e" },
-        { name: "รอตรวจ", value: pending, color: "#3b82f6" },
+        { name: "รอตรวจ/แก้ไข", value: pending, color: "#3b82f6" },
         {
             name: "ยังไม่ส่ง",
             value: remaining > 0 ? remaining : 0,
@@ -132,16 +132,23 @@ const SectionProgressChart = ({
 }: {
     data: Array<{
         section_code: string;
+        course_type: string;
         approvedCount: number;
         totalSubmissions: number;
     }>;
 }) => {
     const chartData = data.map((d) => ({
-        name: d.section_code,
+        name: d.course_type === "PRE_PROJECT"
+            ? `${d.section_code} (คัดเลือก)`
+            : d.course_type === "PROJECT"
+                ? `${d.section_code} (โปรเจกต์)`
+                : d.section_code,
         progress:
             d.totalSubmissions > 0
                 ? Math.round((d.approvedCount / d.totalSubmissions) * 100)
                 : 0,
+        approved: d.approvedCount,
+        total: d.totalSubmissions,
     }));
 
     if (chartData.length === 0) {
@@ -160,10 +167,18 @@ const SectionProgressChart = ({
                     <YAxis
                         type="category"
                         dataKey="name"
-                        width={80}
-                        tick={{ fontSize: 12, fill: "#6b7280" }}
+                        width={110}
+                        tick={{ fontSize: 11, fill: "#6b7280" }}
                     />
-                    <Tooltip formatter={(value: number) => [`${value}%`, "Progress"]} />
+                    <Tooltip
+                        formatter={(_: number, __: string, props: any) => {
+                            const { approved, total, progress } = props.payload;
+                            return [
+                                total > 0 ? `${approved}/${total} งาน (${progress}%)` : `ยังไม่มีข้อมูล`,
+                                "ผ่านแล้ว",
+                            ];
+                        }}
+                    />
                     <Bar dataKey="progress" fill="#3b82f6" radius={[0, 4, 4, 0]} />
                 </BarChart>
             </ResponsiveContainer>
@@ -230,7 +245,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
                 <StatCard
                     icon={FileCheck}
-                    label="รอตรวจ"
+                    label="รอตรวจ/แก้ไข"
                     value={stats.pendingSubmissions}
                     color="bg-blue-500"
                     highlight={stats.pendingSubmissions > 0}
@@ -284,7 +299,7 @@ export const AdminDashboard: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                             <div className="w-3 h-3 rounded-full bg-blue-500" />
                             <span className="text-xs text-gray-600 dark:text-gray-400">
-                                รอตรวจ ({stats.pendingSubmissions})
+                                รอตรวจ/แก้ไข ({stats.pendingSubmissions})
                             </span>
                         </div>
                     </div>

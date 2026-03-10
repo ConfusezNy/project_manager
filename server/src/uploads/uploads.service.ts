@@ -6,19 +6,19 @@ import * as path from 'path';
  * Uploads Service
  *
  * 📌 จัดการไฟล์อัปโหลด:
- * - saveFile(file, subfolder) → เก็บไฟล์ลง disk, return absolute URL
+ * - saveFile(file, subfolder) → เก็บไฟล์ลง disk, return relative path /uploads/...
  * - deleteFile(filePath) → ลบไฟล์เก่า
+ *
+ * ✅ Return relative path แทน absolute URL เพื่อให้ deploy ได้ทุก environment
+ *    Client จะประกอบ URL เต็มเองด้วย NEXT_PUBLIC_API_URL ผ่าน getImageSrc()
  */
 @Injectable()
 export class UploadsService {
     private readonly logger = new Logger(UploadsService.name);
     private readonly uploadRoot: string;
-    /** Base URL ของ NestJS server เอง (ต้องเป็น absolute ไม่ใช่ port 3000) */
-    private readonly baseUrl: string;
 
     constructor() {
         this.uploadRoot = path.join(process.cwd(), 'uploads');
-        this.baseUrl = process.env.BACKEND_URL || 'http://localhost:4000';
         // สร้าง folder หลักถ้ายังไม่มี
         this.ensureDir(this.uploadRoot);
         this.ensureDir(path.join(this.uploadRoot, 'profiles'));
@@ -51,7 +51,8 @@ export class UploadsService {
 
     /**
      * บันทึกไฟล์ลง disk
-     * @returns absolute fileUrl เช่น "http://localhost:4000/uploads/submissions/uuid_report.pdf"
+     * @returns relative fileUrl เช่น "/uploads/submissions/uuid_report.pdf"
+     *          Client ใช้ getImageSrc() ประกอบ URL เต็มเอง
      */
     saveFile(
         file: Express.Multer.File,
@@ -68,9 +69,9 @@ export class UploadsService {
 
         this.logger.log(`File saved: ${subfolder}/${uniqueName} (${file.size} bytes)`);
 
-        // ✅ Return absolute URL → ตรงไป port 4000 ไม่ผ่าน Next.js
+        // ✅ Return relative path → ใช้งานได้ทุก environment (dev / Docker / production)
         return {
-            fileUrl: `${this.baseUrl}/uploads/${subfolder}/${uniqueName}`,
+            fileUrl: `/uploads/${subfolder}/${uniqueName}`,
             filename: Buffer.from(file.originalname, 'latin1').toString('utf8'),
         };
     }

@@ -5,6 +5,7 @@ import { LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { getImageSrc } from "@/lib/image";
 
 const Profile = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,7 +20,7 @@ const Profile = () => {
     api.get("/profile")
       .then((profile) => {
         if (profile?.profilePicture) {
-          setAvatarUrl(profile.profilePicture);
+          setAvatarUrl(getImageSrc(profile.profilePicture));
         }
       })
       .catch(() => {/* ถ้า fetch ไม่ได้ก็ใช้ initial แทน */ });

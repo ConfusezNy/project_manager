@@ -75,11 +75,7 @@ const UserFormModal: React.FC<Props> = ({
 
             // Show existing profile picture
             if (initialData.avatar) {
-                if (initialData.avatar.startsWith("/uploads")) {
-                    setPreviewUrl(`${API_URL}${initialData.avatar}`);
-                } else {
-                    setPreviewUrl(initialData.avatar);
-                }
+                setPreviewUrl(getImageSrc(initialData.avatar));
             } else {
                 setPreviewUrl(null);
             }
