@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 import { Resend } from 'resend';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
@@ -35,11 +36,10 @@ export class AuthService {
   // ยืนยันตัวตนด้วยอีเมลมหาลัย + ส่ง OTP ผ่าน Resend
   // =====================================================
   async requestOtp(email: string) {
-    // 1. ตรวจ domain — DEV: รับ @gmail.com ด้วย (TODO: ลบก่อน production)
+    // 1. ตรวจ domain — รับเฉพาะอีเมลมหาวิทยาลัย
     const allowed =
       email.endsWith('@mail.rmutt.ac.th') ||
-      email.endsWith('@en.rmutt.ac.th') ||
-      email.endsWith('@gmail.com'); // DEV only
+      email.endsWith('@en.rmutt.ac.th');
     if (!allowed) {
       throw new BadRequestException(
         'อีเมลต้องเป็น @mail.rmutt.ac.th (นักศึกษา) หรือ @en.rmutt.ac.th (อาจารย์) เท่านั้น',
@@ -63,10 +63,10 @@ export class AuthService {
       where: { email, isUsed: false },
     });
 
-    // 3. สร้าง OTP 6 หลัก
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // 4. สร้าง OTP 6 หลัก (cryptographically secure)
+    const otp = randomInt(100000, 1000000).toString();
 
-    // 4. บันทึก OTP ลง DB (หมดอายุใน 5 นาที)
+    // 5. บันทึก OTP ลง DB (หมดอายุใน 5 นาที)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     await this.prisma.otpCode.create({
       data: { email, otp, expiresAt },
@@ -192,9 +192,8 @@ export class AuthService {
     });
 
     // 5. แยก role จาก domain
-    // DEV: @gmail.com → ADVISOR สำหรับทดสอบ | TODO: ลบออกก่อน production
     let role: 'STUDENT' | 'ADVISOR' = 'STUDENT';
-    if (email.endsWith('@en.rmutt.ac.th') || email.endsWith('@gmail.com')) {
+    if (email.endsWith('@en.rmutt.ac.th')) {
       role = 'ADVISOR';
     }
 
@@ -229,8 +228,8 @@ export class AuthService {
       where: { email, isUsed: false },
     });
 
-    // 4. สร้าง OTP 6 หลัก
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // 4. สร้าง OTP 6 หลัก (cryptographically secure)
+    const otp = randomInt(100000, 1000000).toString();
 
     // 5. บันทึก OTP ลง DB (หมดอายุ 5 นาที)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -390,9 +389,8 @@ export class AuthService {
     const hashedPassword = bcrypt.hashSync(dto.password, 10);
 
     // 4. แยก role จาก domain อัตโนมัติ
-    // DEV: @gmail.com → ADVISOR | TODO: ลบก่อน production
     let role: 'STUDENT' | 'ADVISOR' = 'STUDENT';
-    if (dto.email.endsWith('@en.rmutt.ac.th') || dto.email.endsWith('@gmail.com')) {
+    if (dto.email.endsWith('@en.rmutt.ac.th')) {
       role = 'ADVISOR';
     }
 

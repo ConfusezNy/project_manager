@@ -124,7 +124,6 @@ export class AdvisorsService {
                 team: {
                     team_id: team.team_id,
                     groupNumber: team.groupNumber,
-                    semester: team.semester,
                     section: {
                         section_id: team.Section?.section_id,
                         section_code: team.Section?.section_code,
@@ -213,7 +212,6 @@ export class AdvisorsService {
                 team: {
                     team_id: team.team_id,
                     groupNumber: team.groupNumber,
-                    semester: team.semester,
                     section: {
                         section_id: team.Section?.section_id,
                         section_code: team.Section?.section_code,

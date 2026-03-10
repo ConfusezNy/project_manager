@@ -23,40 +23,14 @@ export const LoginForm: React.FC = () => {
         <div className="hidden lg:flex flex-1 relative items-center justify-center p-12 bg-gradient-to-br from-blue-600 to-indigo-800 text-white overflow-hidden">
           <img
             className="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-overlay"
-            src="/cpe.jpg"
+            src="https://images.unsplash./photo--4bd374c3f58b?q=80&w=2070&auto=format&fit=crop"
             alt="Technology Background"
           />
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
 
           <div className="relative z-10 flex flex-col items-start max-w-md">
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm mb-8 shadow-inner">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="4" y="4" width="16" height="16" rx="2" />
-                <rect x="9" y="9" width="6" height="6" />
-                <path d="M9 1V4" />
-                <path d="M15 1V4" />
-                <path d="M9 20V23" />
-                <path d="M15 20V23" />
-                <path d="M20 9H23" />
-                <path d="M20 14H23" />
-                <path d="M1 9H4" />
-                <path d="M1 14H4" />
-              </svg>
-            </div>
-            <h2 className="text-4xl font-extrabold tracking-tight leading-tight mb-4">
-              Engineering <br />
-              <span className="text-blue-200">Intelligence.</span>
-            </h2>
+
+
             <p className="text-lg text-blue-100/90 font-light leading-relaxed">
               ระบบบริหารจัดการปริญญานิพนธ์ <br /> วิศวกรรมคอมพิวเตอร์
             </p>

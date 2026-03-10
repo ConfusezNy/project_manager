@@ -108,7 +108,6 @@ export class UsersService {
                 users_id: true,
                 firstname: true,
                 lastname: true,
-                teamId: true,
                 role: true,
             },
         });
@@ -198,7 +197,7 @@ export class UsersService {
                 return {
                     team_id: team.team_id,
                     groupNumber: team.groupNumber,
-                    name: team.topicThai || team.description || "",
+                    name: team.Project?.projectname || "",
                     project: team.Project ? { projectname: team.Project.projectname } : null
                 };
             }) || [],

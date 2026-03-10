@@ -15,13 +15,12 @@ export interface AdvisorProject {
   team: {
     team_id: number;
     groupNumber: number;
-    semester: string;
     section: {
+      section_id?: number;
       section_code: string;
       term?: {
-        term_name: string;
-        semester: string;
-        academicYear: string;
+        semester: number;
+        academicYear: number;
       };
     };
     members: Array<{

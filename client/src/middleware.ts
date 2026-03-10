@@ -86,7 +86,7 @@ export async function middleware(request: NextRequest) {
       (pathname.startsWith("/dashboard") ||
         pathname.startsWith("/tasks") ||
         pathname.startsWith("/events") ||
-        pathname.startsWith("/Teams")) &&
+        pathname.startsWith("/teams")) &&
       user.role !== "STUDENT"
     ) {
       const redirectPath =

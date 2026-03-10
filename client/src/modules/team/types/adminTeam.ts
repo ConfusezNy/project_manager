@@ -9,7 +9,6 @@ export interface AdminTeamMember {
 export interface AdminTeam {
     team_id: number;
     groupNumber: string;
-    status: string;
     semester: string;
     memberCount: number;
     members: AdminTeamMember[];

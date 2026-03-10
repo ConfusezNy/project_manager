@@ -8,7 +8,6 @@ export interface TeamInfoData {
   name?: string;
   groupNumber?: string;
   semester?: string;
-  status?: string;
 }
 
 interface TeamInfoCardsProps {
@@ -31,9 +30,6 @@ export const TeamInfoCards = ({
             <Users size={20} className="text-blue-500" />
             สถานะกลุ่ม
           </h2>
-          <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[11px] font-bold px-3 py-1 rounded-full uppercase border border-blue-100 dark:border-blue-800">
-            {data.status || "รออนุมัติหัวข้อ"}
-          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">

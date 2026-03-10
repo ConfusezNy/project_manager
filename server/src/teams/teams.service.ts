@@ -93,24 +93,11 @@ export class TeamsService {
             throw new BadRequestException('คุณมีทีมในรายวิชานี้แล้ว');
         }
 
-        // 3. ดึง section + term info สำหรับ semester string
-        const section = await this.prisma.section.findUnique({
-            where: { section_id: dto.sectionId },
-            include: { Term: true },
-        });
-        if (!section) {
-            throw new NotFoundException('Section not found');
-        }
-
-        // 4. สร้างทีม + เพิ่มสมาชิก
+        // 3. สร้างทีม + เพิ่มสมาชิก
         const team = await this.prisma.team.create({
             data: {
                 section_id: dto.sectionId,
                 groupNumber: `TEMP-${Date.now()}`,
-                semester:
-                    section.Term?.semester && section.Term?.academicYear
-                        ? `${section.Term.semester}/${section.Term.academicYear}`
-                        : '1/2568',
             },
         });
 
@@ -330,11 +317,7 @@ export class TeamsService {
             }
             await tx.submission.deleteMany({ where: { team_id: team.team_id } });
             await tx.notification.deleteMany({ where: { team_id: team.team_id } });
-            // ✅ disconnect implicit Users[] ก่อนลบ (ไม่งั้น FK fail)
-            await tx.team.update({
-                where: { team_id: team.team_id },
-                data: { Users: { set: [] } },
-            });
+
             await tx.teammember.deleteMany({ where: { team_id: team.team_id } });
             await tx.team.delete({ where: { team_id: team.team_id } });
         };

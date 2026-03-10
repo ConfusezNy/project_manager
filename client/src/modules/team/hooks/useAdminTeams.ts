@@ -29,7 +29,6 @@ export function useAdminTeams() {
             team.members.map((m) => ({
                 group: team.groupNumber,
                 section: team.section?.section_code || "-",
-                status: team.status,
                 student_id: m.user_id,
                 firstname: m.firstname || "",
                 lastname: m.lastname || "",
@@ -45,7 +44,6 @@ export function useAdminTeams() {
             [
                 { key: "group", label: "กลุ่ม" },
                 { key: "section", label: "Section" },
-                { key: "status", label: "สถานะทีม" },
                 { key: "student_id", label: "รหัสนักศึกษา" },
                 { key: "firstname", label: "ชื่อ" },
                 { key: "lastname", label: "นามสกุล" },
@@ -63,7 +61,6 @@ export function useAdminTeams() {
             [
                 { header: "กลุ่ม", key: "group", width: 8 },
                 { header: "Section", key: "section", width: 12 },
-                { header: "สถานะทีม", key: "status", width: 12 },
                 { header: "รหัสนักศึกษา", key: "student_id", width: 15 },
                 { header: "ชื่อ", key: "firstname", width: 15 },
                 { header: "นามสกุล", key: "lastname", width: 15 },
@@ -82,7 +79,6 @@ export function useAdminTeams() {
             [
                 { header: "Group", key: "group" },
                 { header: "Section", key: "section" },
-                { header: "Status", key: "status" },
                 { header: "Student ID", key: "student_id" },
                 { header: "Name", key: "firstname" },
                 { header: "Surname", key: "lastname" },

@@ -14,7 +14,6 @@ interface CreateTeamModalProps {
 export interface CreateTeamFormData {
   name: string;
   semester: string;
-  topicThai: string;
   description: string;
 }
 
@@ -27,7 +26,6 @@ export const CreateTeamModal = ({
   const [formData, setFormData] = useState<CreateTeamFormData>({
     name: "",
     semester: "1/2568",
-    topicThai: "",
     description: "",
   });
   const [nameError, setNameError] = useState("");
@@ -105,17 +103,7 @@ export const CreateTeamModal = ({
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              หัวข้อโครงงาน (ภาษาไทย)
-            </label>
-            <input
-              name="topicThai"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-none rounded-xl text-sm outline-none dark:text-white"
-              placeholder="ระบุชื่อหัวข้อเบื้องต้น"
-              onChange={handleChange}
-            />
-          </div>
+
 
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">

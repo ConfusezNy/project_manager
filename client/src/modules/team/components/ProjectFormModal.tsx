@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import Button from "@/shared/components/Button";
+import { PROJECT_TYPES } from "@/shared/constants/project-types";
 
 interface ProjectFormModalProps {
   isOpen: boolean;
@@ -19,15 +20,6 @@ export interface ProjectFormData {
   description: string;
 }
 
-const PROJECT_TYPES = [
-  "Software",
-  "AI / Data",
-  "Embedded / IoT",
-  "Network / Security",
-  "Image / Signal",
-  "Game / AR-VR",
-  "Research"
-];
 
 export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   isOpen,
@@ -45,6 +37,11 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
     }
   );
 
+  const [errors, setErrors] = useState({
+    projectname: "",
+    projectnameEng: ""
+  });
+
   React.useEffect(() => {
     if (initialData) {
       setFormData(initialData);
@@ -56,10 +53,45 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
         description: ""
       });
     }
+    setErrors({ projectname: "", projectnameEng: "" });
   }, [initialData, isOpen]);
+
+  const validateName = (name: string, isThai: boolean) => {
+    if (!name) return "";
+
+    // Thai pattern allows Thai characters, spaces, numbers, and common punctuation
+    const thaiPattern = /^[\u0E00-\u0E7F0-9\s!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/;
+    // English pattern allows English characters, spaces, numbers, and common punctuation
+    const engPattern = /^[a-zA-Z0-9\s!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/;
+
+    if (isThai && !thaiPattern.test(name)) {
+      return "กรุณากรอกชื่อโครงงานเป็นภาษาไทยเท่านั้น";
+    }
+    if (!isThai && name && !engPattern.test(name)) {
+      return "กรุณากรอกชื่อโครงงานเป็นภาษาอังกฤษเท่านั้น";
+    }
+    return "";
+  };
+
+  const handleNameChange = (field: "projectname" | "projectnameEng", value: string, isThai: boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    const error = validateName(value, isThai);
+    setErrors(prev => ({ ...prev, [field]: error }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const thaiError = validateName(formData.projectname, true);
+    const engError = validateName(formData.projectnameEng, false);
+
+    if (thaiError || engError) {
+      setErrors({ projectname: thaiError, projectnameEng: engError });
+      return;
+    }
+
+    if (!formData.projectname.trim()) return;
+
     onSubmit(formData);
   };
 
@@ -92,12 +124,16 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
               type="text"
               required
               value={formData.projectname}
-              onChange={(e) =>
-                setFormData({ ...formData, projectname: e.target.value })
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              onChange={(e) => handleNameChange("projectname", e.target.value, true)}
+              className={`w-full px-4 py-2.5 rounded-lg border ${errors.projectname
+                ? "border-red-500 focus:ring-red-500"
+                : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent transition`}
               placeholder="ระบุชื่อโครงงานภาษาไทย"
             />
+            {errors.projectname && (
+              <p className="mt-1 text-sm text-red-500">{errors.projectname}</p>
+            )}
           </div>
 
           {/* ชื่อโครงงาน (อังกฤษ) */}
@@ -108,12 +144,16 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
             <input
               type="text"
               value={formData.projectnameEng}
-              onChange={(e) =>
-                setFormData({ ...formData, projectnameEng: e.target.value })
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              onChange={(e) => handleNameChange("projectnameEng", e.target.value, false)}
+              className={`w-full px-4 py-2.5 rounded-lg border ${errors.projectnameEng
+                ? "border-red-500 focus:ring-red-500"
+                : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent transition`}
               placeholder="Project Name in English"
             />
+            {errors.projectnameEng && (
+              <p className="mt-1 text-sm text-red-500">{errors.projectnameEng}</p>
+            )}
           </div>
 
           {/* ประเภทโครงงาน */}
@@ -168,7 +208,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
             <Button
               type="submit"
               variant="primary"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !!errors.projectname || !!errors.projectnameEng}
               className="flex-1"
             >
               {isSubmitting ? "กำลังบันทึก..." : initialData ? "บันทึกการแก้ไข" : "สร้างโครงงาน"}

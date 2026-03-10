@@ -53,8 +53,6 @@ export class AdminTeamsService {
         const mapped = teams.map((team) => ({
             team_id: team.team_id,
             groupNumber: team.groupNumber,
-            status: team.status,
-            semester: team.semester,
             memberCount: team.Teammember.length,
             members: team.Teammember.map((m) => ({
                 user_id: m.Users.users_id,

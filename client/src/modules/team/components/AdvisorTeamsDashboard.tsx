@@ -133,8 +133,8 @@ const ProjectListItem: React.FC<{
     <button
       onClick={onSelect}
       className={`w-full text-left p-4 rounded-xl border-2 transition-all ${isSelected
-          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-700"
+        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-700"
         }`}
     >
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -337,7 +337,9 @@ const TeamMembersCard: React.FC<{ project: AdvisorProject }> = ({
             ภาคเรียน
           </p>
           <p className="text-base font-semibold text-gray-900 dark:text-white mt-1">
-            {project.team.semester}
+            {project.team.section.term
+              ? `${project.team.section.term.semester}/${project.team.section.term.academicYear}`
+              : "-"}
           </p>
         </div>
       </div>

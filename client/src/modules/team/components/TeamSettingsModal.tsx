@@ -5,8 +5,8 @@ import { X } from "lucide-react";
 import { PROJECT_TYPES } from "@/shared/constants/project-types";
 
 export interface TeamSettingsData {
-  topicThai: string;
-  topicEng: string;
+  projectname: string;
+  projectnameEng: string;
   description: string;
   projectType: string;
 }
@@ -27,8 +27,8 @@ export const TeamSettingsModal = ({
   initialData,
 }: TeamSettingsModalProps) => {
   const [editData, setEditData] = useState<TeamSettingsData>({
-    topicThai: "",
-    topicEng: "",
+    projectname: "",
+    projectnameEng: "",
     description: "",
     projectType: "",
   });
@@ -37,8 +37,8 @@ export const TeamSettingsModal = ({
   useEffect(() => {
     if (initialData && isOpen) {
       setEditData({
-        topicThai: initialData.topicThai || "",
-        topicEng: initialData.topicEng || "",
+        projectname: initialData.projectname || "",
+        projectnameEng: initialData.projectnameEng || "",
         description: initialData.description || "",
         projectType: initialData.projectType || "",
       });
@@ -81,9 +81,9 @@ export const TeamSettingsModal = ({
             <input
               className="w-full px-4 py-2.5 bg-[#2d2d2d] border border-gray-700 rounded-lg text-white outline-none focus:border-blue-500 transition-all"
               placeholder="ระบุชื่อภาษาไทย"
-              value={editData.topicThai}
+              value={editData.projectname}
               onChange={(e) =>
-                setEditData({ ...editData, topicThai: e.target.value })
+                setEditData({ ...editData, projectname: e.target.value })
               }
             />
           </div>
@@ -95,9 +95,9 @@ export const TeamSettingsModal = ({
             <input
               className="w-full px-4 py-2.5 bg-[#2d2d2d] border border-gray-700 rounded-lg text-white outline-none focus:border-blue-500 transition-all"
               placeholder="Student Project Management"
-              value={editData.topicEng}
+              value={editData.projectnameEng}
               onChange={(e) =>
-                setEditData({ ...editData, topicEng: e.target.value })
+                setEditData({ ...editData, projectnameEng: e.target.value })
               }
             />
           </div>

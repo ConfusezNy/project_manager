@@ -35,7 +35,6 @@ export const AdvisorSignupForm: React.FC = () => {
         tel_number: "",
         email: verifiedEmail,
         password: "",
-        expertiseAreas: "",
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -57,8 +56,14 @@ export const AdvisorSignupForm: React.FC = () => {
             setMessage(null);
 
             // Validate required fields
+            const thaiPattern = /^[\u0E00-\u0E7F\s]+$/;
             if (!form.firstname.trim()) {
                 setMessage({ type: "error", text: "กรุณากรอกชื่อจริง" });
+                setLoading(false);
+                return;
+            }
+            if (!thaiPattern.test(form.firstname.trim())) {
+                setMessage({ type: "error", text: "กรุณากรอกชื่อจริงเป็นภาษาไทยเท่านั้น" });
                 setLoading(false);
                 return;
             }
@@ -67,10 +72,15 @@ export const AdvisorSignupForm: React.FC = () => {
                 setLoading(false);
                 return;
             }
+            if (!thaiPattern.test(form.lastname.trim())) {
+                setMessage({ type: "error", text: "กรุณากรอกนามสกุลเป็นภาษาไทยเท่านั้น" });
+                setLoading(false);
+                return;
+            }
             if (form.tel_number) {
                 const tel = form.tel_number.trim();
-                if (!/^0\d{9}$/.test(tel)) {
-                    setMessage({ type: "error", text: "เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0" });
+                if (!/^0\d{8,9}$/.test(tel)) {
+                    setMessage({ type: "error", text: "เบอร์โทรศัพท์ต้องขึ้นต้นด้วย 0 และไม่เกิน 10 หลัก" });
                     setLoading(false);
                     return;
                 }
@@ -91,7 +101,6 @@ export const AdvisorSignupForm: React.FC = () => {
                         tel_number: form.tel_number.trim() || undefined,
                         email: form.email,
                         password: form.password,
-                        expertiseAreas: form.expertiseAreas || undefined,
                     }),
                 });
                 const data = await res.json();
@@ -119,11 +128,7 @@ export const AdvisorSignupForm: React.FC = () => {
 
                 {/* Left Panel — Purple for Advisor */}
                 <div className="hidden lg:flex flex-1 relative items-center justify-center p-12 bg-gradient-to-br from-violet-600 to-purple-800 text-white overflow-hidden">
-                    <img
-                        className="absolute inset-0 h-full w-full object-cover opacity-20 mix-blend-overlay"
-                        src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070&auto=format&fit=crop"
-                        alt="Advisor Background"
-                    />
+
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
                     <div className="relative z-10 flex flex-col items-start max-w-md">
                         <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm mb-8 shadow-inner">
@@ -147,11 +152,6 @@ export const AdvisorSignupForm: React.FC = () => {
                                     <p className="text-white text-sm font-bold">ยืนยันอีเมลสำเร็จ</p>
                                 </div>
                                 <p className="text-purple-200 text-xs break-all pl-7">{verifiedEmail}</p>
-                            </div>
-                            <div className="bg-white/10 rounded-xl p-3">
-                                <p className="text-purple-200 text-xs leading-relaxed">
-                                    💡 กรอกข้อมูลความเชี่ยวชาญเพื่อให้นักศึกษาค้นหาและเลือกอาจารย์ที่ปรึกษาได้ง่ายขึ้น
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -246,19 +246,7 @@ export const AdvisorSignupForm: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Expertise */}
-                            <div className="space-y-2">
-                                <label className={labelClass}>ความเชี่ยวชาญ <span className="text-xs font-normal text-gray-400">(ไม่บังคับ)</span></label>
-                                <textarea
-                                    name="expertiseAreas"
-                                    value={form.expertiseAreas}
-                                    onChange={handleChange}
-                                    placeholder="เช่น AI, Machine Learning, Computer Networks, Embedded Systems"
-                                    rows={2}
-                                    className="block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all duration-200 text-sm font-medium shadow-sm resize-none"
-                                />
-                                <p className="text-gray-400 text-xs">คั่นด้วยจุลภาค เช่น "AI, ML, Python"</p>
-                            </div>
+
 
                             {/* Password */}
                             <div className="space-y-2">

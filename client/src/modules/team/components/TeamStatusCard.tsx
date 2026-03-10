@@ -26,11 +26,6 @@ export const TeamStatusCard: React.FC<Props> = ({
           <Users size={22} className="text-blue-500" />
           สถานะกลุ่ม
         </h2>
-        {hasTeam && (
-          <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1.5 rounded-full uppercase border border-blue-100 dark:border-blue-800">
-            รอมอบหมายหัวข้อ
-          </span>
-        )}
       </div>
 
       {hasTeam ? (

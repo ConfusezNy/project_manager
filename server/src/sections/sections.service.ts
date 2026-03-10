@@ -386,7 +386,6 @@ export class SectionsService {
         const mapTeam = (team: ResolvedTeam) => ({
             team_id: team.team_id,
             groupNumber: team.groupNumber,
-            status: team.status,
             memberCount: team.Teammember.length,
             members: team.Teammember.map((m) => ({
                 users_id: m.user_id,
@@ -674,10 +673,6 @@ export class SectionsService {
                     data: {
                         // ใช้ชื่อกลุ่มเดิม (composite unique [groupNumber, section_id] ทำให้ซ้ำข้ามวิชาได้)
                         groupNumber: team.groupNumber,
-                        semester: `${newTerm.semester}/${newTerm.academicYear}`,
-                        status: team.status ?? 'รออนุมัติหัวข้อ',
-                        description: team.description,
-                        topicThai: team.topicThai,
                         section_id: newSection.section_id,
                     },
                 });

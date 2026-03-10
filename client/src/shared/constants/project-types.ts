@@ -5,12 +5,21 @@
  * ถ้าต้องเพิ่ม/ลบ type → แก้ที่นี่ที่เดียว
  */
 export const PROJECT_TYPES = [
-    "Software",
-    "AI / Data",
-    "Embedded / IoT",
-    "Network / Security",
-    "Image / Signal",
-    "Game / AR-VR",
+    "Web Application",
+    "Mobile Application",
+    "Desktop Application",
+    "AI / Machine Learning",
+    "Data Science / Big Data",
+    "Embedded System",
+    "IoT (Internet of Things)",
+    "Computer Network",
+    "Cybersecurity",
+    "Image Processing",
+    "Signal Processing",
+    "Game Development",
+    "AR / VR",
+    "Cloud / DevOps",
+    "Robotics",
     "Research",
 ] as const;
 
