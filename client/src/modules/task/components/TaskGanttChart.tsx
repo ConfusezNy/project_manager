@@ -28,17 +28,17 @@ const getStatusColor = (status: string): string => {
   }
 };
 
-// Map our Task priority to progress percentage (visual indicator)
-const getPriorityProgress = (priority: string): number => {
-  switch (priority) {
-    case "URGENT":
+// Map our Task status to progress percentage
+const getStatusProgress = (status: string): number => {
+  switch (status) {
+    case "DONE":
       return 100;
-    case "HIGH":
-      return 75;
-    case "MEDIUM":
+    case "IN_REVIEW":
+      return 90;
+    case "IN_PROGRESS":
       return 50;
-    case "LOW":
-      return 25;
+    case "TODO":
+      return 0;
     default:
       return 0;
   }
@@ -70,8 +70,7 @@ export const TaskGanttChart: React.FC<TaskGanttChartProps> = ({
           name: task.title,
           start,
           end: validEnd,
-          progress:
-            task.status === "DONE" ? 100 : getPriorityProgress(task.priority),
+          progress: getStatusProgress(task.status),
           type: "task" as const,
           styles: {
             backgroundColor: getStatusColor(task.status),
@@ -156,7 +155,7 @@ export const TaskGanttChart: React.FC<TaskGanttChartProps> = ({
           tasks={ganttTasks}
           viewMode={viewMode}
           onClick={handleTaskClick}
-          listCellWidth=""
+          listCellWidth="155px"
           columnWidth={
             viewMode === ViewMode.Day
               ? 60
@@ -167,7 +166,7 @@ export const TaskGanttChart: React.FC<TaskGanttChartProps> = ({
           barCornerRadius={4}
           barProgressColor="#1e40af"
           handleWidth={8}
-          todayColor="rgba(59, 130, 246, 0.1)"
+          todayColor="rgba(239, 68, 68, 0.15)" // Red tint for Today column
           locale="th"
         />
       </div>

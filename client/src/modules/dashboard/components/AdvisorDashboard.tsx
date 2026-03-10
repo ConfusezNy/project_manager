@@ -378,15 +378,6 @@ const AdvisorCalendar = ({ events }: { events: AdvisorCalendarEvent[] }) => {
                         );
                     })}
                 </div>
-
-                {/* Legend */}
-                <div className="flex gap-3 justify-center mt-2 text-xs text-gray-400">
-                    {Object.entries(statusLabel).map(([k, v]) => (
-                        <span key={k} className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLOR_MAP[k] }} />{v}
-                        </span>
-                    ))}
-                </div>
             </div>
 
             {/* Popup: events of selected date */}

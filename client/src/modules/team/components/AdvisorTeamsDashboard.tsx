@@ -326,7 +326,7 @@ const TeamMembersCard: React.FC<{ project: AdvisorProject }> = ({
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <p className="text-xs text-gray-400 uppercase font-black tracking-widest">
-            รายวิชา
+            กลุ่มเรียน
           </p>
           <p className="text-base font-semibold text-gray-900 dark:text-white mt-1">
             {project.team.section.section_code}

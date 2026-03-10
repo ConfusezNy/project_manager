@@ -42,7 +42,7 @@ export const TeamStatusCard: React.FC<Props> = ({
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider mb-2">
-              เลขกลุ่ม
+              กลุ่มเรียน
             </p>
             <p className="text-base font-semibold text-gray-900 dark:text-white">
               {section?.section_code || "---"}

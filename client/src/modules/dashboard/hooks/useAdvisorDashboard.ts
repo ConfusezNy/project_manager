@@ -78,9 +78,10 @@ export function useAdvisorDashboard() {
       setLoading(true);
       setError(null);
 
-      // GET /advisors/my-projects — โปรเจกต์ที่อาจารย์ดูแล
-      // ข้อมูลที่ได้: project_id, projectname, status, team { team_id, groupNumber, section, members }
-      const projectsData = await api.get<any[]>("/advisors/my-projects");
+      const [projectsData, allProjectsData] = await Promise.all([
+        api.get<any[]>("/advisors/my-projects"),
+        api.get<any[]>("/advisors/all-projects")
+      ]);
 
       if (!projectsData || projectsData.length === 0) {
         setTeams([]);
@@ -102,11 +103,33 @@ export function useAdvisorDashboard() {
         const team = proj.team;
         if (!team) continue;
 
-        // ดึง submissions ของทีมนี้
-        const submissions = await api.get<any[]>(`/submissions?team_id=${team.team_id}`);
+        const currentMembers = (team.members || [])
+          .map((m: any) => m.user?.users_id || m.users_id)
+          .sort()
+          .join(',');
 
-        // คำนวณ progress เฉพาะเอกสาร/บทที่ (requireFile === true)
-        const docSubs = submissions?.filter((s) => s.Event?.requireFile === true) || [];
+        const relatedTeams = (allProjectsData || [])
+          .filter((p: any) => {
+            const pm = (p.team?.members || [])
+              .map((m: any) => m.user?.users_id || m.users_id)
+              .sort()
+              .join(',');
+            return pm === currentMembers;
+          })
+          .map((p: any) => p.team?.team_id)
+          .filter(Boolean);
+
+        // Fetch submissions for all related teams
+        const allSubsData: any[] = [];
+        for (const tid of Array.from(new Set(relatedTeams))) {
+          try {
+            const subs = await api.get<any[]>(`/submissions?team_id=${tid}`);
+            allSubsData.push(...(subs || []));
+          } catch (e) { }
+        }
+
+        // คำนวณ progress เฉพาะเอกสาร/บทที่ (requireFile === true) ของทุก team ที่เกี่ยวข้อง
+        const docSubs = allSubsData.filter((s) => s.Event?.requireFile === true);
         const approvedCount = docSubs.filter((s) => s.status === "APPROVED").length;
         const submittedCount = docSubs.filter((s) => s.status === "SUBMITTED").length;
         const totalEvents = docSubs.length;
