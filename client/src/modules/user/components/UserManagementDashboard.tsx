@@ -41,7 +41,7 @@ export const UserManagementDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            User
+            {isAdmin ? "User" : "เพื่อนร่วม Section"}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             สถานะของคุณ:{" "}
@@ -63,8 +63,9 @@ export const UserManagementDashboard: React.FC = () => {
 
       {/* Stats */}
       <UserStats
-        total={users.length}
+        total={isAdmin ? users.length : users.filter(u => u.role !== "ADMIN").length}
         admins={users.filter((u) => u.role === "ADMIN").length}
+        showAdminStat={isAdmin}
       />
 
       {/* Filters */}
@@ -74,13 +75,14 @@ export const UserManagementDashboard: React.FC = () => {
           setSearchQuery={setSearchQuery}
           roleFilter={roleFilter}
           setRoleFilter={setRoleFilter}
+          hideAdmin={!isAdmin}
         />
       </div>
 
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <UserTable
-          users={filteredUsers}
+          users={isAdmin ? filteredUsers : filteredUsers.filter(u => u.role !== "ADMIN")}
           onEdit={handlers.handleEditClick}
           onDelete={handlers.handleDeleteClick}
           onRoleChange={handlers.handleRoleChange}

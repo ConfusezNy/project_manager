@@ -173,7 +173,7 @@ export const OtpVerifyForm: React.FC = () => {
                         {/* Step indicators */}
                         <div className="w-full space-y-3">
                             {[
-                                { n: 1, label: "กรอกอีเมลสถาบัน", sub: "@mail / @en .rmutt.ac.th" },
+                                { n: 1, label: "กรอกอีเมล", sub: "@mail / @en .rmutt.ac.th" },
                                 { n: 2, label: "ยืนยันรหัส OTP", sub: "ตรวจสอบ inbox ของคุณ" },
                                 { n: 3, label: "กรอกข้อมูลสมาชิก", sub: "ฟอร์มตาม role ของคุณ" },
                             ].map(({ n, label, sub }) => (
@@ -228,7 +228,7 @@ export const OtpVerifyForm: React.FC = () => {
                             <form onSubmit={handleRequestOtp} className="space-y-5">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
-                                        อีเมลสถาบัน
+                                        อีเมล
                                     </label>
                                     <div className="relative group">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -238,7 +238,7 @@ export const OtpVerifyForm: React.FC = () => {
                                             type="email"
                                             value={email}
                                             onChange={(e) => { setEmail(e.target.value); setEmailError(""); }}
-                                            placeholder="650123456@mail.rmutt.ac.th"
+                                            placeholder="student@mail.rmutt.ac.th"
                                             required
                                             className={`block w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 text-sm font-medium shadow-sm ${emailError ? "border-red-400 focus:ring-red-500/30 focus:border-red-500" : "border-gray-200 dark:border-gray-600"}`}
                                         />

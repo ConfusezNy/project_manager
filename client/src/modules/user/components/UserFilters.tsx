@@ -7,10 +7,11 @@ interface Props {
     setSearchQuery: (val: string) => void;
     roleFilter: string;
     setRoleFilter: (val: string) => void;
+    hideAdmin?: boolean;
 }
 
 const UserFilters: React.FC<Props> = ({
-    searchQuery, setSearchQuery, roleFilter, setRoleFilter
+    searchQuery, setSearchQuery, roleFilter, setRoleFilter, hideAdmin = false
 }) => {
     return (
         <div className="flex flex-col md:flex-row gap-4 mb-6 animate-in fade-in duration-500">
@@ -36,7 +37,7 @@ const UserFilters: React.FC<Props> = ({
                     className="px-4 py-3 rounded-xl border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none cursor-pointer shadow-sm transition-all"
                 >
                     <option value="All">ทุกระดับสิทธิ์</option>
-                    <option value="ADMIN">Admin</option>
+                    {!hideAdmin && <option value="ADMIN">Admin</option>}
                     <option value="ADVISOR">Advisor (Teacher)</option>
                     <option value="STUDENT">Student</option>
                 </select>

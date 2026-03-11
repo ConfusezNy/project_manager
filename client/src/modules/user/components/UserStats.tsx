@@ -2,12 +2,12 @@
 import React from 'react';
 import { Users, Shield } from 'lucide-react';
 
-interface Props { total: number; admins: number; }
+interface Props { total: number; admins: number; showAdminStat?: boolean; }
 
-const UserStats: React.FC<Props> = ({ total, admins }) => {
+const UserStats: React.FC<Props> = ({ total, admins, showAdminStat = true }) => {
     const stats = [
         { label: 'ผู้ใช้งานทั้งหมด', value: total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-        { label: 'ผู้ดูแลระบบ (Admin)', value: admins, icon: Shield, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
+        ...(showAdminStat ? [{ label: 'ผู้ดูแลระบบ (Admin)', value: admins, icon: Shield, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-500/10' }] : []),
     ];
 
     return (

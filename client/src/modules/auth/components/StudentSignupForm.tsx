@@ -236,7 +236,7 @@ export const StudentSignupForm: React.FC = () => {
 
                             {/* Password */}
                             <div className="space-y-2">
-                                <label className={labelClass}>ตั้งรหัสผ่าน <span className="text-xs font-normal text-gray-400">(อย่างน้อย 6 ตัว)</span></label>
+                                <label className={labelClass}>ตั้งรหัสผ่าน <span className="text-xs font-normal text-gray-400">(อย่างน้อย 9 ตัว)</span></label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
@@ -248,7 +248,7 @@ export const StudentSignupForm: React.FC = () => {
                                         onChange={handleChange}
                                         placeholder="••••••••"
                                         required
-                                        minLength={6}
+                                        minLength={9}
                                         className="block w-full pl-11 pr-12 py-3.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 text-sm font-medium shadow-sm"
                                     />
                                     <button type="button" onClick={() => setShowPassword(!showPassword)}

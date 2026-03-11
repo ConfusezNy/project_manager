@@ -67,23 +67,6 @@ export const ProjectSearchDashboard: React.FC = () => {
           />
         </div>
 
-        <div className="w-full max-w-[200px]">
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            อาจารย์ที่ปรึกษา
-          </label>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2">
-              <GraduationCap className="h-4 w-4 text-gray-400" />
-            </span>
-            <input
-              className="w-full rounded-lg bg-gray-100 p-2 pl-8 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-              type="text"
-              placeholder="ชื่ออาจารย์..."
-              value={advisorFilter}
-              onChange={(e) => setAdvisorFilter(e.target.value)}
-            />
-          </div>
-        </div>
       </div>
 
       {/* Table */}

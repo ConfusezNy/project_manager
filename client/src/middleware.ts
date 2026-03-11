@@ -1,17 +1,13 @@
 /**
  * Middleware — Route protection + Role-based access
- * ย้ายมาจาก: client/src/middleware.ts (เวอร์ชัน NextAuth)
  *
- * ⚠️ สิ่งที่เปลี่ยนจากเดิม:
- * - เดิม: ใช้ getToken() จาก next-auth/jwt
- * - ใหม่: อ่าน JWT จาก cookie 'access_token' + decode ด้วย jwt-decode
- * - ใช้ jwt-decode (ไม่ verify signature) เพราะ middleware ทำหน้าที่แค่ route guard
- * - การ verify จริงอยู่ที่ NestJS backend (JwtStrategy)
+ * ใช้ jose เพื่อ verify JWT signature จริง (ป้องกัน token tampering)
+ * ถ้า signature ไม่ตรง → ถือว่า user = null → redirect ไป signin
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtDecode } from "jwt-decode";
+import { jwtVerify } from "jose";
 
 interface JwtPayload {
   sub: string;
@@ -25,6 +21,11 @@ interface JwtPayload {
 // หน้าที่ไม่ต้อง login
 const publicPaths = ["/signin", "/signup", "/forgot-password", "/reset-password"];
 
+// JWT Secret — ต้องตรงกับ backend (docker-compose JWT_SECRET)
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET ?? "p7TevVUKL215n9yzT7rSAWRlwGQgIaVvBKsmsW5+Ynud+gHg2Ruww/wDqNM="
+);
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -33,18 +34,19 @@ export async function middleware(request: NextRequest) {
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-  // อ่าน JWT จาก cookie
+  // อ่าน JWT จาก cookie แล้ว VERIFY signature
   const tokenCookie = request.cookies.get("access_token")?.value;
   let user: JwtPayload | null = null;
 
   if (tokenCookie) {
     try {
-      const decoded = jwtDecode<JwtPayload>(tokenCookie);
-      // เช็ค token หมดอายุ
-      if (decoded.exp * 1000 > Date.now()) {
-        user = decoded;
+      const { payload } = await jwtVerify(tokenCookie, JWT_SECRET);
+      // ตรวจ token หมดอายุ (jose ทำให้อัตโนมัติ แต่เช็คซ้ำเพื่อความชัดเจน)
+      if (payload.exp && payload.exp * 1000 > Date.now()) {
+        user = payload as unknown as JwtPayload;
       }
     } catch {
+      // signature ไม่ตรง หรือ token หมดอายุ → ถือว่าไม่ได้ login
       user = null;
     }
   }
@@ -81,12 +83,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(redirectPath, request.url));
     }
 
-    // Student routes (dashboard, tasks, events, teams)
+    // Student routes (dashboard, tasks, events, teams, classmates)
     if (
       (pathname.startsWith("/dashboard") ||
         pathname.startsWith("/tasks") ||
         pathname.startsWith("/events") ||
-        pathname.startsWith("/teams")) &&
+        pathname.startsWith("/teams") ||
+        pathname.startsWith("/classmates")) &&
       user.role !== "STUDENT"
     ) {
       const redirectPath =
@@ -106,7 +109,7 @@ export const config = {
      * - _next/image (image optimization)
      * - favicon.ico
      * - public files
-     * - api routes (ถ้ายังมี Next.js API routes เหลืออยู่)
+     * - api routes
      */
     "/((?!_next/static|_next/image|favicon.ico|public|api).*)",
   ],

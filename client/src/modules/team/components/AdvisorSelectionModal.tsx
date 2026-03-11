@@ -147,7 +147,7 @@ export default function AdvisorSelectionModal({
               {advisors.map((advisor) => (
                 <div
                   key={advisor.users_id}
-                  className={`border-2 rounded-xl p-6 transition-all ${advisor.canSelect
+                  className={`flex flex-col border-2 rounded-xl p-6 transition-all ${advisor.canSelect
                     ? "border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-lg"
                     : "border-gray-200 dark:border-gray-700 opacity-60"
                     }`}
@@ -210,19 +210,21 @@ export default function AdvisorSelectionModal({
                   </div>
 
                   {/* Select Button or Reason */}
-                  {advisor.canSelect ? (
-                    <button
-                      onClick={() => handleSelectAdvisor(advisor.users_id)}
-                      disabled={selecting}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {selecting ? "กำลังเลือก..." : "เลือกอาจารย์ท่านนี้"}
-                    </button>
-                  ) : (
-                    <div className="w-full py-3 text-center text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                      {advisor.reason || "ไม่สามารถเลือกได้"}
-                    </div>
-                  )}
+                  <div className="mt-auto pt-2">
+                    {advisor.canSelect ? (
+                      <button
+                        onClick={() => handleSelectAdvisor(advisor.users_id)}
+                        disabled={selecting}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {selecting ? "กำลังเลือก..." : "เลือกอาจารย์ท่านนี้"}
+                      </button>
+                    ) : (
+                      <div className="w-full py-3 text-center text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                        {advisor.reason || "ไม่สามารถเลือกได้"}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
