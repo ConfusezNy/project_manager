@@ -50,6 +50,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   initialData,
 }) => {
   const { user: currentUser } = useAuth();
+  const today = new Date().toISOString().split("T")[0];
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(
     initialData?.description || "",
@@ -229,6 +230,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <input
                 type="date"
                 value={startDate}
+                min={today}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -241,6 +243,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <input
                 type="date"
                 value={dueDate}
+                min={startDate || today}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />

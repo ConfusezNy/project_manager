@@ -1,0 +1,2409 @@
+{
+  "info": {
+    "name": "Project Manager API by Roles",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Role: ADMIN",
+      "item": [
+        {
+          "name": "GET /admin/projects (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "projects"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/teams (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /events (create)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /events/:id (update)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /events/:id (partialUpdate)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /events/fix-no-file-submissions (fixNoFileSubmissions)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events/fix-no-file-submissions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events",
+                "fix-no-file-submissions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /events/:id (remove)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /grades (batchSave)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/grades",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "grades"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /grades/:id (update)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/grades/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "grades",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /grades/:id (remove)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/grades/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "grades",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/student-groups (getStudentGroups)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/student-groups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "student-groups"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /sections (create)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /sections/:id (update)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /sections/:id (remove)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /sections/:id/enroll (enroll)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}/enroll",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}",
+                "enroll"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/:id/enrollments (findEnrollments)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}/enrollments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}",
+                "enrollments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /sections/:id/enrollments/:userId (unenroll)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}/enrollments/{{userId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}",
+                "enrollments",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/:id/teams (findTeams)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}",
+                "teams"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/:id/search-students (searchStudents)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}/search-students",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}",
+                "search-students"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/:id/candidates (findCandidates)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}/candidates",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}",
+                "candidates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /sections/:id/continue-to-project (continueToProject)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}/continue-to-project",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}",
+                "continue-to-project"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /submissions/:id/approve (approve)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/submissions/{{id}}/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "submissions",
+                "{{id}}",
+                "approve"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /submissions/:id/reject (reject)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/submissions/{{id}}/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "submissions",
+                "{{id}}",
+                "reject"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /teams/assign-name (assignName)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams/assign-name",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "assign-name"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /teams/:id/members/:memberId (removeMember)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams/{{id}}/members/{{memberId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "{{id}}",
+                "members",
+                "{{memberId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /terms (create)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/terms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "terms"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /terms/:id (remove)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/terms/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "terms",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /users (create)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /users/:id (update)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /users/:id (remove)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Role: ADVISOR",
+      "item": [
+        {
+          "name": "GET /advisors/my-projects (getMyProjects)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/advisors/my-projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "advisors",
+                "my-projects"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /advisors/all-projects (getAllProjects)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/advisors/all-projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "advisors",
+                "all-projects"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /projects/:id/status (updateStatus)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{id}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /submissions/:id/approve (approve)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/submissions/{{id}}/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "submissions",
+                "{{id}}",
+                "approve"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /submissions/:id/reject (reject)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/submissions/{{id}}/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "submissions",
+                "{{id}}",
+                "reject"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Role: STUDENT",
+      "item": [
+        {
+          "name": "POST /projects (create)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /projects/:id (update)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /projects/:id (remove)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /projects/:id/advisor (addAdvisor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{id}}/advisor",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{id}}",
+                "advisor"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/my-section (findMySection)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/my-section",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "my-section"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/my-enrolled (findMyEnrolled)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/my-enrolled",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "my-enrolled"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /teams (create)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /teams/invite (invite)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams/invite",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "invite"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /teams/join (join)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "join"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /teams/leave (leave)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams/leave",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "leave"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Role: COMMON/NO_ROLE",
+      "item": [
+        {
+          "name": "PATCH /admin/projects/:id/archive (toggleArchive)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/projects/{{id}}/archive",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "projects",
+                "{{id}}",
+                "archive"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/teams/:teamId (findOne)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams/{{teamId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams",
+                "{{teamId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /admin/teams/:teamId (update)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams/{{teamId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams",
+                "{{teamId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /admin/teams (removeByBody)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /admin/teams/:teamId (remove)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams/{{teamId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams",
+                "{{teamId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/teams/:teamId/members (getMembers)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams/{{teamId}}/members",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams",
+                "{{teamId}}",
+                "members"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /admin/teams/:teamId/members (addMember)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams/{{teamId}}/members",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams",
+                "{{teamId}}",
+                "members"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /admin/teams/:teamId/members/:memberId (removeMember)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams/{{teamId}}/members/{{memberId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams",
+                "{{teamId}}",
+                "members",
+                "{{memberId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/teams/:teamId/available-members (getAvailableMembers)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/teams/{{teamId}}/available-members",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "teams",
+                "{{teamId}}",
+                "available-members"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /advisors/available (getAvailable)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/advisors/available",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "advisors",
+                "available"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/signup (signup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/signup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/login (login)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/request-otp (requestOtp)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/request-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "request-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/verify-otp (verifyOtp)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/forgot-password (forgotPassword)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/forgot-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/reset-password (resetPassword)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/reset-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /events (findBySection)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /events/:id (findOne)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /grades (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/grades",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "grades"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /notifications (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /notifications/read-all (markAllAsRead)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/read-all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /notifications/:id/read (markAsRead)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/{{id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "{{id}}",
+                "read"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /profile (getProfile)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /profile (update)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /projects/archive/filters (getArchiveFilters)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/archive/filters",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "archive",
+                "filters"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /projects/archive (findArchived)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/archive",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "archive"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /projects (findByTeam)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /projects/check-similarity (checkSimilarity)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/check-similarity",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "check-similarity"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /projects/:id/advisor (removeAdvisor)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{id}}/advisor",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{id}}",
+                "advisor"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/:id (findOne)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /sections/:id/available-students (findAvailableStudents)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sections/{{id}}/available-students",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sections",
+                "{{id}}",
+                "available-students"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /submissions (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/submissions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "submissions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /submissions/:id/submit (submit)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/submissions/{{id}}/submit",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "submissions",
+                "{{id}}",
+                "submit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /tasks (findByProject)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /tasks (create)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /tasks/:id (findOne)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /tasks/:id (update)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /tasks/:id (remove)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /tasks/:id/assign (assign)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}/assign",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}",
+                "assign"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /tasks/:id/assign (unassign)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}/assign",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}",
+                "assign"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /tasks/:id/comments (getComments)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}/comments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}",
+                "comments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /tasks/:id/comments (addComment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}/comments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}",
+                "comments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /tasks/:id/attachments (getAttachments)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}/attachments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}",
+                "attachments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /tasks/:id/attachments (addAttachment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}/attachments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}",
+                "attachments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /tasks/:id/attachments/:attachmentId (removeAttachment)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{id}}/attachments/{{attachmentId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tasks",
+                "{{id}}",
+                "attachments",
+                "{{attachmentId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /teams (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /teams/my-team (findMyTeam)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams/my-team",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "my-team"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /teams/pending-invites (getPendingInvites)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams/pending-invites",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "pending-invites"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /teams/reject (reject)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teams/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "reject"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /terms (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/terms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "terms"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /uploads/profile (Unknown)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/uploads/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "uploads",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /uploads/submission (Unknown)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/uploads/submission",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "uploads",
+                "submission"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /uploads/attachment (Unknown)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/uploads/attachment",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "uploads",
+                "attachment"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /users/search (search)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "search"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /users (findAll)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /users/:id (findOne)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{id}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    }
+  ]
+}

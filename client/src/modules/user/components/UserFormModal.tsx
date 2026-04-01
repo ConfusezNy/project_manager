@@ -21,7 +21,7 @@ const ALL_TITLES = [
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (user: Partial<User> & { newPassword?: string; profilePicture?: string }) => void;
+    onSubmit: (user: Partial<User> & { newPassword?: string; profilePicture?: string }) => void | Promise<void>;
     initialData?: User | null;
 }
 
@@ -52,6 +52,8 @@ const UserFormModal: React.FC<Props> = ({
     const [confirmPassword, setConfirmPassword] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [nameError, setNameError] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -89,6 +91,8 @@ const UserFormModal: React.FC<Props> = ({
         setConfirmPassword("");
         setPasswordError("");
         setNameError("");
+        setEmailError("");
+        setIsSubmitting(false);
         setExpertiseInput("");
     }, [initialData, isOpen]);
 
@@ -133,13 +137,29 @@ const UserFormModal: React.FC<Props> = ({
         setExpertiseTags(expertiseTags.filter((t) => t !== tag));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setPasswordError("");
         setNameError("");
+        setEmailError("");
 
         if (!form.firstname.trim() || !form.lastname.trim()) {
             setNameError("กรุณากรอกชื่อและนามสกุล");
+            return;
+        }
+
+        if (!initialData && !form.email.trim()) {
+            setEmailError("กรุณากรอกอีเมล");
+            return;
+        }
+
+        if (!initialData && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+            setEmailError("รูปแบบอีเมลไม่ถูกต้อง");
+            return;
+        }
+
+        if (!initialData && !newPassword) {
+            setPasswordError("กรุณากรอกรหัสผ่านสำหรับผู้ใช้งานใหม่");
             return;
         }
 
@@ -160,18 +180,23 @@ const UserFormModal: React.FC<Props> = ({
 
         const expertiseStr = expertiseTags.join(", ");
 
-        onSubmit({
-            role: form.role,
-            titles: form.titles,
-            firstname: form.firstname.trim(),
-            lastname: form.lastname.trim(),
-            name: `${form.firstname.trim()} ${form.lastname.trim()}`,
-            email: form.email,
-            tel_number: form.tel_number,
-            expertiseAreas: form.role === "ADVISOR" ? expertiseStr : undefined,
-            ...(uploadedFileUrl !== null ? { profilePicture: uploadedFileUrl } : {}),
-            ...(newPassword ? { newPassword } : {}),
-        } as any);
+        setIsSubmitting(true);
+        try {
+            await onSubmit({
+                role: form.role,
+                titles: form.titles,
+                firstname: form.firstname.trim(),
+                lastname: form.lastname.trim(),
+                name: `${form.firstname.trim()} ${form.lastname.trim()}`,
+                email: form.email,
+                tel_number: form.tel_number,
+                expertiseAreas: form.role === "ADVISOR" ? expertiseStr : undefined,
+                ...(uploadedFileUrl !== null ? { profilePicture: uploadedFileUrl } : {}),
+                ...(newPassword ? { newPassword } : {}),
+            } as any);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -299,15 +324,22 @@ const UserFormModal: React.FC<Props> = ({
 
                     {/* 5. Email */}
                     <div className="space-y-2">
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">อีเมล</label>
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            อีเมล {initialData && <span className="text-xs font-normal text-slate-400">(ไม่สามารถแก้ไขได้)</span>}
+                        </label>
                         <input
                             type="email"
-                            required
+                            required={!initialData}
                             placeholder="example@univ.ac.th"
-                            className={inputClass}
+                            className={`${inputClass} ${emailError ? "!border-red-400" : ""} ${initialData ? "opacity-60 cursor-not-allowed" : ""}`}
                             value={form.email}
-                            onChange={(e) => setForm({ ...form, email: e.target.value })}
+                            disabled={!!initialData}
+                            onChange={(e) => {
+                                setForm({ ...form, email: e.target.value });
+                                if (e.target.value.trim()) setEmailError("");
+                            }}
                         />
+                        {emailError && <p className="text-xs text-red-500">{emailError}</p>}
                     </div>
 
                     {/* 6. Phone */}
@@ -379,31 +411,31 @@ const UserFormModal: React.FC<Props> = ({
                         </div>
                     )}
 
-                    {/* 8. Password Change — only when editing */}
-                    {initialData && (
-                        <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-gray-700">
-                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                เปลี่ยนรหัสผ่าน <span className="text-xs font-normal text-slate-400">(ไม่บังคับ)</span>
-                            </p>
-                            <input
-                                type="password"
-                                placeholder="รหัสผ่านใหม่ (อย่างน้อย 8 ตัว + ตัวเลข 1 ตัว)"
-                                className={inputClass}
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                            />
-                            <input
-                                type="password"
-                                placeholder="ยืนยันรหัสผ่านใหม่"
-                                className={inputClass}
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                            />
-                            {passwordError && (
-                                <p className="text-xs text-rose-500 font-medium">{passwordError}</p>
-                            )}
-                        </div>
-                    )}
+                    {/* 8. Password */}
+                    <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-gray-700">
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            {initialData ? "เปลี่ยนรหัสผ่าน" : "รหัสผ่าน"} <span className="text-xs font-normal text-slate-400">{initialData ? "(ไม่บังคับ)" : "(บังคับ)"}</span>
+                        </p>
+                        <input
+                            type="password"
+                            required={!initialData}
+                            placeholder={initialData ? "รหัสผ่านใหม่ (อย่างน้อย 8 ตัว + ตัวเลข 1 ตัว)" : "รหัสผ่าน (อย่างน้อย 8 ตัว + ตัวเลข 1 ตัว)"}
+                            className={inputClass}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                        <input
+                            type="password"
+                            required={!initialData}
+                            placeholder={initialData ? "ยืนยันรหัสผ่านใหม่" : "ยืนยันรหัสผ่าน"}
+                            className={inputClass}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                        {passwordError && (
+                            <p className="text-xs text-rose-500 font-medium">{passwordError}</p>
+                        )}
+                    </div>
 
                     {/* Actions */}
                     <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-gray-700">
@@ -416,9 +448,10 @@ const UserFormModal: React.FC<Props> = ({
                         </button>
                         <button
                             type="submit"
-                            className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-95"
+                            disabled={isSubmitting}
+                            className={`px-5 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-95 ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""}`}
                         >
-                            บันทึกข้อมูล
+                            {isSubmitting ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
                         </button>
                     </div>
                 </form>

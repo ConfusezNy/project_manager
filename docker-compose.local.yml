@@ -1,0 +1,67 @@
+# ============================================================
+# docker-compose.local.yml  —  สำหรับ Demo บนเครื่องอื่น (localhost)
+# ============================================================
+# วิธีใช้:
+#   docker compose -f docker-compose.local.yml up --build
+#
+# เข้าใช้งาน:
+#   Frontend : http://localhost:3000
+#   Backend  : http://localhost:4000
+# ============================================================
+
+services:
+  postgres:
+    image: postgres:15-bullseye
+    container_name: pm_demo_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 165050
+      POSTGRES_DB: projectmanagement
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # ★ mount dump.sql ไว้ใน docker-entrypoint-initdb.d
+      #   จะ auto-import เฉพาะครั้งแรกที่สร้าง volume เท่านั้น
+      - ./dump.sql:/docker-entrypoint-initdb.d/01-dump.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build: ./server
+    container_name: pm_demo_server
+    environment:
+      - DATABASE_URL=postgresql://postgres:165050@postgres:5432/projectmanagement
+      - JWT_SECRET=p7TevVUKL215n9yzT7rSAWRlwGQgIaVvBKsmsW5+Ynud+gHg2Ruww/wDqNM=
+      - PORT=4000
+      - CLIENT_URL=http://localhost:3000
+      - RESEND_API_KEY=re_B5Qgff3h_67HktHRBwEHc5Pbk7nKbknwz
+      - RESEND_FROM=noreply@cpeproject.app
+      - DEV_EMAIL=natthachai.confuse@gmail.com
+    ports:
+      - "4000:4000"
+    volumes:
+      - server_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:4000
+    container_name: pm_demo_client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  server_uploads:

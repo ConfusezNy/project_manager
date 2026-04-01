@@ -28,6 +28,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // คำนวณ min datetime สำหรับป้องกันการเลือกวันย้อนหลัง
+  const now = new Date();
+  const minDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,6 +111,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               <input
                 type="datetime-local"
                 value={dueDate}
+                min={minDateTime}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none"
               />

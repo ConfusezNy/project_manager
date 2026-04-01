@@ -1,5 +1,5 @@
 import {
-    Controller, Get, Patch, Delete,
+    Controller, Get, Patch, Delete, Post,
     Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -9,6 +9,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -31,6 +32,13 @@ export class UsersController {
     @Get(':id')
     async findOne(@Param('id') id: string) {
         return this.usersService.findOne(id);
+    }
+
+    @UseGuards(RolesGuard)
+    @Roles('ADMIN')
+    @Post()
+    async create(@Body() dto: CreateUserDto) {
+        return this.usersService.create(dto);
     }
 
     @UseGuards(RolesGuard)
