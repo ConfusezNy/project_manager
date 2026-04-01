@@ -3,15 +3,63 @@ import {
     NotFoundException,
     BadRequestException,
     ForbiddenException,
+    ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
     constructor(private prisma: PrismaService) { }
+
+    // POST /users (Admin) — สร้าง user ใหม่
+    async create(dto: CreateUserDto) {
+        // 1. สร้าง users_id จาก email (เอาส่วนก่อน @)
+        const users_id = dto.email.split('@')[0].trim();
+
+        // 2. เช็ค duplicate
+        const existing = await this.prisma.users.findFirst({
+            where: {
+                OR: [{ email: dto.email }, { users_id }],
+            },
+        });
+        if (existing) {
+            throw new ConflictException('อีเมลหรือรหัสผู้ใช้นี้มีอยู่ในระบบแล้ว');
+        }
+
+        // 3. Hash password
+        const hashedPassword = bcrypt.hashSync(dto.password, 10);
+
+        // 4. สร้าง user ใน DB
+        const newUser = await this.prisma.users.create({
+            data: {
+                users_id,
+                titles: dto.titles,
+                firstname: dto.firstname,
+                lastname: dto.lastname,
+                tel_number: dto.tel_number,
+                email: dto.email,
+                passwordHash: hashedPassword,
+                role: dto.role,
+                profilePicture: dto.profilePicture,
+                expertiseAreas: dto.expertiseAreas,
+            },
+        });
+
+        return {
+            message: 'สร้างผู้ใช้งานสำเร็จ',
+            user: {
+                users_id: newUser.users_id,
+                firstname: newUser.firstname,
+                lastname: newUser.lastname,
+                email: newUser.email,
+                role: newUser.role,
+            },
+        };
+    }
 
     // GET /users?role= — ดึง users ตาม role-scoped visibility
     async findAll(userId: string, userRole: string, roleFilter?: string) {
