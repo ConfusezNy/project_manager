@@ -221,7 +221,7 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
                       <div className="absolute -left-3 -top-4 w-[1px] h-[calc(100%+16px)] bg-gray-300 dark:bg-gray-600"></div>
                       <ListTodo size={20} className="text-gray-500" />
                     </div>
-                    <span className={contentClass}>งาน</span>
+                    <span className={contentClass}>Task</span>
                     {isSidebarOpen && tasksCount > 0 && (
                       <span className="ml-auto flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                         {tasksCount > 99 ? "99+" : tasksCount}
@@ -235,7 +235,7 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
                       <div className="absolute -left-3 bottom-1/2 w-[1px] h-10 bg-gray-300 dark:bg-gray-600"></div>
                       <FileText size={20} className="text-gray-500" />
                     </div>
-                    <span className={contentClass}>ส่งเอกสาร</span>
+                    <span className={contentClass}>Submit</span>
                     {isSidebarOpen && eventsCount > 0 && (
                       <span className="ml-auto flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                         {eventsCount > 99 ? "99+" : eventsCount}
@@ -251,7 +251,7 @@ const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
                 <Folder size={24} className="text-gray-400" />
               </div>
               <span className={contentClass}>
-                {loading ? "Loading..." : "ไม่มีโครงงาน"}
+                {loading ? "Loading..." : "available"}
               </span>
             </div>
           )}

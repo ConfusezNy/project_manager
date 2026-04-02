@@ -123,6 +123,24 @@ export function useUserManagement() {
             payload.expertiseAreas = formData.expertiseAreas;
           }
           await api.patch(`/users/${editingUser.id}`, payload);
+        } else {
+          // Add new user
+          const payload: any = {
+            role: formData.role,
+            titles: formData.titles,
+            firstname: formData.firstname,
+            lastname: formData.lastname,
+            email: formData.email,
+            password: formData.newPassword,
+            tel_number: formData.tel_number,
+          };
+          if (formData.profilePicture !== undefined) {
+            payload.profilePicture = formData.profilePicture;
+          }
+          if (formData.expertiseAreas !== undefined) {
+            payload.expertiseAreas = formData.expertiseAreas;
+          }
+          await api.post("/users", payload);
         }
         await fetchUsers();
         setIsModalOpen(false);
